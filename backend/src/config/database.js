@@ -13,6 +13,7 @@ const pool = mysql.createPool({
   queueLimit: 0,            // Không giới hạn hàng đợi
   charset: 'utf8mb4',
   timezone: '+07:00',       // Múi giờ Việt Nam
+  ...(process.env.DB_SSL === 'true' && { ssl: { rejectUnauthorized: false } }),
 });
 
 // Hàm kiểm tra kết nối database khi khởi động server
