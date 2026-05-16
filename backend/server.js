@@ -28,10 +28,16 @@ const io = new Server(httpServer, {
 initSocket(io);
 const PORT = process.env.PORT || 5000;
 
-// ─── Middleware toàn cục ──────────────────────────────────────────────────────
+// ─── Static files (trước CORS — không cần CORS check) ────────────────────────
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
-// Cho phép CORS từ localhost (mọi port) và CLIENT_URL trong .env
-app.use(cors({
+// ─── Body parser ──────────────────────────────────────────────────────────────
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// ─── CORS chỉ cho /api (localhost + CLIENT_URL) ───────────────────────────────
+const corsOptions = {
   origin: (origin, callback) => {
     if (!origin || /^http:\/\/localhost:\d+$/.test(origin)) {
       callback(null, true);
@@ -42,11 +48,8 @@ app.use(cors({
     }
   },
   credentials: true,
-}));
-
-// Parse JSON body
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+};
+app.use('/api', cors(corsOptions));
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
@@ -63,11 +66,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 
-// ─── Serve ảnh upload (avatars, ...) ─────────────────────────────────────────
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
-
-// ─── Serve React Frontend (build) ────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, '../frontend/dist')));
+// ─── Catch-all: trả về index.html cho React Router ───────────────────────────
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
 });
@@ -93,8 +92,8 @@ const startServer = async () => {
     console.log(`📋 Môi trường: ${process.env.NODE_ENV}`);
     console.log(`🔌 Socket.io đang lắng nghe`);
   });
-  cleanupExpiredAccounts(); // Chạy ngay khi khởi động để dọn dẹp tồn đọng
-  setInterval(cleanupExpiredAccounts, 60 * 1000); // Chạy mỗi 60 giây
+  cleanupExpiredAccounts();
+  setInterval(cleanupExpiredAccounts, 60 * 1000);
 };
 
 startServer();
