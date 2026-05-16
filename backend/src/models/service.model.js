@@ -33,8 +33,14 @@ const ServiceModel = {
     let query = `
       SELECT u.user_id, u.full_name, u.avatar_url, u.last_seen_at,
              h.helper_id, h.rating_average, h.total_bookings, h.experience_years,
-             h.is_verified, h.is_available, h.hourly_rate, h.bio,
-             COALESCE(hs.custom_price, s.base_price) AS effective_price,
+             h.is_verified, h.is_available, h.bio,
+             COALESCE(hs.custom_price,
+               CASE hs.experience_level
+                 WHEN 'expert'       THEN s.base_price * 1.5
+                 WHEN 'intermediate' THEN s.base_price * 1.2
+                 ELSE s.base_price
+               END
+             ) AS effective_price,
              hs.experience_level
       FROM helpers h
       JOIN users u ON h.user_id = u.user_id

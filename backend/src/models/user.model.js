@@ -2,13 +2,37 @@
 const { pool } = require('../config/database');
 
 const UserModel = {
-  // Tìm user theo email (dùng khi đăng nhập)
+  // Tìm user theo email - chỉ trả về tài khoản đã kích hoạt (dùng khi đăng nhập)
   findByEmail: async (email) => {
     const [rows] = await pool.query(
       'SELECT * FROM users WHERE email = ? AND is_active = TRUE',
       [email]
     );
     return rows[0] || null;
+  },
+
+  // Tìm user theo email bất kể trạng thái kích hoạt (dùng khi kiểm tra đăng ký)
+  findByEmailAny: async (email) => {
+    const [rows] = await pool.query(
+      'SELECT * FROM users WHERE email = ?',
+      [email]
+    );
+    return rows[0] || null;
+  },
+
+  // Kích hoạt tài khoản sau khi xác minh OTP thành công
+  activateUser: async (email) => {
+    await pool.query('UPDATE users SET is_active = 1 WHERE email = ?', [email]);
+  },
+
+  // Xóa tài khoản chưa kích hoạt để cho phép đăng ký lại
+  deleteInactiveByEmail: async (email) => {
+    await pool.query('DELETE FROM users WHERE email = ? AND is_active = 0', [email]);
+  },
+
+  // Xóa toàn bộ tài khoản theo email (chỉ dùng cho email test, xem TEST_EMAILS trong .env)
+  deleteByEmail: async (email) => {
+    await pool.query('DELETE FROM users WHERE email = ?', [email]);
   },
 
   // Tìm user theo ID
@@ -26,9 +50,9 @@ const UserModel = {
     try {
       await connection.beginTransaction();
 
-      // Tạo bản ghi trong bảng users
+      // Tạo bản ghi trong bảng users với is_active = 0 (chờ xác minh OTP)
       const [userResult] = await connection.query(
-        `INSERT INTO users (email, password_hash, full_name, phone, user_type) VALUES (?, ?, ?, ?, 'customer')`,
+        `INSERT INTO users (email, password_hash, full_name, phone, user_type, is_active) VALUES (?, ?, ?, ?, 'customer', 0)`,
         [email, passwordHash, fullName, phone]
       );
       const userId = userResult.insertId;
@@ -50,21 +74,26 @@ const UserModel = {
   },
 
   // Đăng ký tài khoản Helper
-  createHelper: async ({ email, passwordHash, fullName, phone, dateOfBirth, gender, idCardNumber, address, hourlyRate, bio }) => {
+  createHelper: async ({ email, passwordHash, fullName, phone, dateOfBirth, gender, idCardNumber, address, bio, avatarUrl, pendingServiceIds }) => {
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
 
       const [userResult] = await connection.query(
-        `INSERT INTO users (email, password_hash, full_name, phone, user_type) VALUES (?, ?, ?, ?, 'helper')`,
-        [email, passwordHash, fullName, phone]
+        `INSERT INTO users (email, password_hash, full_name, phone, user_type, is_active, avatar_url) VALUES (?, ?, ?, ?, 'helper', 0, ?)`,
+        [email, passwordHash, fullName, phone, avatarUrl || null]
       );
       const userId = userResult.insertId;
 
+      // Lưu danh sách dịch vụ đăng ký dưới dạng JSON — sẽ được insert vào helper_services khi admin duyệt
+      const serviceIdsJson = pendingServiceIds?.length
+        ? JSON.stringify(pendingServiceIds.map(Number))
+        : null;
+
       await connection.query(
-        `INSERT INTO helpers (user_id, date_of_birth, gender, id_card_number, address, hourly_rate, bio)
+        `INSERT INTO helpers (user_id, date_of_birth, gender, id_card_number, address, bio, pending_service_ids)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [userId, dateOfBirth, gender, idCardNumber, address, hourlyRate, bio]
+        [userId, dateOfBirth, gender, idCardNumber, address, bio || null, serviceIdsJson]
       );
 
       await connection.commit();
@@ -154,17 +183,20 @@ const UserModel = {
   },
 
   // Admin: danh sách tất cả user với bộ lọc
-  adminListUsers: async ({ userType, isActive, search, limit = 20, offset = 0 }) => {
+  adminListUsers: async ({ userType, isActive, isVerified, search, limit = 20, offset = 0 }) => {
     let query = `
       SELECT u.user_id, u.email, u.full_name, u.phone, u.user_type,
-             u.is_active, u.avatar_url, u.created_at, u.last_seen_at
+             u.is_active, u.avatar_url, u.created_at, u.last_seen_at,
+             h.helper_id, h.is_verified, h.hourly_rate, h.rating_average, h.total_bookings
       FROM users u
+      LEFT JOIN helpers h ON u.user_id = h.user_id AND u.user_type = 'helper'
       WHERE 1=1
     `;
     const params = [];
 
     if (userType) { query += ' AND u.user_type = ?'; params.push(userType); }
     if (isActive !== undefined) { query += ' AND u.is_active = ?'; params.push(isActive); }
+    if (isVerified !== undefined) { query += ' AND h.is_verified = ?'; params.push(isVerified === 'true'); }
     if (search) { query += ' AND (u.full_name LIKE ? OR u.email LIKE ? OR u.phone LIKE ?)'; params.push(`%${search}%`, `%${search}%`, `%${search}%`); }
 
     query += ' ORDER BY u.created_at DESC LIMIT ? OFFSET ?';
@@ -181,7 +213,50 @@ const UserModel = {
 
   // Admin: xác minh helper (is_verified = true)
   adminVerifyHelper: async (helperId) => {
-    await pool.query('UPDATE helpers SET is_verified = TRUE WHERE helper_id = ?', [helperId]);
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      // Kích hoạt xác minh
+      await connection.query('UPDATE helpers SET is_verified = TRUE WHERE helper_id = ?', [helperId]);
+
+      // Đọc danh sách dịch vụ đang chờ
+      const [[helper]] = await connection.query(
+        'SELECT pending_service_ids FROM helpers WHERE helper_id = ?', [helperId]
+      );
+
+      if (helper?.pending_service_ids) {
+        let serviceIds = [];
+        try { serviceIds = JSON.parse(helper.pending_service_ids); } catch { /* bỏ qua */ }
+
+        if (serviceIds.length > 0) {
+          // Lấy base_price của các dịch vụ để lưu làm custom_price
+          const [services] = await connection.query(
+            `SELECT service_id, base_price FROM services WHERE service_id IN (${serviceIds.map(() => '?').join(',')})`,
+            serviceIds
+          );
+          const priceMap = Object.fromEntries(services.map(s => [s.service_id, s.base_price]));
+
+          for (const sid of serviceIds) {
+            await connection.query(
+              `INSERT IGNORE INTO helper_services (helper_id, service_id, experience_level, custom_price)
+               VALUES (?, ?, 'beginner', ?)`,
+              [helperId, sid, priceMap[sid] || null]
+            );
+          }
+
+          // Xóa pending_service_ids sau khi đã xử lý
+          await connection.query('UPDATE helpers SET pending_service_ids = NULL WHERE helper_id = ?', [helperId]);
+        }
+      }
+
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
   },
 };
 

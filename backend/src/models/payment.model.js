@@ -9,18 +9,27 @@ const PaymentModel = {
       await connection.beginTransaction();
 
       await connection.query(
-        `UPDATE payments
-         SET payment_status = 'paid', paid_at = NOW()
-         WHERE booking_id = ?`,
+        `UPDATE payments SET payment_status = 'paid', paid_at = NOW() WHERE booking_id = ?`,
         [bookingId]
       );
 
-      // Ghi log thanh toán
-      await connection.query(
-        `INSERT INTO booking_logs (booking_id, changed_by, old_status, new_status, note)
-         VALUES (?, ?, 'confirmed', 'confirmed', 'Thanh toán thành công')`,
-        [bookingId, paidByUserId]
-      );
+      // Nếu không có user (VNPay tự động), lấy customer_id của booking để ghi log
+      let logUserId = paidByUserId;
+      if (!logUserId) {
+        const [[b]] = await connection.query(
+          'SELECT c.user_id FROM bookings b JOIN customers c ON b.customer_id = c.customer_id WHERE b.booking_id = ?',
+          [bookingId]
+        );
+        logUserId = b?.user_id;
+      }
+
+      if (logUserId) {
+        await connection.query(
+          `INSERT INTO booking_logs (booking_id, changed_by, old_status, new_status, note)
+           VALUES (?, ?, 'confirmed', 'confirmed', 'Thanh toán thành công')`,
+          [bookingId, logUserId]
+        );
+      }
 
       await connection.commit();
     } catch (error) {
@@ -100,8 +109,8 @@ const PaymentModel = {
       JOIN bookings b ON p.booking_id = b.booking_id
       JOIN customers c ON b.customer_id = c.customer_id
       JOIN users uc ON c.user_id = uc.user_id
-      JOIN helpers h ON b.helper_id = h.helper_id
-      JOIN users uh ON h.user_id = uh.user_id
+      LEFT JOIN helpers h ON b.helper_id = h.helper_id
+      LEFT JOIN users uh ON h.user_id = uh.user_id
       JOIN services s ON b.service_id = s.service_id
       WHERE 1=1
     `;

@@ -15,7 +15,11 @@
     "express": "^4.19.2",
     "express-validator": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.1.1",
     "mysql2": "^3.9.7",
+    "nodemailer": "^8.0.5",
+    "qs": "^6.15.1",
+    "socket.io": "^4.8.3",
     "uuid": "^10.0.0"
   },
   "devDependencies": {
@@ -25,7 +29,11 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "testMatch": ["**/tests/**/*.test.js"],
-    "collectCoverageFrom": ["src/**/*.js"]
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.js"
+    ]
   }
 }

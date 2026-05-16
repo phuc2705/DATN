@@ -51,10 +51,11 @@ CREATE TABLE helpers (
     experience_years INT DEFAULT 0,
     rating_average   DECIMAL(3,2) DEFAULT 0.00,
     total_bookings   INT DEFAULT 0,
-    hourly_rate      DECIMAL(10,2) NOT NULL,
+    hourly_rate      DECIMAL(10,2) NOT NULL DEFAULT 0,
     is_verified      BOOLEAN DEFAULT FALSE,
     is_available     BOOLEAN DEFAULT TRUE,
     bio              TEXT NULL,
+    pending_service_ids TEXT NULL,        -- JSON array serviceId khi đăng ký, xóa sau khi admin duyệt
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     INDEX idx_rating (rating_average),
     INDEX idx_hourly_rate (hourly_rate),
@@ -104,7 +105,7 @@ CREATE TABLE schedules (
 CREATE TABLE bookings (
     booking_id     INT AUTO_INCREMENT PRIMARY KEY,
     customer_id    INT NOT NULL,
-    helper_id      INT NOT NULL,
+    helper_id      INT NULL DEFAULT NULL,               -- NULL khi admin chưa giao việc
     service_id     INT NOT NULL,
     promo_id       INT NULL,                            -- Liên kết khuyến mãi (nếu có)
     booking_date   DATE NOT NULL,
@@ -151,7 +152,7 @@ CREATE TABLE payments (
     payment_id     INT AUTO_INCREMENT PRIMARY KEY,
     booking_id     INT UNIQUE NOT NULL,
     amount         DECIMAL(10,2) NOT NULL,
-    payment_method ENUM('cash','bank_transfer','e_wallet') NOT NULL,
+    payment_method ENUM('cash','bank_transfer','e_wallet','vnpay') NOT NULL DEFAULT 'cash',
     payment_status ENUM('unpaid','paid','refunded') DEFAULT 'unpaid',
     transaction_id VARCHAR(100) NULL,
     paid_at        TIMESTAMP NULL,
@@ -843,6 +844,21 @@ FROM helpers h
 INNER JOIN users u ON h.user_id = u.user_id
 LEFT  JOIN helper_documents hd ON h.helper_id = hd.helper_id
 GROUP BY h.helper_id, u.full_name, h.is_verified;
+
+-- ============================================================
+-- BẢNG OTP XÁC NHẬN ĐĂNG KÝ TÀI KHOẢN
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS otp_verifications (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    email       VARCHAR(255) NOT NULL,
+    otp_code    VARCHAR(6)   NOT NULL,
+    expires_at  DATETIME     NOT NULL,
+    is_used     TINYINT(1)   NOT NULL DEFAULT 0,
+    created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_otp_email (email),
+    INDEX idx_otp_expires (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ============================================================
 -- COMPOSITE INDEXES CHO QUERY PHỔ BIẾN

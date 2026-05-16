@@ -34,10 +34,12 @@ const authenticate = (req, res, next) => {
   }
 };
 
-// Middleware phân quyền - chỉ cho phép các role cụ thể truy cập
+// Middleware phân quyền - admin có thể bypass tất cả role
 // Sử dụng: authorize('admin'), authorize('customer', 'helper')
 const authorize = (...roles) => {
   return (req, res, next) => {
+    // Admin có quyền truy cập mọi endpoint để test
+    if (req.user.user_type === 'admin') return next();
     if (!roles.includes(req.user.user_type)) {
       return res.status(403).json({
         success: false,
