@@ -5,9 +5,9 @@ const NotificationModel = {
   // Tạo thông báo mới gửi đến một user
   create: async ({ userId, title, body, type, refId = null }) => {
     const [result] = await pool.query(
-      `INSERT INTO notifications (user_id, title, body, type, ref_id)
+      `INSERT INTO notifications (user_id, title, body, type, data)
        VALUES (?, ?, ?, ?, ?)`,
-      [userId, title, body, type, refId]
+      [userId, title, body, type, refId ? JSON.stringify({ refId }) : null]
     );
     return result.insertId;
   },

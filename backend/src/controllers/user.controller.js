@@ -80,7 +80,7 @@ const UserController = {
       const [rows] = await pool.query(
         `SELECT u.user_id, u.full_name, u.avatar_url, u.last_seen_at,
                 h.helper_id, h.rating_average, h.total_bookings, h.experience_years,
-                h.is_verified, h.is_available, h.hourly_rate, h.bio, h.gender
+                h.is_verified, h.is_available, h.hourly_rate, h.bio, h.gender, h.date_of_birth
          FROM helpers h
          JOIN users u ON h.user_id = u.user_id
          WHERE h.helper_id = ? AND u.is_active = TRUE`,

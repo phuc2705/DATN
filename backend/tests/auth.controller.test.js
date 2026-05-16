@@ -1,11 +1,16 @@
-// Unit test AuthController — mock UserModel, bcrypt, jwt config
-// Kiểm tra: đăng ký, đăng nhập, refresh token, lấy thông tin user
+// Unit test AuthController — mock UserModel, OtpModel, bcrypt, jwt, email
+// Kiểm tra: đăng ký (OTP flow), đăng nhập, refresh token, lấy thông tin user
 
 jest.mock('../src/models/user.model');
+jest.mock('../src/models/otp.model');
 jest.mock('bcryptjs');
 jest.mock('../src/config/jwt');
+jest.mock('../src/utils/email', () => ({ sendOtpEmail: jest.fn().mockResolvedValue() }));
+jest.mock('../src/utils/geocode', () => ({ geocodeAddress: jest.fn().mockResolvedValue(null) }));
+jest.mock('../src/config/database', () => ({ pool: { query: jest.fn() } }));
 
 const UserModel = require('../src/models/user.model');
+const OtpModel = require('../src/models/otp.model');
 const bcrypt = require('bcryptjs');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../src/config/jwt');
 const AuthController = require('../src/controllers/auth.controller');
@@ -32,23 +37,25 @@ describe('AuthController.registerCustomer', () => {
     },
   };
 
-  test('Đăng ký thành công: trả về 201 và userId', async () => {
-    UserModel.findByEmail.mockResolvedValue(null);
+  test('Đăng ký thành công: gửi OTP và trả về 200', async () => {
+    UserModel.findByEmailAny.mockResolvedValue(null);
     bcrypt.hash.mockResolvedValue('hashed_password');
-    UserModel.createCustomer.mockResolvedValue(5);
+    UserModel.createCustomer.mockResolvedValue();
+    OtpModel.create.mockResolvedValue();
 
     const res = mockRes();
     await AuthController.registerCustomer(req, res, mockNext);
 
-    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
       success: true,
-      data: expect.objectContaining({ userId: 5 }),
+      data: expect.objectContaining({ email: 'test@example.com' }),
     }));
+    expect(OtpModel.create).toHaveBeenCalled();
   });
 
-  test('Email đã tồn tại: trả về 409', async () => {
-    UserModel.findByEmail.mockResolvedValue({ user_id: 1, email: 'test@example.com' });
+  test('Email đã tồn tại và đã kích hoạt: trả về 409', async () => {
+    UserModel.findByEmailAny.mockResolvedValue({ user_id: 1, email: 'test@example.com', is_active: true });
 
     const res = mockRes();
     await AuthController.registerCustomer(req, res, mockNext);
@@ -59,7 +66,7 @@ describe('AuthController.registerCustomer', () => {
 
   test('Lỗi DB: gọi next(error)', async () => {
     const err = new Error('DB error');
-    UserModel.findByEmail.mockRejectedValue(err);
+    UserModel.findByEmailAny.mockRejectedValue(err);
 
     const res = mockRes();
     await AuthController.registerCustomer(req, res, mockNext);
@@ -78,20 +85,21 @@ describe('AuthController.registerHelper', () => {
     },
   };
 
-  test('Đăng ký helper thành công: trả về 201', async () => {
-    UserModel.findByEmail.mockResolvedValue(null);
+  test('Đăng ký helper thành công: gửi OTP và trả về 200', async () => {
+    UserModel.findByEmailAny.mockResolvedValue(null);
     bcrypt.hash.mockResolvedValue('hashed_pass');
-    UserModel.createHelper.mockResolvedValue(10);
+    UserModel.createHelper.mockResolvedValue();
+    OtpModel.create.mockResolvedValue();
 
     const res = mockRes();
     await AuthController.registerHelper(req, res, mockNext);
 
-    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
   });
 
-  test('Email trùng: trả về 409', async () => {
-    UserModel.findByEmail.mockResolvedValue({ user_id: 2 });
+  test('Email đã tồn tại và kích hoạt: trả về 409', async () => {
+    UserModel.findByEmailAny.mockResolvedValue({ user_id: 2, is_active: true });
 
     const res = mockRes();
     await AuthController.registerHelper(req, res, mockNext);

@@ -2,5 +2,15 @@ import api from './axios';
 
 export const loginApi = (data) => api.post('/api/auth/login', data);
 export const registerCustomerApi = (data) => api.post('/api/auth/register/customer', data);
-export const registerHelperApi = (data) => api.post('/api/auth/register/helper', data);
+export const registerHelperApi = ({ avatarFile, serviceIds = [], ...fields }) => {
+  const formData = new FormData();
+  Object.entries(fields).forEach(([k, v]) => v !== undefined && v !== null && formData.append(k, v));
+  formData.append('serviceIds', JSON.stringify(serviceIds));
+  if (avatarFile) formData.append('avatar', avatarFile);
+  return api.post('/api/auth/register/helper', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+};
 export const getMeApi = () => api.get('/api/auth/me');
+export const verifyOtpApi = (data) => api.post('/api/auth/verify-otp', data);
+export const resendOtpApi = (data) => api.post('/api/auth/resend-otp', data);

@@ -1,10 +1,11 @@
-// Routes xác thực - đăng ký, đăng nhập, refresh token
+// Routes xác thực - đăng ký (kèm OTP), đăng nhập, refresh token
 const express = require('express');
 const { body } = require('express-validator');
 const router = express.Router();
 const AuthController = require('../controllers/auth.controller');
 const { authenticate } = require('../middleware/auth');
 const validate = require('../middleware/validate');
+const upload = require('../middleware/upload');
 
 // Validation rules cho đăng ký khách hàng
 const registerCustomerRules = [
@@ -25,14 +26,24 @@ const registerHelperRules = [
   body('dateOfBirth').isDate().withMessage('Ngày sinh không hợp lệ'),
   body('gender').isIn(['male', 'female', 'other']).withMessage('Giới tính không hợp lệ'),
   body('idCardNumber').trim().notEmpty().withMessage('Số CCCD không được để trống'),
-  body('hourlyRate').isFloat({ min: 0 }).withMessage('Giá/giờ không hợp lệ'),
 ];
 
-// POST /api/auth/register/customer
+// POST /api/auth/register/customer - Bước 1: gửi OTP
 router.post('/register/customer', registerCustomerRules, validate, AuthController.registerCustomer);
 
-// POST /api/auth/register/helper
-router.post('/register/helper', registerHelperRules, validate, AuthController.registerHelper);
+// POST /api/auth/register/helper - Bước 1: gửi OTP (upload.single xử lý multipart trước validation)
+router.post('/register/helper', upload.single('avatar'), registerHelperRules, validate, AuthController.registerHelper);
+
+// POST /api/auth/verify-otp - Bước 2: xác minh OTP và tạo tài khoản
+router.post('/verify-otp', [
+  body('email').isEmail().withMessage('Email không hợp lệ').normalizeEmail(),
+  body('otp').isLength({ min: 6, max: 6 }).withMessage('Mã OTP phải có 6 chữ số').isNumeric().withMessage('Mã OTP phải là số'),
+], validate, AuthController.verifyOtp);
+
+// POST /api/auth/resend-otp - Gửi lại OTP
+router.post('/resend-otp', [
+  body('email').isEmail().withMessage('Email không hợp lệ').normalizeEmail(),
+], validate, AuthController.resendOtp);
 
 // POST /api/auth/login
 router.post('/login', [

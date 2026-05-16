@@ -1,6 +1,9 @@
 // Logic tính giá được tập trung tại Backend để đảm bảo tính minh bạch
 // KHÔNG để Frontend tự tính giá vì dễ bị giả mạo
 
+// Hệ số nhân theo cấp độ kinh nghiệm của helper
+const EXPERIENCE_MULTIPLIER = { beginner: 1.0, intermediate: 1.2, expert: 1.5 };
+
 /**
  * Tính số giờ làm việc từ start_time đến end_time
  * @param {string} startTime - "08:00"
@@ -66,4 +69,14 @@ const calculateBookingPrice = (startTime, endTime, helperHourlyRate, promo = nul
   return { hours, basePrice, discountAmount, totalPrice };
 };
 
-module.exports = { calculateHours, calculateBasePrice, calculateDiscount, calculateBookingPrice };
+/**
+ * Lấy giá hiệu dụng của helper cho một dịch vụ
+ * Ưu tiên: custom_price → base_price × experience_multiplier
+ */
+const getEffectiveRate = (basePrice, customPrice, experienceLevel) => {
+  if (customPrice && parseFloat(customPrice) > 0) return parseFloat(customPrice);
+  const mult = EXPERIENCE_MULTIPLIER[experienceLevel] || 1.0;
+  return Math.round(basePrice * mult * 100) / 100;
+};
+
+module.exports = { calculateHours, calculateBasePrice, calculateDiscount, calculateBookingPrice, getEffectiveRate, EXPERIENCE_MULTIPLIER };

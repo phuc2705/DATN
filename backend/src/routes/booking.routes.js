@@ -11,7 +11,7 @@ router.use(authenticate);
 
 // POST /api/bookings - Khách hàng tạo đơn đặt lịch
 router.post('/', authorize('customer'), [
-  body('helperId').isInt().withMessage('helperId không hợp lệ'),
+  body('helperId').optional().isInt({ min: 1 }).withMessage('helperId không hợp lệ'),
   body('serviceId').isInt().withMessage('serviceId không hợp lệ'),
   body('bookingDate').isDate().withMessage('Ngày đặt lịch không hợp lệ'),
   body('startTime').matches(/^\d{2}:\d{2}$/).withMessage('Giờ bắt đầu không hợp lệ (HH:MM)'),
@@ -19,11 +19,26 @@ router.post('/', authorize('customer'), [
   body('address').trim().notEmpty().withMessage('Địa chỉ không được để trống'),
 ], validate, BookingController.createBooking);
 
+// GET /api/bookings/promo/validate - Xác minh mã khuyến mãi (phải đặt trước /:bookingId)
+router.get('/promo/validate', authorize('customer'), BookingController.validatePromoCode);
+
+// GET /api/bookings/price-preview - Tính giá ước tính từ backend (có xét experience + custom_price)
+router.get('/price-preview', BookingController.pricePreview);
+
+// GET /api/bookings/suggest-helpers - Gợi ý helper xếp hạng theo thuật toán matching
+router.get('/suggest-helpers', BookingController.suggestHelpers);
+
 // GET /api/bookings/my - Lịch sử đặt lịch của khách hàng
 router.get('/my', authorize('customer'), BookingController.getMyBookingsAsCustomer);
 
-// GET /api/bookings/helper/my - Lịch làm việc của helper
+// GET /api/bookings/my-previous-helpers - Danh sách helper quen để customer yêu cầu lại
+router.get('/my-previous-helpers', authorize('customer'), BookingController.getPreviousHelpers);
+
+// GET /api/bookings/helper/my - Lịch làm việc của helper (đã nhận)
 router.get('/helper/my', authorize('helper'), BookingController.getMyBookingsAsHelper);
+
+// GET /api/bookings/helper/available-jobs - Job board: helper xem việc có thể nhận
+router.get('/helper/available-jobs', authorize('helper'), BookingController.getAvailableJobs);
 
 // GET /api/bookings/:bookingId - Chi tiết booking
 router.get('/:bookingId', BookingController.getBookingDetail);
@@ -36,6 +51,9 @@ router.patch('/:bookingId/checkin', authorize('helper'), BookingController.check
 
 // PATCH /api/bookings/:bookingId/checkout - Helper check-out
 router.patch('/:bookingId/checkout', authorize('helper'), BookingController.checkOut);
+
+// PATCH /api/bookings/:bookingId/accept - Helper nhận việc từ job board
+router.patch('/:bookingId/accept', authorize('helper'), BookingController.acceptJob);
 
 // PATCH /api/bookings/:bookingId/cancel - Hủy booking
 router.patch('/:bookingId/cancel', authorize('customer', 'admin'), BookingController.cancelBooking);

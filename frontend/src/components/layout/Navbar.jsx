@@ -1,93 +1,286 @@
-// Thanh điều hướng — hiển thị links theo role người dùng
-import { Link, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { getNotificationsApi } from '../../api/notification.api';
+
+function BellIcon({ unread }) {
+  return (
+    <Link to="/notifications" className="relative p-2 rounded-xl text-gray-500 hover:text-orange-500 hover:bg-orange-50 transition-all duration-200">
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+      </svg>
+      {unread > 0 && (
+        <span className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold text-[10px] leading-none">
+          {unread > 9 ? '9+' : unread}
+        </span>
+      )}
+    </Link>
+  );
+}
+
+function NavLink({ to, children }) {
+  const location = useLocation();
+  const active = location.pathname === to || (to !== '/' && location.pathname.startsWith(to));
+  return (
+    <Link
+      to={to}
+      className={`text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 ${
+        active
+          ? 'text-orange-600 bg-orange-50'
+          : 'text-gray-600 hover:text-orange-600 hover:bg-orange-50'
+      }`}
+    >
+      {children}
+    </Link>
+  );
+}
+
+function UserAvatar({ name, avatarUrl }) {
+  if (avatarUrl) {
+    return <img src={avatarUrl} alt={name} className="w-8 h-8 rounded-full object-cover" />;
+  }
+  const initials = name?.split(' ').map((w) => w[0]).slice(-2).join('').toUpperCase() || '?';
+  return (
+    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+      {initials}
+    </div>
+  );
+}
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, logout, unreadCount } = useAuth();
   const navigate = useNavigate();
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  // Lấy số thông báo chưa đọc mỗi khi user đăng nhập
-  useEffect(() => {
-    if (!user) { setUnreadCount(0); return; }
-    getNotificationsApi({ limit: 1 })
-      .then(({ data }) => setUnreadCount(data.data?.unreadCount || 0))
-      .catch(() => {});
-  }, [user]);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+    setMenuOpen(false);
+    setMobileOpen(false);
   };
 
+  const closeAll = () => { setMenuOpen(false); setMobileOpen(false); };
+
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="text-xl font-bold text-primary-600">
-          🏠 GiúpViệc24h
-        </Link>
+    <>
+      <nav className="bg-white/95 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2 group flex-shrink-0" onClick={closeAll}>
+            <img src="/logo.png" alt="ConnectClean" className="h-9 w-auto object-contain group-hover:opacity-90 transition-opacity" />
+          </Link>
 
-        <div className="flex items-center gap-4">
-          {!user && (
-            <>
-              <Link to="/" className="text-gray-600 hover:text-primary-600 text-sm">Dịch vụ</Link>
-              <Link to="/login" className="text-gray-600 hover:text-primary-600 text-sm">Đăng nhập</Link>
-              <Link to="/register/customer" className="bg-primary-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-primary-600">
-                Đăng ký
-              </Link>
-            </>
-          )}
+          {/* Desktop nav links */}
+          <div className="hidden md:flex items-center gap-1">
+            {!user && (
+              <>
+                <NavLink to="/">Dịch vụ</NavLink>
+                <NavLink to="/login">Đăng nhập</NavLink>
+                <Link to="/register/customer" className="ml-2 btn-primary text-sm px-4 py-2">
+                  Đăng ký miễn phí
+                </Link>
+              </>
+            )}
 
-          {user?.userType === 'customer' && (
-            <>
-              <Link to="/" className="text-gray-600 hover:text-primary-600 text-sm">Dịch vụ</Link>
-              <Link to="/bookings" className="text-gray-600 hover:text-primary-600 text-sm">Lịch đặt</Link>
-            </>
-          )}
+            {user?.userType === 'customer' && (
+              <>
+                <NavLink to="/">Dịch vụ</NavLink>
+                <NavLink to="/bookings">Lịch đặt của tôi</NavLink>
+              </>
+            )}
 
-          {user?.userType === 'helper' && (
-            <>
-              <Link to="/helper/jobs" className="text-gray-600 hover:text-primary-600 text-sm">Công việc</Link>
-              <Link to="/helper/earnings" className="text-gray-600 hover:text-primary-600 text-sm">Thu nhập</Link>
-            </>
-          )}
+            {user?.userType === 'helper' && (
+              <>
+                <NavLink to="/helper/jobs">Công việc</NavLink>
+                <NavLink to="/helper/earnings">Thu nhập</NavLink>
+              </>
+            )}
 
-          {user?.userType === 'admin' && (
-            <>
-              <Link to="/admin" className="text-gray-600 hover:text-primary-600 text-sm">Dashboard</Link>
-              <Link to="/admin/users" className="text-gray-600 hover:text-primary-600 text-sm">Người dùng</Link>
-              <Link to="/admin/bookings" className="text-gray-600 hover:text-primary-600 text-sm">Đơn hàng</Link>
-            </>
-          )}
-
-          {user && (
-            <div className="flex items-center gap-3">
-              {/* Bell icon thông báo */}
-              <Link to="/notifications" className="relative text-gray-500 hover:text-primary-600">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </Link>
-
-              <span className="text-sm text-gray-600">{user.fullName}</span>
-              <button
-                onClick={handleLogout}
-                className="text-sm text-red-500 hover:text-red-700 border border-red-300 px-3 py-1 rounded-lg"
+            {user?.userType === 'admin' && (
+              <Link
+                to="/admin"
+                className="flex items-center gap-1.5 bg-gray-900 text-white text-xs font-semibold px-3 py-2 rounded-lg hover:bg-gray-800 transition-colors"
               >
-                Đăng xuất
-              </button>
-            </div>
-          )}
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
+                </svg>
+                Admin Panel
+              </Link>
+            )}
+          </div>
+
+          {/* Right side */}
+          <div className="flex items-center gap-1">
+            {user ? (
+              <>
+                <BellIcon unread={unreadCount} />
+
+                {/* Desktop user menu */}
+                <div className="hidden md:block relative">
+                  <button
+                    onClick={() => setMenuOpen(!menuOpen)}
+                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-gray-50 transition-colors"
+                  >
+                    <UserAvatar name={user.fullName} avatarUrl={user.avatarUrl} />
+                    <span className="text-sm font-medium text-gray-700 max-w-[120px] truncate">
+                      {user.fullName}
+                    </span>
+                    <svg className={`w-4 h-4 text-gray-400 transition-transform ${menuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {menuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-[-1]" onClick={() => setMenuOpen(false)} />
+                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 animate-fadeIn z-50">
+                        <div className="px-4 py-3 border-b border-gray-50">
+                          <p className="text-sm font-semibold text-gray-800 truncate">{user.fullName}</p>
+                          <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                          <span className="mt-1 inline-block text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 font-medium capitalize">
+                            {user.userType === 'customer' ? 'Khách hàng' : user.userType === 'helper' ? 'Người giúp việc' : 'Admin'}
+                          </span>
+                        </div>
+
+                        <div className="py-1">
+                          <Link
+                            to="/profile"
+                            onClick={() => setMenuOpen(false)}
+                            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            Hồ sơ cá nhân
+                          </Link>
+                          <Link
+                            to="/notifications"
+                            onClick={() => setMenuOpen(false)}
+                            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                            Thông báo
+                            {unreadCount > 0 && (
+                              <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 leading-none">
+                                {unreadCount}
+                              </span>
+                            )}
+                          </Link>
+                        </div>
+
+                        <div className="border-t border-gray-50 pt-1">
+                          <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            Đăng xuất
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Mobile hamburger */}
+                <button
+                  onClick={() => setMobileOpen(!mobileOpen)}
+                  className="md:hidden p-2 rounded-xl text-gray-500 hover:text-orange-500 hover:bg-orange-50 transition-all"
+                >
+                  {mobileOpen ? (
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                  )}
+                </button>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link to="/login" className="hidden md:block text-sm font-medium text-gray-600 px-3 py-2 hover:text-orange-600 transition-colors">
+                  Đăng nhập
+                </Link>
+                <Link to="/register/customer" className="btn-primary text-sm px-4 py-2">
+                  Đăng ký
+                </Link>
+                <button
+                  onClick={() => setMobileOpen(!mobileOpen)}
+                  className="md:hidden p-2 rounded-xl text-gray-500 hover:text-orange-500 hover:bg-orange-50"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* ─── Mobile drawer ─────────────────────────────────────── */}
+      {mobileOpen && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-40 md:hidden" onClick={() => setMobileOpen(false)} />
+          <div className="fixed top-16 left-0 right-0 bg-white z-50 md:hidden shadow-xl border-b border-gray-100 animate-slideUp">
+            <div className="p-4 space-y-1">
+              {user && (
+                <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-xl mb-3">
+                  <UserAvatar name={user.fullName} avatarUrl={user.avatarUrl} />
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800">{user.fullName}</p>
+                    <p className="text-xs text-gray-500">{user.email}</p>
+                  </div>
+                </div>
+              )}
+
+              {!user && (
+                <>
+                  <Link to="/" onClick={closeAll} className="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors">🏠 Trang chủ</Link>
+                  <Link to="/login" onClick={closeAll} className="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors">🔐 Đăng nhập</Link>
+                  <Link to="/register/customer" onClick={closeAll} className="block px-4 py-3 text-sm font-medium text-orange-600 bg-orange-50 rounded-xl">✨ Đăng ký khách hàng</Link>
+                  <Link to="/register/helper" onClick={closeAll} className="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">👩 Đăng ký người giúp việc</Link>
+                </>
+              )}
+
+              {user?.userType === 'customer' && (
+                <>
+                  <Link to="/" onClick={closeAll} className="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors">🏠 Dịch vụ</Link>
+                  <Link to="/bookings" onClick={closeAll} className="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors">📋 Lịch đặt của tôi</Link>
+                  <Link to="/profile" onClick={closeAll} className="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors">👤 Hồ sơ cá nhân</Link>
+                </>
+              )}
+
+              {user?.userType === 'helper' && (
+                <>
+                  <Link to="/helper/jobs" onClick={closeAll} className="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors">💼 Công việc</Link>
+                  <Link to="/helper/earnings" onClick={closeAll} className="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors">💰 Thu nhập</Link>
+                  <Link to="/profile" onClick={closeAll} className="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors">👤 Hồ sơ cá nhân</Link>
+                </>
+              )}
+
+              {user && (
+                <>
+                  <Link to="/notifications" onClick={closeAll} className="flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors">
+                    <span>🔔 Thông báo</span>
+                    {unreadCount > 0 && <span className="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">{unreadCount}</span>}
+                  </Link>
+                  <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl transition-colors mt-1">
+                    🚪 Đăng xuất
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </>
   );
 }

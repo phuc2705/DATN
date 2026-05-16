@@ -23,7 +23,8 @@ const mockRes = () => {
 const mockNext = jest.fn();
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  // resetAllMocks xóa cả queue mockResolvedValueOnce, tránh rò rỉ mock giữa các test
+  jest.resetAllMocks();
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -56,7 +57,9 @@ describe('BookingController.createBooking', () => {
 
   test('Giá được tính tại Backend — không dùng giá từ request', async () => {
     UserModel.getCustomerProfile.mockResolvedValue({ customer_id: 10, preferred_payment: 'cash' });
-    pool.query.mockResolvedValue([[{ effective_rate: '50000', is_verified: true, is_available: true }]]);
+    pool.query
+      .mockResolvedValueOnce([[{ service_id: 3, base_price: '50000' }]])                           // service query
+      .mockResolvedValueOnce([[{ helper_id: 2, is_verified: true, is_available: true }]]);          // helper query
     BookingModel.checkHelperConflict.mockResolvedValue(false);
     calculateBookingPrice.mockReturnValue({ hours: 4, basePrice: 200000, discountAmount: 0, totalPrice: 200000 });
     BookingModel.create.mockResolvedValue(1);
@@ -64,7 +67,7 @@ describe('BookingController.createBooking', () => {
     const res = mockRes();
     await BookingController.createBooking(baseReq, res, mockNext);
 
-    // calculateBookingPrice phải được gọi với dữ liệu từ DB (helperRate), không từ body
+    // calculateBookingPrice phải được gọi với dữ liệu từ DB (base_price), không từ body
     expect(calculateBookingPrice).toHaveBeenCalledWith('08:00', '12:00', 50000, null);
   });
 
@@ -163,9 +166,10 @@ describe('BookingController.createBooking', () => {
                     max_discount: 50000, min_order_value: 0 };
     UserModel.getCustomerProfile.mockResolvedValue({ customer_id: 10, preferred_payment: 'cash' });
     pool.query
-      .mockResolvedValueOnce([[{ effective_rate: '50000', is_verified: true, is_available: true }]])
-      .mockResolvedValueOnce([[promo]])
-      .mockResolvedValueOnce([[{ cnt: 0 }]]); // chưa dùng lần nào
+      .mockResolvedValueOnce([[{ service_id: 3, base_price: '50000' }]])                    // service query
+      .mockResolvedValueOnce([[{ helper_id: 2, is_verified: true, is_available: true }]])   // helper query
+      .mockResolvedValueOnce([[promo]])                                                       // promo query
+      .mockResolvedValueOnce([[{ cnt: 0 }]]);                                                // usage query
     BookingModel.checkHelperConflict.mockResolvedValue(false);
     calculateBookingPrice.mockReturnValue({ hours: 4, basePrice: 200000, discountAmount: 40000, totalPrice: 160000 });
     BookingModel.create.mockResolvedValue(5);

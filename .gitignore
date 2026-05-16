@@ -26,3 +26,13 @@ Thumbs.db
 
 # Claude
 .claude/
+CLAUDE.md
+
+# Uploaded user files (ảnh avatar user upload — không đưa lên git)
+frontend/public/avatars/*
+!frontend/public/avatars/.gitkeep
+backend/public/uploads/avatars/*
+!backend/public/uploads/avatars/.gitkeep
+
+# Temp files
+/tmp/

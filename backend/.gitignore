@@ -3,3 +3,5 @@ node_modules/
 coverage/
 *.log
 npm-debug.log*
+public/uploads/avatars/*
+!public/uploads/avatars/.gitkeep

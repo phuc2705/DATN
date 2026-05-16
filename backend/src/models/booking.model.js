@@ -123,8 +123,8 @@ const BookingModel = {
              p.payment_status, p.payment_method
       FROM bookings b
       JOIN services s ON b.service_id = s.service_id
-      JOIN helpers h ON b.helper_id = h.helper_id
-      JOIN users u ON h.user_id = u.user_id
+      LEFT JOIN helpers h ON b.helper_id = h.helper_id
+      LEFT JOIN users u ON h.user_id = u.user_id
       LEFT JOIN payments p ON b.booking_id = p.booking_id
       WHERE b.customer_id = ?
     `;
@@ -156,15 +156,15 @@ const BookingModel = {
   findById: async (bookingId) => {
     const [bookingRows] = await pool.query(
       `SELECT b.*, s.service_name, s.base_price AS service_base_price,
-              uc.full_name AS customer_name, uc.phone AS customer_phone,
-              uh.full_name AS helper_name, uh.avatar_url AS helper_avatar, uh.phone AS helper_phone,
+              uc.user_id AS customer_user_id, uc.full_name AS customer_name, uc.phone AS customer_phone,
+              uh.user_id AS helper_user_id, uh.full_name AS helper_name, uh.avatar_url AS helper_avatar, uh.phone AS helper_phone,
               p.payment_status, p.payment_method, p.paid_at
        FROM bookings b
        JOIN services s ON b.service_id = s.service_id
        JOIN customers c ON b.customer_id = c.customer_id
        JOIN users uc ON c.user_id = uc.user_id
-       JOIN helpers h ON b.helper_id = h.helper_id
-       JOIN users uh ON h.user_id = uh.user_id
+       LEFT JOIN helpers h ON b.helper_id = h.helper_id
+       LEFT JOIN users uh ON h.user_id = uh.user_id
        LEFT JOIN payments p ON b.booking_id = p.booking_id
        WHERE b.booking_id = ?`,
       [bookingId]
@@ -194,7 +194,85 @@ const BookingModel = {
     const params = [helperId, bookingDate, startTime, endTime];
     if (excludeBookingId) { query += ' AND booking_id != ?'; params.push(excludeBookingId); }
     const [rows] = await pool.query(query, params);
-    return rows.length > 0; // true = có xung đột
+    return rows.length > 0;
+  },
+
+  // Lấy danh sách booking đang chờ mà helper có thể nhận (open market + được yêu cầu đích danh)
+  findAvailableJobsForHelper: async (helperId) => {
+    const [rows] = await pool.query(`
+      SELECT b.booking_id, b.booking_date, b.start_time, b.end_time, b.hours,
+             b.address, b.total_price, b.note,
+             (b.helper_id IS NOT NULL) AS is_requested,
+             s.service_name,
+             u.full_name AS customer_name
+      FROM bookings b
+      JOIN services s ON b.service_id = s.service_id
+      JOIN customers c ON b.customer_id = c.customer_id
+      JOIN users u ON c.user_id = u.user_id
+      WHERE b.status = 'pending'
+        AND (b.helper_id IS NULL OR b.helper_id = ?)
+        AND NOT EXISTS (
+          SELECT 1 FROM bookings b2
+          WHERE b2.helper_id = ?
+            AND b2.booking_date = b.booking_date
+            AND b2.status NOT IN ('cancelled')
+            AND NOT (b2.end_time <= b.start_time OR b2.start_time >= b.end_time)
+        )
+      ORDER BY b.booking_date ASC, b.start_time ASC
+    `, [helperId, helperId]);
+    return rows;
+  },
+
+  // Lấy danh sách helper đã từng phục vụ customer (để customer yêu cầu lại)
+  findPreviousHelpers: async (customerId) => {
+    const [rows] = await pool.query(`
+      SELECT h.helper_id, u.full_name, u.avatar_url,
+             h.rating_average, h.total_bookings, h.is_available, h.is_verified,
+             MAX(b.booking_date) AS last_booking_date
+      FROM bookings b
+      JOIN helpers h ON b.helper_id = h.helper_id
+      JOIN users u ON h.user_id = u.user_id
+      WHERE b.customer_id = ? AND b.status = 'completed'
+      GROUP BY h.helper_id, u.full_name, u.avatar_url,
+               h.rating_average, h.total_bookings, h.is_available, h.is_verified
+      ORDER BY last_booking_date DESC
+    `, [customerId]);
+    return rows;
+  },
+
+  // Gán helper vào booking và chuyển pending→confirmed (atomic, dùng FOR UPDATE tránh race condition)
+  assignHelperAndConfirm: async (bookingId, helperId, changedByUserId) => {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      const [current] = await connection.query(
+        'SELECT status, helper_id FROM bookings WHERE booking_id = ? FOR UPDATE',
+        [bookingId]
+      );
+      if (!current[0] || current[0].status !== 'pending') {
+        throw Object.assign(new Error('Booking không còn khả dụng để nhận.'), { statusCode: 409 });
+      }
+      if (current[0].helper_id !== null && current[0].helper_id !== helperId) {
+        throw Object.assign(new Error('Booking đã được nhận bởi người giúp việc khác.'), { statusCode: 409 });
+      }
+
+      await connection.query(
+        'UPDATE bookings SET helper_id = ?, status = ? WHERE booking_id = ?',
+        [helperId, 'confirmed', bookingId]
+      );
+      await connection.query(
+        'INSERT INTO booking_logs (booking_id, changed_by, old_status, new_status, note) VALUES (?, ?, ?, ?, ?)',
+        [bookingId, changedByUserId, 'pending', 'confirmed', 'Helper nhận việc']
+      );
+
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
   },
 };
 

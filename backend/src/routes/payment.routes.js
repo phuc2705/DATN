@@ -1,19 +1,28 @@
-// Routes thanh toán
+// Routes thanh toán - tiền mặt, chuyển khoản và VNPay
 const express = require('express');
 const router = express.Router();
 const PaymentController = require('../controllers/payment.controller');
 const { authenticate, authorize } = require('../middleware/auth');
 
-// Tất cả routes payment đều yêu cầu đăng nhập
+// GET /api/payments/vnpay-return — VNPay redirect về sau thanh toán (public, không cần JWT)
+router.get('/vnpay-return', PaymentController.vnpayReturn);
+
+// Tất cả routes bên dưới yêu cầu đăng nhập
 router.use(authenticate);
 
-// POST /api/payments/:bookingId/confirm - Xác nhận thanh toán
+// POST /api/payments/:bookingId/confirm — Xác nhận thanh toán tiền mặt
 router.post('/:bookingId/confirm', authorize('customer', 'admin'), PaymentController.confirmPayment);
 
-// GET /api/payments/my - Lịch sử thanh toán của customer
+// POST /api/payments/:bookingId/vnpay-url — Tạo URL thanh toán VNPay
+router.post('/:bookingId/vnpay-url', authorize('customer'), PaymentController.createVNPayPaymentUrl);
+
+// GET /api/payments/:bookingId/bank-transfer — Lấy thông tin chuyển khoản ngân hàng
+router.get('/:bookingId/bank-transfer', authorize('customer'), PaymentController.getBankTransferInfo);
+
+// GET /api/payments/my — Lịch sử thanh toán của customer
 router.get('/my', authorize('customer'), PaymentController.getMyPayments);
 
-// GET /api/payments/helper/earnings - Thu nhập của helper
+// GET /api/payments/helper/earnings — Thu nhập của helper
 router.get('/helper/earnings', authorize('helper'), PaymentController.getHelperEarnings);
 
 module.exports = router;
