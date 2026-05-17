@@ -37,11 +37,18 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // ─── CORS chỉ cho /api (localhost + CLIENT_URL) ───────────────────────────────
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'https://connectclean.id.vn',
+  'https://www.connectclean.id.vn',
+  'https://datn-fafj.onrender.com',
+].filter(Boolean);
+
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin || /^http:\/\/localhost:\d+$/.test(origin)) {
       callback(null, true);
-    } else if (origin === process.env.CLIENT_URL) {
+    } else if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
