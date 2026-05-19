@@ -1,5 +1,6 @@
 import { Outlet, Link } from 'react-router-dom';
 import Navbar from './Navbar';
+import { Phone, Mail, MapPin } from 'lucide-react';
 
 const FOOTER_LINKS = {
   'Dịch vụ': ['Dọn dẹp nhà', 'Nấu ăn theo giờ', 'Giặt ủi', 'Vệ sinh điều hòa', 'Vệ sinh tổng thể'],
@@ -66,9 +67,9 @@ export default function Layout() {
               <div>
                 <h3 className="text-white font-semibold mb-3">Liên hệ</h3>
                 <div className="space-y-2 text-sm text-gray-400">
-                  <p className="flex items-center gap-2">📞 Hotline: <span className="text-orange-400 font-medium">1800 1234</span> (miễn phí 24/7)</p>
-                  <p className="flex items-center gap-2">📧 Email: <span className="text-orange-400">support@connectclean.vn</span></p>
-                  <p className="flex items-center gap-2">🏢 Trụ sở: 3 Cầu Giấy, Hà Nội</p>
+                  <p className="flex items-center gap-2"><Phone className="w-4 h-4 text-orange-400 shrink-0" /> Hotline: <span className="text-orange-400 font-medium">1800 1234</span> (miễn phí 24/7)</p>
+                  <p className="flex items-center gap-2"><Mail className="w-4 h-4 text-orange-400 shrink-0" /> Email: <span className="text-orange-400">support@connectclean.vn</span></p>
+                  <p className="flex items-center gap-2"><MapPin className="w-4 h-4 text-orange-400 shrink-0" /> Trụ sở: 3 Cầu Giấy, Hà Nội</p>
                 </div>
               </div>
               <div>
