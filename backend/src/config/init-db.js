@@ -1,4 +1,4 @@
-// Tự động khởi tạo schema và dữ liệu mẫu khi database còn trống
+// Tự động khởi tạo schema, dữ liệu mẫu và chạy migration khi server khởi động
 const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2/promise');
@@ -19,6 +19,17 @@ function parseSqlWithDelimiters(sql) {
   }
   regularParts.push(sql.slice(lastIndex));
   return { regularSql: regularParts.join('\n'), procedureSqls };
+}
+
+// Migration idempotent: phone và password_hash cần nullable để hỗ trợ OAuth users
+async function runMigrations(connection) {
+  try {
+    await connection.query('ALTER TABLE users MODIFY COLUMN phone VARCHAR(15) UNIQUE NULL');
+    await connection.query('ALTER TABLE users MODIFY COLUMN password_hash VARCHAR(255) NULL');
+    console.log('✅ Migrations hoàn tất.');
+  } catch (err) {
+    console.error('⚠️  Migration warning:', err.message);
+  }
 }
 
 async function initDatabase() {
@@ -54,20 +65,22 @@ async function initDatabase() {
     } else if (Number(cnt) > 0) {
       // Bảng tồn tại → kiểm tra xem có user nào chưa
       const [[{ userCount }]] = await connection.query('SELECT COUNT(*) AS userCount FROM users');
-      if (Number(userCount) > 0) {
+      if (Number(userCount) === 0) {
+        // Bảng có nhưng users rỗng → chỉ chạy seed data, không chạy lại schema
+        console.log('⚙️  Bảng tồn tại nhưng chưa có dữ liệu — đang import dữ liệu mẫu...');
+        const dataPath = path.join(__dirname, '../../../database/sample_data.sql');
+        let data = fs.readFileSync(dataPath, 'utf8');
+        data = data.replace(/USE\s+\w+;/gi, '');
+        await connection.query(data);
+        console.log('✅ Dữ liệu mẫu đã được import thành công.');
+        console.log('   Admin  : admin@gmail.com / 123456');
+        console.log('   Customer: nguyenvanbay@gmail.com / 123456');
+        console.log('   Helper  : nguyenthimai@gmail.com / 123456');
+      } else {
         console.log('✅ Database đã có dữ liệu, bỏ qua khởi tạo.');
-        return;
       }
-      // Bảng có nhưng users rỗng → chỉ chạy seed data, không chạy lại schema
-      console.log('⚙️  Bảng tồn tại nhưng chưa có dữ liệu — đang import dữ liệu mẫu...');
-      const dataPath = path.join(__dirname, '../../../database/sample_data.sql');
-      let data = fs.readFileSync(dataPath, 'utf8');
-      data = data.replace(/USE\s+\w+;/gi, '');
-      await connection.query(data);
-      console.log('✅ Dữ liệu mẫu đã được import thành công.');
-      console.log('   Admin  : admin@gmail.com / 123456');
-      console.log('   Customer: nguyenvanbay@gmail.com / 123456');
-      console.log('   Helper  : nguyenthimai@gmail.com / 123456');
+      // Luôn chạy migrations (idempotent) trước khi kết thúc
+      await runMigrations(connection);
       return;
     }
 
@@ -100,6 +113,8 @@ async function initDatabase() {
     console.log('   Admin  : admin@gmail.com / 123456');
     console.log('   Customer: nguyenvanbay@gmail.com / 123456');
     console.log('   Helper  : nguyenthimai@gmail.com / 123456');
+
+    await runMigrations(connection);
   } catch (err) {
     console.error('❌ Lỗi khởi tạo database:', err.message);
   } finally {

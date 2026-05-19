@@ -211,6 +211,42 @@ const UserModel = {
     await pool.query('UPDATE users SET is_active = ? WHERE user_id = ?', [isActive, userId]);
   },
 
+  // Tìm hoặc tạo tài khoản customer từ OAuth (Google/Facebook) — không cần OTP
+  findOrCreateOAuthCustomer: async ({ email, fullName, avatarUrl }) => {
+    // User đã có và đang active → dùng luôn
+    const existing = await UserModel.findByEmail(email);
+    if (existing) return existing;
+
+    // User tồn tại nhưng chưa active (đăng ký OTP dang dở) → kích hoạt luôn
+    const inactive = await UserModel.findByEmailAny(email);
+    if (inactive) {
+      await pool.query('UPDATE users SET is_active = 1 WHERE email = ?', [email]);
+      return await UserModel.findByEmail(email);
+    }
+
+    // Tạo user mới hoàn toàn (is_active=1, phone=NULL, password_hash=NULL)
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      const [r] = await connection.query(
+        `INSERT INTO users (email, password_hash, full_name, phone, user_type, is_active, avatar_url)
+         VALUES (?, NULL, ?, NULL, 'customer', 1, ?)`,
+        [email, fullName || email.split('@')[0], avatarUrl || null]
+      );
+      await connection.query(
+        'INSERT INTO customers (user_id, address, city) VALUES (?, ?, ?)',
+        [r.insertId, '', '']
+      );
+      await connection.commit();
+      return await UserModel.findByEmail(email);
+    } catch (err) {
+      await connection.rollback();
+      throw err;
+    } finally {
+      connection.release();
+    }
+  },
+
   // Admin: xác minh helper (is_verified = true)
   adminVerifyHelper: async (helperId) => {
     const connection = await pool.getConnection();
