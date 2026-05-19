@@ -217,7 +217,7 @@ export default function CreateBookingPage() {
                   className="input-field"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 sm:gap-4">
                 <div>
                   <label className="label">Giờ bắt đầu</label>
                   <input type="time" required value={form.startTime} onChange={set('startTime')} className="input-field" />

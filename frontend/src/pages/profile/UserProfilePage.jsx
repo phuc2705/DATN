@@ -185,7 +185,7 @@ export default function UserProfilePage() {
                 <span className="w-7 h-7 bg-green-100 text-green-600 rounded-lg flex items-center justify-center text-sm">💳</span>
                 Thanh toán ưa thích
               </h3>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {[
                   { key: 'cash', icon: '💵', label: 'Tiền mặt' },
                   { key: 'bank_transfer', icon: '🏧', label: 'Chuyển khoản' },
