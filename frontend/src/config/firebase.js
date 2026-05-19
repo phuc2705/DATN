@@ -1,6 +1,6 @@
 // Khởi tạo Firebase App + Auth providers cho Google và Facebook OAuth
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 
 const app = initializeApp({
   apiKey:            'AIzaSyB5_VhDytOG3mdII5ZXe1yNjarWCFUX0oo',
@@ -13,4 +13,3 @@ const app = initializeApp({
 
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
-export const facebookProvider = new FacebookAuthProvider();
