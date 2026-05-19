@@ -51,6 +51,11 @@ router.post('/login', [
   body('password').notEmpty().withMessage('Mật khẩu không được để trống'),
 ], validate, AuthController.login);
 
+// POST /api/auth/firebase - Đăng nhập / đăng ký bằng Google hoặc Facebook (Firebase OAuth)
+router.post('/firebase', [
+  body('idToken').notEmpty().withMessage('ID token không được để trống'),
+], validate, AuthController.firebaseLogin);
+
 // POST /api/auth/refresh - Làm mới Access Token
 router.post('/refresh', AuthController.refreshToken);
 

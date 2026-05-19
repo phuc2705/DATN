@@ -1,6 +1,6 @@
 // Quản lý trạng thái xác thực toàn cục (user, token, socket)
 import { createContext, useState, useEffect, useCallback } from 'react';
-import { loginApi, getMeApi } from '../api/auth.api';
+import { loginApi, getMeApi, firebaseLoginApi } from '../api/auth.api';
 import { connectSocket, disconnectSocket } from '../socket/socket';
 import { getNotificationsApi } from '../api/notification.api';
 import toast from 'react-hot-toast';
@@ -66,6 +66,16 @@ export function AuthProvider({ children }) {
     return userData;
   }, []);
 
+  const loginWithFirebase = useCallback(async (idToken) => {
+    const { data } = await firebaseLoginApi({ idToken });
+    const { accessToken, refreshToken, user: userData } = data.data;
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+    setUser(userData);
+    connectSocket(accessToken);
+    return userData;
+  }, []);
+
   const logout = useCallback(() => {
     disconnectSocket();
     localStorage.clear();
@@ -74,7 +84,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, setUser, unreadCount, setUnreadCount }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithFirebase, logout, setUser, unreadCount, setUnreadCount }}>
       {children}
     </AuthContext.Provider>
   );

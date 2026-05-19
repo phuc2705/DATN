@@ -303,6 +303,45 @@ const AuthController = {
     }
   },
 
+  // Đăng nhập bằng Firebase OAuth (Google/Facebook) — xác minh ID token, tạo user nếu chưa có
+  firebaseLogin: async (req, res, next) => {
+    try {
+      const { idToken } = req.body;
+      if (!idToken) return sendError(res, 'ID token không được cung cấp.', 400);
+
+      const admin = require('../config/firebase-admin');
+      const decoded = await admin.auth().verifyIdToken(idToken);
+      const { email, name: fullName, picture: avatarUrl } = decoded;
+
+      if (!email) return sendError(res, 'Tài khoản OAuth không có email.', 400);
+
+      const user = await UserModel.findOrCreateOAuthCustomer({ email, fullName, avatarUrl });
+
+      const tokenPayload = { user_id: user.user_id, email: user.email, user_type: user.user_type };
+      const accessToken = generateAccessToken(tokenPayload);
+      const refreshToken = generateRefreshToken(tokenPayload);
+
+      await UserModel.updateLastSeen(user.user_id);
+
+      return sendSuccess(res, {
+        accessToken,
+        refreshToken,
+        user: {
+          userId: user.user_id,
+          email: user.email,
+          fullName: user.full_name,
+          userType: user.user_type,
+          avatarUrl: user.avatar_url,
+        },
+      }, 'Đăng nhập thành công!');
+    } catch (error) {
+      if (error.code?.startsWith('auth/')) {
+        return sendError(res, 'Token xác thực không hợp lệ hoặc đã hết hạn.', 401);
+      }
+      next(error);
+    }
+  },
+
   // Lấy thông tin user hiện tại (từ token)
   getMe: async (req, res, next) => {
     try {

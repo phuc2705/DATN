@@ -14,3 +14,4 @@ export const registerHelperApi = ({ avatarFile, serviceIds = [], ...fields }) =>
 export const getMeApi = () => api.get('/api/auth/me');
 export const verifyOtpApi = (data) => api.post('/api/auth/verify-otp', data);
 export const resendOtpApi = (data) => api.post('/api/auth/resend-otp', data);
+export const firebaseLoginApi = (data) => api.post('/api/auth/firebase', data);
