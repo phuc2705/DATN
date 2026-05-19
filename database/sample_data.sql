@@ -330,26 +330,26 @@ INSERT INTO schedules (helper_id, day_of_week, start_time, end_time, is_availabl
 
 -- 6. BOOKINGS (Lịch sử đặt dịch vụ)
 
-INSERT INTO bookings (customer_id, helper_id, service_id, booking_date, start_time, end_time, hours, address, total_price, status, note) VALUES
+INSERT INTO bookings (customer_id, helper_id, service_id, booking_date, start_time, end_time, hours, address, base_price, total_price, status, note) VALUES
 -- Completed bookings (để test reviews)
-(1, 1, 1, '2026-01-15', '09:00:00', '12:00:00', 3.00, '123 Nguyễn Trãi, P. Thượng Đình, Thanh Xuân, Hà Nội', 360000.00, 'completed', 'Dọn dẹp nhà cửa tổng quát'),
-(1, 2, 2, '2026-01-20', '14:00:00', '17:00:00', 3.00, '123 Nguyễn Trãi, P. Thượng Đình, Thanh Xuân, Hà Nội', 315000.00, 'completed', 'Giặt ủi quần áo'),
-(2, 3, 1, '2026-01-25', '08:00:00', '12:00:00', 4.00, '456 Trần Duy Hưng, P. Trung Hòa, Cầu Giấy, Hà Nội', 520000.00, 'completed', 'Dọn dẹp sau sửa nhà'),
+(1, 1, 1, '2026-01-15', '09:00:00', '12:00:00', 3.00, '123 Nguyễn Trãi, P. Thượng Đình, Thanh Xuân, Hà Nội', 360000.00, 360000.00, 'completed', 'Dọn dẹp nhà cửa tổng quát'),
+(1, 2, 2, '2026-01-20', '14:00:00', '17:00:00', 3.00, '123 Nguyễn Trãi, P. Thượng Đình, Thanh Xuân, Hà Nội', 315000.00, 315000.00, 'completed', 'Giặt ủi quần áo'),
+(2, 3, 1, '2026-01-25', '08:00:00', '12:00:00', 4.00, '456 Trần Duy Hưng, P. Trung Hòa, Cầu Giấy, Hà Nội',  520000.00, 520000.00, 'completed', 'Dọn dẹp sau sửa nhà'),
 
 -- In progress bookings
-(3, 1, 3, '2026-03-12', '10:00:00', '13:00:00', 3.00, '789 Láng Hạ, P. Thành Công, Ba Đình, Hà Nội', 390000.00, 'in_progress', 'Nấu cơm trưa'),
-(4, 2, 1, '2026-03-12', '14:00:00', '16:00:00', 2.00, '321 Giải Phóng, P. Bách Khoa, Hai Bà Trưng, Hà Nội', 230000.00, 'in_progress', 'Dọn dẹp nhanh'),
+(3, 1, 3, '2026-03-12', '10:00:00', '13:00:00', 3.00, '789 Láng Hạ, P. Thành Công, Ba Đình, Hà Nội',         390000.00, 390000.00, 'in_progress', 'Nấu cơm trưa'),
+(4, 2, 1, '2026-03-12', '14:00:00', '16:00:00', 2.00, '321 Giải Phóng, P. Bách Khoa, Hai Bà Trưng, Hà Nội',  230000.00, 230000.00, 'in_progress', 'Dọn dẹp nhanh'),
 
 -- Confirmed bookings (sắp diễn ra)
-(1, 3, 6, '2026-03-15', '09:00:00', '17:00:00', 8.00, '123 Nguyễn Trãi, P. Thượng Đình, Thanh Xuân, Hà Nội', 1080000.00, 'confirmed', 'Vệ sinh tổng thể căn hộ'),
-(2, 1, 1, '2026-03-17', '08:00:00', '11:00:00', 3.00, '456 Trần Duy Hưng, P. Trung Hòa, Cầu Giấy, Hà Nội', 360000.00, 'confirmed', 'Dọn dẹp hàng tuần'),
+(1, 3, 6, '2026-03-15', '09:00:00', '17:00:00', 8.00, '123 Nguyễn Trãi, P. Thượng Đình, Thanh Xuân, Hà Nội',1080000.00,1080000.00, 'confirmed', 'Vệ sinh tổng thể căn hộ'),
+(2, 1, 1, '2026-03-17', '08:00:00', '11:00:00', 3.00, '456 Trần Duy Hưng, P. Trung Hòa, Cầu Giấy, Hà Nội',  360000.00, 360000.00, 'confirmed', 'Dọn dẹp hàng tuần'),
 
 -- Pending bookings (chờ xác nhận)
-(3, 4, 3, '2026-03-20', '11:00:00', '14:00:00', 3.00, '789 Láng Hạ, P. Thành Công, Ba Đình, Hà Nội', 360000.00, 'pending', 'Nấu ăn cho gia đình'),
-(4, 2, 4, '2026-03-25', '08:00:00', '18:00:00', 10.00, '321 Giải Phóng, P. Bách Khoa, Hai Bà Trưng, Hà Nội', 1350000.00, 'pending', 'Chăm sóc trẻ cả ngày'),
+(3, 4, 3, '2026-03-20', '11:00:00', '14:00:00', 3.00, '789 Láng Hạ, P. Thành Công, Ba Đình, Hà Nội',         360000.00, 360000.00, 'pending', 'Nấu ăn cho gia đình'),
+(4, 2, 4, '2026-03-25', '08:00:00', '18:00:00', 10.00,'321 Giải Phóng, P. Bách Khoa, Hai Bà Trưng, Hà Nội', 1350000.00,1350000.00, 'pending', 'Chăm sóc trẻ cả ngày'),
 
 -- Cancelled booking
-(1, 1, 1, '2026-01-30', '09:00:00', '12:00:00', 3.00, '123 Nguyễn Trãi, P. Thượng Đình, Thanh Xuân, Hà Nội', 360000.00, 'cancelled', 'Khách hủy do có việc gấp');
+(1, 1, 1, '2026-01-30', '09:00:00', '12:00:00', 3.00, '123 Nguyễn Trãi, P. Thượng Đình, Thanh Xuân, Hà Nội', 360000.00, 360000.00, 'cancelled', 'Khách hủy do có việc gấp');
 
 -- 7. PAYMENTS (Tự động tạo qua trigger, nhưng update status)
 
