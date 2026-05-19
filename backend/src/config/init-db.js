@@ -39,11 +39,10 @@ async function initDatabase() {
       "SELECT COUNT(*) AS cnt FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users'"
     );
 
-    // FORCE_REINIT=true → drop toàn bộ bảng rồi khởi tạo lại
     if (Number(cnt) > 0 && process.env.FORCE_REINIT === 'true') {
+      // FORCE_REINIT=true → drop toàn bộ bảng rồi khởi tạo lại từ đầu
       console.log('⚠️  FORCE_REINIT=true — đang xóa toàn bộ bảng...');
       await connection.query('SET FOREIGN_KEY_CHECKS = 0');
-      // Dùng alias 'tname' để tránh lỗi case (information_schema trả về TABLE_NAME uppercase)
       const [tables] = await connection.query(
         'SELECT TABLE_NAME AS tname FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()'
       );
@@ -53,7 +52,22 @@ async function initDatabase() {
       await connection.query('SET FOREIGN_KEY_CHECKS = 1');
       console.log(`✅ Đã xóa ${tables.length} bảng.`);
     } else if (Number(cnt) > 0) {
-      console.log('✅ Database đã có dữ liệu, bỏ qua khởi tạo.');
+      // Bảng tồn tại → kiểm tra xem có user nào chưa
+      const [[{ userCount }]] = await connection.query('SELECT COUNT(*) AS userCount FROM users');
+      if (Number(userCount) > 0) {
+        console.log('✅ Database đã có dữ liệu, bỏ qua khởi tạo.');
+        return;
+      }
+      // Bảng có nhưng users rỗng → chỉ chạy seed data, không chạy lại schema
+      console.log('⚙️  Bảng tồn tại nhưng chưa có dữ liệu — đang import dữ liệu mẫu...');
+      const dataPath = path.join(__dirname, '../../../database/sample_data.sql');
+      let data = fs.readFileSync(dataPath, 'utf8');
+      data = data.replace(/USE\s+\w+;/gi, '');
+      await connection.query(data);
+      console.log('✅ Dữ liệu mẫu đã được import thành công.');
+      console.log('   Admin  : admin@gmail.com / 123456');
+      console.log('   Customer: nguyenvanbay@gmail.com / 123456');
+      console.log('   Helper  : nguyenthimai@gmail.com / 123456');
       return;
     }
 

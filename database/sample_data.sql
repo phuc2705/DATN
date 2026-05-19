@@ -4,7 +4,7 @@ USE housekeeping_service;
 -- ============================================================
 -- 0. SERVICES (6 dịch vụ cốt lõi)
 -- ============================================================
-INSERT INTO services (service_name, description, base_price, slug, is_active) VALUES
+INSERT IGNORE INTO services (service_name, description, base_price, slug, is_active) VALUES
 ('Dọn dẹp nhà cửa',    'Lau chùi, quét hút bụi, lau sàn, vệ sinh phòng bếp, phòng tắm toàn bộ căn nhà', 50000.00, 'don-dep-nha-cua',    TRUE),
 ('Giặt ủi',            'Giặt máy, phơi đồ, ủi quần áo và gấp gọn theo yêu cầu',                          50000.00, 'giat-ui',            TRUE),
 ('Nấu ăn',             'Nấu các bữa ăn gia đình theo thực đơn thỏa thuận, vệ sinh bếp sau khi nấu',       55000.00, 'nau-an',             TRUE),
