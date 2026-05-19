@@ -21,11 +21,14 @@ const BookingModel = {
       );
       const bookingId = bookingResult.insertId;
 
-      // Tạo bản ghi thanh toán ban đầu (trạng thái unpaid)
-      await connection.query(
-        'INSERT INTO payments (booking_id, amount, payment_method) VALUES (?, ?, ?)',
-        [bookingId, totalPrice, paymentMethod]
-      );
+      // Trigger trg_create_payment_after_booking tự tạo payment với payment_method='cash'
+      // Cập nhật đúng payment_method theo yêu cầu của khách hàng
+      if (paymentMethod && paymentMethod !== 'cash') {
+        await connection.query(
+          'UPDATE payments SET payment_method = ? WHERE booking_id = ?',
+          [paymentMethod, bookingId]
+        );
+      }
 
       // Ghi log trạng thái khởi tạo
       await connection.query(
