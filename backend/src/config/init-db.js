@@ -18,17 +18,28 @@ async function initDatabase() {
       ...(process.env.DB_SSL === 'true' && { ssl: { rejectUnauthorized: false } }),
     });
 
-    // Kiểm tra bảng users đã tồn tại chưa
     const [[{ cnt }]] = await connection.query(
       "SELECT COUNT(*) AS cnt FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users'"
     );
 
-    if (Number(cnt) > 0) {
+    // FORCE_REINIT=true → xóa toàn bộ bảng và khởi tạo lại (dùng khi cần reset Aiven)
+    if (Number(cnt) > 0 && process.env.FORCE_REINIT === 'true') {
+      console.log('⚠️  FORCE_REINIT=true — đang xóa toàn bộ bảng để khởi tạo lại...');
+      await connection.query('SET FOREIGN_KEY_CHECKS = 0');
+      const [tables] = await connection.query(
+        "SELECT table_name FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()"
+      );
+      for (const { table_name } of tables) {
+        await connection.query(`DROP TABLE IF EXISTS \`${table_name}\``);
+      }
+      await connection.query('SET FOREIGN_KEY_CHECKS = 1');
+      console.log('✅ Đã xóa xong tất cả bảng.');
+    } else if (Number(cnt) > 0) {
       console.log('✅ Database đã có dữ liệu, bỏ qua khởi tạo.');
       return;
     }
 
-    console.log('⚙️  Database trống — đang khởi tạo schema và dữ liệu mẫu...');
+    console.log('⚙️  Đang khởi tạo schema và dữ liệu mẫu...');
 
     // Đọc schema.sql, bỏ qua dòng CREATE DATABASE / USE (Aiven đã tạo sẵn DB)
     const schemaPath = path.join(__dirname, '../../../database/schema.sql');

@@ -20,34 +20,34 @@ INSERT INTO users (email, password_hash, full_name, phone, user_type, avatar_url
 ('admin@gmail.com', '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Quản Trị Viên', '0901234567', 'admin', 'https://via.placeholder.com/150', TRUE),
 
 -- Customers (4)
-('nguyen.van.bay@gmail.com', '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Nguyễn Văn Bảy', '0912345678', 'customer', 'https://via.placeholder.com/150', TRUE),
-('tran.thi.toan@gmail.com', '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Trần Thị Toán', '0923456789', 'customer', 'https://via.placeholder.com/150', TRUE),
-('ngo.quang.nguyen@gmail.com', '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Ngô Quang Nguyện', '0934567890', 'customer', 'https://via.placeholder.com/150', TRUE),
-('pham.thi.qgiang@gmail.com', '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Phạm Thị Quỳnh Giang', '0945678901', 'customer', 'https://via.placeholder.com/150', TRUE),
+('nguyenvanbay@gmail.com', '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Nguyễn Văn Bảy', '0912345678', 'customer', 'https://via.placeholder.com/150', TRUE),
+('tranthitoan@gmail.com', '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Trần Thị Toán', '0923456789', 'customer', 'https://via.placeholder.com/150', TRUE),
+('ngoquangnguyen@gmail.com', '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Ngô Quang Nguyện', '0934567890', 'customer', 'https://via.placeholder.com/150', TRUE),
+('phamthiqgiang@gmail.com', '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Phạm Thị Quỳnh Giang', '0945678901', 'customer', 'https://via.placeholder.com/150', TRUE),
 
 -- Helpers (12)
-('nguyen.thi.mai@gmail.com',      '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Nguyễn Thị Mai',       '0956789012', 'helper', '/avatars/helper-1.svg',  TRUE),
-('tran.thi.lan@gmail.com',        '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Trần Thị Lan',         '0967890123', 'helper', '/avatars/helper-2.svg',  TRUE),
-('le.thi.huong@gmail.com',        '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Lê Thị Hương',         '0978901234', 'helper', '/avatars/helper-3.svg',  TRUE),
-('pham.thi.nga@gmail.com',        '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Phạm Thị Nga',         '0989012345', 'helper', '/avatars/helper-4.svg',  TRUE),
-('hoang.thi.ly@gmail.com',        '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Hoàng Thị Ly',         '0990123456', 'helper', '/avatars/helper-5.svg',  TRUE),
-('vu.thi.thanh@gmail.com',        '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Vũ Thị Thanh',         '0901234568', 'helper', '/avatars/helper-6.svg',  TRUE),
-('do.thi.hoa@gmail.com',          '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Đỗ Thị Hoa',           '0912345679', 'helper', '/avatars/helper-7.svg',  TRUE),
-('bui.thi.linh@gmail.com',        '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Bùi Thị Linh',         '0923456780', 'helper', '/avatars/helper-8.svg',  TRUE),
-('duong.thi.phuong@gmail.com',    '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Dương Thị Phương',     '0934567891', 'helper', '/avatars/helper-9.svg',  TRUE),
-('ngo.thi.thao@gmail.com',        '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Ngô Thị Thảo',         '0945678902', 'helper', '/avatars/helper-10.svg', TRUE),
-('dang.thi.tuyet@gmail.com',      '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Đặng Thị Tuyết',       '0956789013', 'helper', '/avatars/helper-11.svg', TRUE),
-('dinh.thu.ha@gmail.com',         '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Đinh Thị Thu Hà',      '0967890124', 'helper', '/avatars/helper-12.svg', TRUE),
+('nguyenthimai@gmail.com',      '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Nguyễn Thị Mai',       '0956789012', 'helper', '/avatars/helper-1.svg',  TRUE),
+('tranthilan@gmail.com',        '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Trần Thị Lan',         '0967890123', 'helper', '/avatars/helper-2.svg',  TRUE),
+('lethihuong@gmail.com',        '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Lê Thị Hương',         '0978901234', 'helper', '/avatars/helper-3.svg',  TRUE),
+('phamthinga@gmail.com',        '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Phạm Thị Nga',         '0989012345', 'helper', '/avatars/helper-4.svg',  TRUE),
+('hoangthily@gmail.com',        '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Hoàng Thị Ly',         '0990123456', 'helper', '/avatars/helper-5.svg',  TRUE),
+('vuthithanh@gmail.com',        '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Vũ Thị Thanh',         '0901234568', 'helper', '/avatars/helper-6.svg',  TRUE),
+('dothihoa@gmail.com',          '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Đỗ Thị Hoa',           '0912345679', 'helper', '/avatars/helper-7.svg',  TRUE),
+('buithilinh@gmail.com',        '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Bùi Thị Linh',         '0923456780', 'helper', '/avatars/helper-8.svg',  TRUE),
+('duongthiphuong@gmail.com',    '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Dương Thị Phương',     '0934567891', 'helper', '/avatars/helper-9.svg',  TRUE),
+('ngothithao@gmail.com',        '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Ngô Thị Thảo',         '0945678902', 'helper', '/avatars/helper-10.svg', TRUE),
+('dangthituyet@gmail.com',      '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Đặng Thị Tuyết',       '0956789013', 'helper', '/avatars/helper-11.svg', TRUE),
+('dinhthuha@gmail.com',         '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Đinh Thị Thu Hà',      '0967890124', 'helper', '/avatars/helper-12.svg', TRUE),
 
 -- Helpers mới (user_id 18–25)
-('ly.thi.bich.ngoc@gmail.com',    '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Lý Thị Bích Ngọc',     '0971234501', 'helper', '/avatars/helper-13.svg', TRUE),
-('trinh.thi.minh.chau@gmail.com', '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Trịnh Thị Minh Châu',  '0982345602', 'helper', '/avatars/helper-14.svg', TRUE),
-('cao.thi.thu.thuy@gmail.com',    '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Cao Thị Thu Thủy',     '0993456703', 'helper', '/avatars/helper-15.svg', TRUE),
-('luu.thi.hong.nhung@gmail.com',  '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Lưu Thị Hồng Nhung',   '0904567804', 'helper', '/avatars/helper-16.svg', TRUE),
-('phung.thi.dieu.linh@gmail.com', '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Phùng Thị Diệu Linh',  '0915678905', 'helper', '/avatars/helper-17.svg', TRUE),
-('to.thi.bao.tran@gmail.com',     '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Tô Thị Bảo Trân',      '0926789006', 'helper', '/avatars/helper-18.svg', TRUE),
-('quach.thi.my.duyen@gmail.com',  '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Quách Thị Mỹ Duyên',   '0937890107', 'helper', '/avatars/helper-19.svg', TRUE),
-('mac.thi.hai.yen@gmail.com',     '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Mạc Thị Hải Yến',      '0948901208', 'helper', '/avatars/helper-20.svg', TRUE);
+('lythibichngoc@gmail.com',    '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Lý Thị Bích Ngọc',     '0971234501', 'helper', '/avatars/helper-13.svg', TRUE),
+('trinhthiminhchau@gmail.com', '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Trịnh Thị Minh Châu',  '0982345602', 'helper', '/avatars/helper-14.svg', TRUE),
+('caothithuthuy@gmail.com',    '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Cao Thị Thu Thủy',     '0993456703', 'helper', '/avatars/helper-15.svg', TRUE),
+('luuthihongnhung@gmail.com',  '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Lưu Thị Hồng Nhung',   '0904567804', 'helper', '/avatars/helper-16.svg', TRUE),
+('phungthidieulinh@gmail.com', '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Phùng Thị Diệu Linh',  '0915678905', 'helper', '/avatars/helper-17.svg', TRUE),
+('tothibaotran@gmail.com',     '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Tô Thị Bảo Trân',      '0926789006', 'helper', '/avatars/helper-18.svg', TRUE),
+('quachthimyduyen@gmail.com',  '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Quách Thị Mỹ Duyên',   '0937890107', 'helper', '/avatars/helper-19.svg', TRUE),
+('macthihaiyen@gmail.com',     '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Mạc Thị Hải Yến',      '0948901208', 'helper', '/avatars/helper-20.svg', TRUE);
 
 -- 2. CUSTOMERS
 
