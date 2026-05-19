@@ -14,10 +14,10 @@ INSERT INTO services (service_name, description, base_price, slug, is_active) VA
 
 -- ============================================================
 -- 1. USERS (25 users: 1 admin, 4 customers, 20 helpers)
--- Mật khẩu mẫu: "password123456" -> hash bcrypt
+-- Mật khẩu mẫu: "123456" -> hash bcrypt
 INSERT INTO users (email, password_hash, full_name, phone, user_type, avatar_url, is_active) VALUES
 -- Admin
-('admin@gmail.vn', '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Quản Trị Viên', '0901234567', 'admin', 'https://via.placeholder.com/150', TRUE),
+('admin@gmail.com', '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Quản Trị Viên', '0901234567', 'admin', 'https://via.placeholder.com/150', TRUE),
 
 -- Customers (4)
 ('nguyen.van.bay@gmail.com', '\$2a\$10\$vGpmi5z7dz2CpaTbHxtx/.QeC8zaz8Ok/PJ.fhagcmtpejuyqtupq', 'Nguyễn Văn Bảy', '0912345678', 'customer', 'https://via.placeholder.com/150', TRUE),

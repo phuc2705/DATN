@@ -95,8 +95,10 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="label">Email</label>
+                <label htmlFor="login-email" className="label">Email</label>
                 <input
+                  id="login-email"
+                  name="email"
                   type="email"
                   required
                   value={form.email}
@@ -108,9 +110,11 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label className="label">Mật khẩu</label>
+                <label htmlFor="login-password" className="label">Mật khẩu</label>
                 <div className="relative">
                   <input
+                    id="login-password"
+                    name="password"
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={form.password}

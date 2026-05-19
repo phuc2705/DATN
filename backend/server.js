@@ -7,6 +7,7 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
 const { testConnection, pool } = require('./src/config/database');
+const { initDatabase } = require('./src/config/init-db');
 const { errorHandler, notFound } = require('./src/middleware/errorHandler');
 const { initSocket } = require('./src/socket');
 
@@ -94,6 +95,7 @@ const cleanupExpiredAccounts = async () => {
 // ─── Khởi động Server ─────────────────────────────────────────────────────────
 const startServer = async () => {
   await testConnection(); // Kiểm tra DB trước khi mở cổng
+  await initDatabase();   // Tự động tạo schema + dữ liệu mẫu nếu DB còn trống
   httpServer.listen(PORT, () => {
     console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
     console.log(`📋 Môi trường: ${process.env.NODE_ENV}`);
