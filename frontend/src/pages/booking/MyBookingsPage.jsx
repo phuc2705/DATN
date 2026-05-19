@@ -3,14 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { getMyBookingsApi } from '../../api/booking.api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { formatPrice, formatDate, BOOKING_STATUS_LABEL } from '../../utils/format';
+import { ClipboardList, Calendar, MapPin, User, AlertTriangle, Plus } from 'lucide-react';
 
 const TABS = [
-  { key: 'all',         label: 'Tất cả',      count: null },
-  { key: 'pending',     label: 'Chờ xác nhận', count: null },
-  { key: 'confirmed',   label: 'Đã xác nhận',  count: null },
-  { key: 'in_progress', label: 'Đang làm',     count: null },
-  { key: 'completed',   label: 'Hoàn thành',   count: null },
-  { key: 'cancelled',   label: 'Đã hủy',       count: null },
+  { key: 'all',         label: 'Tất cả' },
+  { key: 'pending',     label: 'Chờ xác nhận' },
+  { key: 'confirmed',   label: 'Đã xác nhận' },
+  { key: 'in_progress', label: 'Đang làm' },
+  { key: 'completed',   label: 'Hoàn thành' },
+  { key: 'cancelled',   label: 'Đã hủy' },
 ];
 
 const STATUS_COLORS = {
@@ -34,12 +35,10 @@ export default function MyBookingsPage() {
   }, []);
 
   const filtered = tab === 'all' ? bookings : bookings.filter((b) => b.status === tab);
-
   const countByStatus = (key) => key === 'all' ? bookings.length : bookings.filter(b => b.status === key).length;
 
   return (
     <div className="animate-fadeIn">
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Lịch đặt của tôi</h1>
@@ -47,7 +46,7 @@ export default function MyBookingsPage() {
         </div>
         <button onClick={() => navigate('/')}
           className="btn-primary px-5 py-2.5 text-sm flex items-center gap-2">
-          <span>+</span> Đặt lịch mới
+          <Plus className="w-4 h-4" /> Đặt lịch mới
         </button>
       </div>
 
@@ -80,13 +79,14 @@ export default function MyBookingsPage() {
         <div className="flex justify-center py-16"><LoadingSpinner /></div>
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm">
-          <div className="text-5xl mb-4">📋</div>
+          <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <ClipboardList className="w-8 h-8 text-gray-400" />
+          </div>
           <p className="text-gray-700 font-semibold mb-1">Chưa có đơn hàng nào</p>
           <p className="text-gray-400 text-sm mb-6">
-            {tab === 'all' ? 'Bạn chưa đặt lịch giúp việc nào.' : `Không có đơn hàng ở trạng thái này.`}
+            {tab === 'all' ? 'Bạn chưa đặt lịch giúp việc nào.' : 'Không có đơn hàng ở trạng thái này.'}
           </p>
-          <button onClick={() => navigate('/')}
-            className="btn-primary px-6 py-2.5 text-sm inline-block">
+          <button onClick={() => navigate('/')} className="btn-primary px-6 py-2.5 text-sm inline-block">
             Đặt lịch ngay
           </button>
         </div>
@@ -102,7 +102,6 @@ export default function MyBookingsPage() {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    {/* Service + ID */}
                     <div className="flex items-center gap-2 mb-1.5">
                       <p className="font-semibold text-gray-900 truncate">
                         {b.serviceName || `Đơn #${b.bookingId}`}
@@ -110,21 +109,20 @@ export default function MyBookingsPage() {
                       <span className="text-xs text-gray-400 flex-shrink-0">#{b.bookingId}</span>
                     </div>
 
-                    {/* Date & time */}
                     <p className="text-sm text-gray-500 flex items-center gap-1.5">
-                      <span>📅</span>
+                      <Calendar className="w-3.5 h-3.5 shrink-0" />
                       {formatDate(b.bookingDate)} · {b.startTime} – {b.endTime}
                     </p>
 
-                    {/* Address */}
                     <p className="text-xs text-gray-400 mt-1 truncate flex items-center gap-1">
-                      <span>📍</span> {b.address}
+                      <MapPin className="w-3 h-3 shrink-0" /> {b.address}
                     </p>
 
-                    {/* Helper */}
                     {b.helperName && (
                       <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1.5">
-                        <span className="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center text-xs">👩</span>
+                        <span className="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center">
+                          <User className="w-3 h-3 text-orange-600" />
+                        </span>
                         {b.helperName}
                       </p>
                     )}
@@ -134,7 +132,9 @@ export default function MyBookingsPage() {
                     <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${sl.color}`}>{sl.text}</span>
                     <p className="text-orange-500 font-bold mt-2">{formatPrice(b.totalPrice)}</p>
                     {b.paymentStatus === 'unpaid' && b.status === 'completed' && (
-                      <p className="text-xs text-red-500 mt-0.5 font-medium">⚠ Chưa TT</p>
+                      <p className="text-xs text-red-500 mt-0.5 font-medium flex items-center justify-end gap-1">
+                        <AlertTriangle className="w-3 h-3" /> Chưa TT
+                      </p>
                     )}
                   </div>
                 </div>

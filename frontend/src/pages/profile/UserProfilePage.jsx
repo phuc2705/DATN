@@ -3,10 +3,16 @@ import { useAuth } from '../../hooks/useAuth';
 import { updateProfileApi, changePasswordApi, toggleAvailabilityApi } from '../../api/user.api';
 import { getMeApi } from '../../api/auth.api';
 import toast from 'react-hot-toast';
+import {
+  User, Lock, ShoppingBag, Sparkles, Settings,
+  ClipboardList, MapPin, CreditCard, Pencil,
+  Wallet, Building2, Save, KeyRound,
+  Eye, EyeOff, Lightbulb, Loader2,
+} from 'lucide-react';
 
 const TABS = [
-  { key: 'info',     label: 'Thông tin cá nhân', icon: '👤' },
-  { key: 'password', label: 'Đổi mật khẩu',       icon: '🔒' },
+  { key: 'info',     label: 'Thông tin cá nhân', Icon: User },
+  { key: 'password', label: 'Đổi mật khẩu',       Icon: Lock },
 ];
 
 function InputField({ label, name, value, onChange, type = 'text', placeholder, required }) {
@@ -98,6 +104,20 @@ export default function UserProfilePage() {
 
   const initials = user.fullName?.split(' ').map(w => w[0]).slice(-2).join('').toUpperCase() || '?';
 
+  const userTypeMeta = {
+    customer: { Icon: ShoppingBag, label: 'Khách hàng',       color: 'bg-blue-100 text-blue-700'   },
+    helper:   { Icon: Sparkles,    label: 'Người giúp việc',   color: 'bg-orange-100 text-orange-700' },
+    admin:    { Icon: Settings,    label: 'Admin',             color: 'bg-gray-100 text-gray-700'   },
+  };
+  const typeMeta = userTypeMeta[user.userType] || userTypeMeta.customer;
+  const TypeIcon = typeMeta.Icon;
+
+  const PAYMENT_OPTIONS = [
+    { key: 'cash',          Icon: Wallet,    label: 'Tiền mặt'    },
+    { key: 'bank_transfer', Icon: Building2, label: 'Chuyển khoản' },
+    { key: 'vnpay',         Icon: CreditCard, label: 'VNPay'      },
+  ];
+
   return (
     <div className="max-w-2xl mx-auto animate-fadeIn">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Hồ sơ cá nhân</h1>
@@ -118,8 +138,8 @@ export default function UserProfilePage() {
             <h2 className="text-xl font-bold text-gray-900">{user.fullName}</h2>
             <p className="text-sm text-gray-500">{user.email}</p>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
-              <span className="text-xs px-2.5 py-1 rounded-full bg-orange-100 text-orange-700 font-medium capitalize">
-                {user.userType === 'customer' ? '🛍️ Khách hàng' : user.userType === 'helper' ? '🧹 Người giúp việc' : '⚙️ Admin'}
+              <span className={`text-xs px-2.5 py-1 rounded-full font-medium flex items-center gap-1 ${typeMeta.color}`}>
+                <TypeIcon className="w-3 h-3" /> {typeMeta.label}
               </span>
               {user.userType === 'helper' && (
                 <button onClick={handleToggleAvailability}
@@ -139,16 +159,19 @@ export default function UserProfilePage() {
 
       {/* Tab navigation */}
       <div className="flex gap-2 mb-6 bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100">
-        {TABS.map((t) => (
-          <button key={t.key} onClick={() => setTab(t.key)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all ${
-              tab === t.key ? 'bg-orange-500 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            <span>{t.icon}</span>
-            <span className="hidden sm:block">{t.label}</span>
-          </button>
-        ))}
+        {TABS.map((t) => {
+          const TabIcon = t.Icon;
+          return (
+            <button key={t.key} onClick={() => setTab(t.key)}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                tab === t.key ? 'bg-orange-500 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <TabIcon className="w-4 h-4" />
+              <span className="hidden sm:block">{t.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Tab: Thông tin */}
@@ -156,7 +179,9 @@ export default function UserProfilePage() {
         <form onSubmit={handleSaveInfo} className="space-y-5 animate-fadeIn">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <span className="w-7 h-7 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center text-sm">📋</span>
+              <span className="w-7 h-7 bg-orange-100 rounded-lg flex items-center justify-center">
+                <ClipboardList className="w-4 h-4 text-orange-600" />
+              </span>
               Thông tin cơ bản
             </h3>
             <div className="grid md:grid-cols-2 gap-4">
@@ -167,7 +192,9 @@ export default function UserProfilePage() {
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <span className="w-7 h-7 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-sm">📍</span>
+              <span className="w-7 h-7 bg-blue-100 rounded-lg flex items-center justify-center">
+                <MapPin className="w-4 h-4 text-blue-600" />
+              </span>
               Địa chỉ
             </h3>
             <div className="space-y-4">
@@ -182,21 +209,23 @@ export default function UserProfilePage() {
           {user.userType === 'customer' && (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <span className="w-7 h-7 bg-green-100 text-green-600 rounded-lg flex items-center justify-center text-sm">💳</span>
+                <span className="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center">
+                  <CreditCard className="w-4 h-4 text-green-600" />
+                </span>
                 Thanh toán ưa thích
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {[
-                  { key: 'cash', icon: '💵', label: 'Tiền mặt' },
-                  { key: 'bank_transfer', icon: '🏧', label: 'Chuyển khoản' },
-                  { key: 'vnpay', icon: '🏦', label: 'VNPay' },
-                ].map(({ key, icon, label }) => (
+                {PAYMENT_OPTIONS.map(({ key, Icon: PayIcon, label }) => (
                   <button key={key} type="button" onClick={() => setForm(p => ({ ...p, preferredPayment: key }))}
-                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
                       form.preferredPayment === key ? 'border-orange-500 bg-orange-50' : 'border-gray-100 hover:border-gray-200'
                     }`}
                   >
-                    <span className="text-xl">{icon}</span>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      form.preferredPayment === key ? 'bg-orange-100' : 'bg-gray-100'
+                    }`}>
+                      <PayIcon className={`w-5 h-5 ${form.preferredPayment === key ? 'text-orange-600' : 'text-gray-500'}`} />
+                    </div>
                     <span className={`text-xs font-medium ${form.preferredPayment === key ? 'text-orange-700' : 'text-gray-600'}`}>{label}</span>
                   </button>
                 ))}
@@ -207,7 +236,9 @@ export default function UserProfilePage() {
           {user.userType === 'helper' && (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <span className="w-7 h-7 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-sm">✏️</span>
+                <span className="w-7 h-7 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <Pencil className="w-4 h-4 text-purple-600" />
+                </span>
                 Giới thiệu bản thân
               </h3>
               <div>
@@ -222,16 +253,18 @@ export default function UserProfilePage() {
           )}
 
           <button type="submit" disabled={saving}
-            className="w-full btn-primary py-3.5 text-base disabled:opacity-50">
+            className="w-full btn-primary py-3.5 text-base disabled:opacity-50 flex items-center justify-center gap-2">
             {saving ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                </svg>
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
                 Đang lưu...
-              </span>
-            ) : '💾 Lưu thông tin'}
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Lưu thông tin
+              </>
+            )}
           </button>
         </form>
       )}
@@ -241,7 +274,9 @@ export default function UserProfilePage() {
         <form onSubmit={handleChangePassword} className="animate-fadeIn">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
             <h3 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
-              <span className="w-7 h-7 bg-red-100 text-red-600 rounded-lg flex items-center justify-center text-sm">🔒</span>
+              <span className="w-7 h-7 bg-red-100 rounded-lg flex items-center justify-center">
+                <Lock className="w-4 h-4 text-red-600" />
+              </span>
               Thay đổi mật khẩu
             </h3>
 
@@ -266,19 +301,30 @@ export default function UserProfilePage() {
                     onClick={() => setShowPw(p => ({ ...p, [key]: !p[key] }))}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
                   >
-                    {showPw[key] ? '🙈' : '👁️'}
+                    {showPw[key] ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
             ))}
 
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-600">
-              💡 Mật khẩu phải có ít nhất 6 ký tự. Nên dùng kết hợp chữ và số.
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-600 flex items-start gap-2">
+              <Lightbulb className="w-4 h-4 shrink-0 mt-0.5" />
+              Mật khẩu phải có ít nhất 6 ký tự. Nên dùng kết hợp chữ và số.
             </div>
 
             <button type="submit" disabled={saving}
-              className="w-full bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-semibold py-3.5 rounded-xl transition-all shadow-sm hover:shadow-md active:scale-95 disabled:opacity-50">
-              {saving ? 'Đang đổi...' : '🔑 Đổi mật khẩu'}
+              className="w-full bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-semibold py-3.5 rounded-xl transition-all shadow-sm hover:shadow-md active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2">
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Đang đổi...
+                </>
+              ) : (
+                <>
+                  <KeyRound className="w-4 h-4" />
+                  Đổi mật khẩu
+                </>
+              )}
             </button>
           </div>
         </form>
