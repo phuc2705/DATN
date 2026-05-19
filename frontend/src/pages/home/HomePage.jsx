@@ -3,47 +3,52 @@ import { useNavigate, Link } from 'react-router-dom';
 import { getAllServicesApi } from '../../api/service.api';
 import { formatPrice } from '../../utils/format';
 import { useAuth } from '../../hooks/useAuth';
+import {
+  Sparkles, Sun, Leaf, Shirt, ChefHat, Star, Droplets,
+  Users, Zap, ShieldCheck, CreditCard, MapPin,
+  Search, Calendar, CheckCircle, Check,
+  Home, ArrowRight,
+} from 'lucide-react';
 
-// Icon cho từng dịch vụ
 const SERVICE_ICONS = [
-  { bg: 'from-orange-400 to-orange-600', emoji: '🧹', light: 'bg-orange-50' },
-  { bg: 'from-blue-400 to-blue-600',   emoji: '🪟', light: 'bg-blue-50'   },
-  { bg: 'from-green-400 to-green-600', emoji: '🌿', light: 'bg-green-50'  },
-  { bg: 'from-purple-400 to-purple-600', emoji: '👕', light: 'bg-purple-50'},
-  { bg: 'from-pink-400 to-pink-600',   emoji: '🍳', light: 'bg-pink-50'   },
-  { bg: 'from-yellow-400 to-yellow-600', emoji: '✨', light: 'bg-yellow-50'},
-  { bg: 'from-teal-400 to-teal-600',   emoji: '🚿', light: 'bg-teal-50'   },
-  { bg: 'from-red-400 to-red-600',     emoji: '🛁', light: 'bg-red-50'    },
+  { bg: 'from-orange-400 to-orange-600', Icon: Sparkles },
+  { bg: 'from-blue-400 to-blue-600',    Icon: Sun      },
+  { bg: 'from-green-400 to-green-600',  Icon: Leaf     },
+  { bg: 'from-purple-400 to-purple-600',Icon: Shirt    },
+  { bg: 'from-pink-400 to-pink-600',    Icon: ChefHat  },
+  { bg: 'from-yellow-400 to-yellow-600',Icon: Star     },
+  { bg: 'from-teal-400 to-teal-600',    Icon: Droplets },
+  { bg: 'from-red-400 to-red-600',      Icon: Droplets },
 ];
 
 const STATS = [
-  { value: '50.000+', label: 'Khách hàng tin dùng', icon: '👥' },
-  { value: '98%',     label: 'Tỷ lệ hài lòng',      icon: '⭐' },
-  { value: '500+',    label: 'Người giúp việc',      icon: '🧹' },
-  { value: '3 phút',  label: 'Đặt lịch nhanh chóng', icon: '⚡' },
+  { value: '50.000+', label: 'Khách hàng tin dùng', Icon: Users,    color: 'text-blue-500',   bg: 'bg-blue-50 group-hover:bg-blue-500' },
+  { value: '98%',     label: 'Tỷ lệ hài lòng',      Icon: Star,     color: 'text-yellow-500', bg: 'bg-yellow-50 group-hover:bg-yellow-500' },
+  { value: '500+',    label: 'Người giúp việc',      Icon: Sparkles, color: 'text-orange-500', bg: 'bg-orange-50 group-hover:bg-orange-500' },
+  { value: '3 phút',  label: 'Đặt lịch nhanh chóng',Icon: Zap,      color: 'text-green-500',  bg: 'bg-green-50 group-hover:bg-green-500' },
 ];
 
 const FEATURES = [
   {
-    icon: '🛡️',
+    Icon: ShieldCheck, iconBg: 'bg-green-100', iconColor: 'text-green-600',
     title: 'Đã xác minh danh tính',
     desc: 'Mọi người giúp việc đều được kiểm tra CCCD và lý lịch trước khi hoạt động trên nền tảng.',
     color: 'from-green-400 to-teal-500',
   },
   {
-    icon: '⭐',
+    Icon: Star, iconBg: 'bg-yellow-100', iconColor: 'text-yellow-600',
     title: 'Đánh giá minh bạch',
     desc: 'Hệ thống đánh giá 2 chiều giúp bạn chọn được người phù hợp nhất với nhu cầu.',
     color: 'from-yellow-400 to-orange-500',
   },
   {
-    icon: '💳',
+    Icon: CreditCard, iconBg: 'bg-blue-100', iconColor: 'text-blue-600',
     title: 'Giá cả rõ ràng',
     desc: 'Giá hiển thị đầy đủ trước khi đặt, không phát sinh phí ẩn. Thanh toán linh hoạt.',
     color: 'from-blue-400 to-indigo-500',
   },
   {
-    icon: '📍',
+    Icon: MapPin, iconBg: 'bg-pink-100', iconColor: 'text-pink-600',
     title: 'Check-in/Check-out GPS',
     desc: 'Theo dõi thời gian làm việc thực tế, đảm bảo quyền lợi và minh bạch cho cả hai bên.',
     color: 'from-pink-400 to-rose-500',
@@ -51,35 +56,13 @@ const FEATURES = [
 ];
 
 const TESTIMONIALS = [
-  {
-    name: 'Nguyễn Thị Lan',
-    location: 'Hà Nội',
-    avatar: 'L',
-    rating: 5,
-    text: 'Dịch vụ rất tốt! Chị giúp việc đến đúng giờ, làm việc tỉ mỉ. Tôi đặt lịch định kỳ hàng tuần luôn rồi.',
-    service: 'Dọn dẹp nhà',
-  },
-  {
-    name: 'Trần Văn Minh',
-    location: 'Hà Nội',
-    avatar: 'M',
-    rating: 5,
-    text: 'Ứng dụng dễ dùng, đặt lịch chỉ mất 2 phút. Người giúp việc được xác minh nên rất yên tâm.',
-    service: 'Nấu ăn theo giờ',
-  },
-  {
-    name: 'Phạm Thị Hoa',
-    location: 'Hà Nội',
-    avatar: 'H',
-    rating: 5,
-    text: 'Lần đầu dùng dịch vụ đã thích ngay. Giá cả hợp lý, nhân viên thân thiện. Sẽ tiếp tục ủng hộ!',
-    service: 'Giặt ủi quần áo',
-  },
+  { name: 'Nguyễn Thị Lan', location: 'Hà Nội', avatar: 'L', rating: 5, text: 'Dịch vụ rất tốt! Chị giúp việc đến đúng giờ, làm việc tỉ mỉ. Tôi đặt lịch định kỳ hàng tuần luôn rồi.', service: 'Dọn dẹp nhà' },
+  { name: 'Trần Văn Minh',  location: 'Hà Nội', avatar: 'M', rating: 5, text: 'Ứng dụng dễ dùng, đặt lịch chỉ mất 2 phút. Người giúp việc được xác minh nên rất yên tâm.', service: 'Nấu ăn theo giờ' },
+  { name: 'Phạm Thị Hoa',   location: 'Hà Nội', avatar: 'H', rating: 5, text: 'Lần đầu dùng dịch vụ đã thích ngay. Giá cả hợp lý, nhân viên thân thiện. Sẽ tiếp tục ủng hộ!', service: 'Giặt ủi quần áo' },
 ];
 
 const CITIES = ['Hà Nội'];
 
-// Hook đếm số lên animation
 function useCountUp(target, duration = 1500, shouldStart = false) {
   const [count, setCount] = useState(0);
   useEffect(() => {
@@ -98,11 +81,13 @@ function useCountUp(target, duration = 1500, shouldStart = false) {
   return count || target;
 }
 
-function StatItem({ value, label, icon, shouldStart }) {
+function StatItem({ value, label, Icon, color, bg, shouldStart }) {
   const displayed = useCountUp(value, 1200, shouldStart);
   return (
     <div className="text-center group">
-      <div className="text-3xl mb-1">{icon}</div>
+      <div className={`w-12 h-12 ${bg} transition-all rounded-2xl flex items-center justify-center mx-auto mb-3`}>
+        <Icon className={`w-6 h-6 ${color} group-hover:text-white transition-colors`} />
+      </div>
       <div className="text-2xl md:text-3xl font-extrabold text-gray-900 group-hover:text-orange-500 transition-colors">
         {displayed}
       </div>
@@ -127,7 +112,6 @@ export default function HomePage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Kích hoạt đếm số khi stats section hiện ra viewport
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) setStatsVisible(true); },
@@ -146,20 +130,17 @@ export default function HomePage() {
 
       {/* ─── HERO ─────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 text-white mb-10 shadow-2xl">
-        {/* Background decoration */}
         <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/10 rounded-full blur-sm" />
         <div className="absolute -bottom-32 -left-16 w-96 h-96 bg-white/5 rounded-full" />
         <div className="absolute top-10 right-40 w-20 h-20 bg-white/10 rounded-full" />
         <div className="absolute bottom-10 right-10 w-12 h-12 bg-white/15 rounded-full" />
 
         <div className="relative px-6 py-14 md:py-20 max-w-4xl mx-auto">
-          {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-full text-sm font-medium mb-6 border border-white/20">
             <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
             Đang phục vụ tại Hà Nội
           </div>
 
-          {/* Headline */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 leading-tight">
             Giúp việc gia đình<br />
             <span className="text-orange-200">theo giờ, tiện lợi</span>
@@ -173,17 +154,14 @@ export default function HomePage() {
           <div className="bg-white rounded-2xl p-3 shadow-2xl max-w-2xl">
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-xl">
-                <span className="text-gray-400 text-lg">📍</span>
-                <select
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  className="bg-transparent text-gray-700 text-sm font-medium flex-1 focus:outline-none"
-                >
+                <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
+                <select value={city} onChange={(e) => setCity(e.target.value)}
+                  className="bg-transparent text-gray-700 text-sm font-medium flex-1 focus:outline-none">
                   {CITIES.map((c) => <option key={c}>{c}</option>)}
                 </select>
               </div>
               <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-xl">
-                <span className="text-gray-400 text-lg">🧹</span>
+                <Sparkles className="w-4 h-4 text-gray-400 shrink-0" />
                 <select className="bg-transparent text-gray-700 text-sm font-medium flex-1 focus:outline-none">
                   <option value="">Chọn dịch vụ...</option>
                   {services.map((s) => (
@@ -202,10 +180,16 @@ export default function HomePage() {
 
           {/* Trust badges */}
           <div className="flex flex-wrap gap-4 mt-6 text-sm text-orange-100">
-            <span className="flex items-center gap-1.5"><span>✅</span> Xác minh CCCD</span>
-            <span className="flex items-center gap-1.5"><span>💰</span> Giá minh bạch</span>
-            <span className="flex items-center gap-1.5"><span>⚡</span> Đặt lịch 3 phút</span>
-            <span className="flex items-center gap-1.5"><span>🔒</span> Bảo hiểm công việc</span>
+            {[
+              { Icon: CheckCircle, text: 'Xác minh CCCD' },
+              { Icon: CreditCard,  text: 'Giá minh bạch' },
+              { Icon: Zap,         text: 'Đặt lịch 3 phút' },
+              { Icon: ShieldCheck, text: 'Bảo hiểm công việc' },
+            ].map(({ Icon, text }) => (
+              <span key={text} className="flex items-center gap-1.5">
+                <Icon className="w-4 h-4" /> {text}
+              </span>
+            ))}
           </div>
         </div>
       </section>
@@ -242,15 +226,15 @@ export default function HomePage() {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
             {services.map((svc, idx) => {
-              const { bg, emoji, light } = SERVICE_ICONS[idx % SERVICE_ICONS.length];
+              const { bg, Icon } = SERVICE_ICONS[idx % SERVICE_ICONS.length];
               return (
                 <button
                   key={svc.serviceId}
                   onClick={() => handleServiceClick(svc.serviceId)}
                   className="group bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-lg hover:border-orange-200 transition-all duration-300 text-left active:scale-[0.98]"
                 >
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${bg} flex items-center justify-center text-2xl mb-4 shadow-sm group-hover:scale-110 transition-transform duration-300`}>
-                    {emoji}
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${bg} flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform duration-300`}>
+                    <Icon className="w-7 h-7 text-white" />
                   </div>
                   <h3 className="font-semibold text-gray-900 text-base mb-1 group-hover:text-orange-600 transition-colors">{svc.serviceName}</h3>
                   {svc.description && (
@@ -261,9 +245,7 @@ export default function HomePage() {
                       Từ {formatPrice(svc.basePrice)}/giờ
                     </span>
                     <span className="w-7 h-7 rounded-full bg-orange-50 flex items-center justify-center text-orange-400 group-hover:bg-orange-500 group-hover:text-white transition-all duration-200">
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                      </svg>
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </span>
                   </div>
                 </button>
@@ -281,18 +263,17 @@ export default function HomePage() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-6 relative">
-          {/* Connecting line on desktop */}
           <div className="hidden md:block absolute top-14 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-orange-200 via-orange-300 to-orange-200" />
 
           {[
-            { step: '01', icon: '🔍', title: 'Chọn dịch vụ', desc: 'Chọn loại dịch vụ và xem danh sách người giúp việc được xếp hạng phù hợp.', color: 'bg-orange-500' },
-            { step: '02', icon: '📅', title: 'Đặt lịch hẹn',  desc: 'Chọn ngày giờ, địa chỉ, phương thức thanh toán và xác nhận trong vài giây.', color: 'bg-orange-500' },
-            { step: '03', icon: '✅', title: 'Nghỉ ngơi thôi!', desc: 'Người giúp việc đến đúng giờ. Đánh giá sau khi hoàn thành để giúp cộng đồng.', color: 'bg-orange-500' },
-          ].map(({ step, icon, title, desc, color }) => (
+            { step: '01', Icon: Search,       title: 'Chọn dịch vụ', desc: 'Chọn loại dịch vụ và xem danh sách người giúp việc được xếp hạng phù hợp.' },
+            { step: '02', Icon: Calendar,     title: 'Đặt lịch hẹn',  desc: 'Chọn ngày giờ, địa chỉ, phương thức thanh toán và xác nhận trong vài giây.' },
+            { step: '03', Icon: CheckCircle,  title: 'Nghỉ ngơi thôi!', desc: 'Người giúp việc đến đúng giờ. Đánh giá sau khi hoàn thành để giúp cộng đồng.' },
+          ].map(({ step, Icon, title, desc }) => (
             <div key={step} className="relative bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center hover:shadow-md transition-shadow">
               <div className="absolute top-4 right-5 text-6xl font-black text-gray-50 select-none leading-none">{step}</div>
-              <div className={`w-16 h-16 ${color} rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 shadow-md`}>
-                {icon}
+              <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
+                <Icon className="w-8 h-8 text-white" />
               </div>
               <h3 className="font-bold text-gray-900 mb-2 text-lg">{title}</h3>
               <p className="text-gray-500 text-sm leading-relaxed">{desc}</p>
@@ -308,10 +289,10 @@ export default function HomePage() {
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Tại sao chọn ConnectClean?</h2>
         </div>
         <div className="grid md:grid-cols-2 gap-5">
-          {FEATURES.map(({ icon, title, desc, color }) => (
+          {FEATURES.map(({ Icon, iconBg, iconColor, title, desc, color }) => (
             <div key={title} className="group flex gap-4 bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-orange-100 transition-all duration-200">
-              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center text-2xl flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform`}>
-                {icon}
+              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform`}>
+                <Icon className="w-7 h-7 text-white" />
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 mb-1.5 text-base">{title}</h3>
@@ -331,17 +312,12 @@ export default function HomePage() {
         <div className="grid md:grid-cols-3 gap-5">
           {TESTIMONIALS.map((t) => (
             <div key={t.name} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-              {/* Stars */}
               <div className="flex gap-0.5 mb-3">
                 {[...Array(t.rating)].map((_, i) => (
-                  <svg key={i} className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
+                  <Star key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                 ))}
               </div>
-              {/* Quote */}
               <p className="text-gray-600 text-sm leading-relaxed mb-4 italic">"{t.text}"</p>
-              {/* User */}
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                   {t.avatar}
@@ -369,16 +345,16 @@ export default function HomePage() {
               Đã có hơn <strong className="text-orange-400">500 người</strong> đang làm việc cùng chúng tôi.
             </p>
             <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-300">
-              <span className="flex items-center gap-1.5">✅ Thu nhập ổn định</span>
-              <span className="flex items-center gap-1.5">✅ Lịch linh hoạt</span>
-              <span className="flex items-center gap-1.5">✅ Được đào tạo</span>
+              {['Thu nhập ổn định', 'Lịch linh hoạt', 'Được đào tạo'].map((t) => (
+                <span key={t} className="flex items-center gap-1.5">
+                  <Check className="w-4 h-4 text-green-400" /> {t}
+                </span>
+              ))}
             </div>
           </div>
           <div className="flex-shrink-0">
-            <Link
-              to="/register/helper"
-              className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold px-8 py-4 rounded-2xl transition-all shadow-lg hover:shadow-xl active:scale-95 text-center"
-            >
+            <Link to="/register/helper"
+              className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold px-8 py-4 rounded-2xl transition-all shadow-lg hover:shadow-xl active:scale-95 text-center">
               Đăng ký ngay →
             </Link>
           </div>
@@ -387,7 +363,9 @@ export default function HomePage() {
 
       {/* ─── CTA CUỐI ─────────────────────────────────────────────── */}
       <section className="bg-gradient-to-br from-orange-500 to-red-600 rounded-3xl p-10 text-center text-white mb-2">
-        <div className="text-5xl mb-4">🏠</div>
+        <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Home className="w-8 h-8 text-white" />
+        </div>
         <h2 className="text-2xl md:text-3xl font-bold mb-3">Sẵn sàng có ngôi nhà sạch sẽ?</h2>
         <p className="text-orange-100 mb-6 max-w-md mx-auto">
           {user?.userType === 'customer'
@@ -404,17 +382,13 @@ export default function HomePage() {
             </button>
           ) : (
             <>
-              <Link
-                to={user ? '/' : '/register/customer'}
-                className="inline-block bg-white text-orange-600 font-bold px-8 py-3.5 rounded-2xl hover:bg-orange-50 transition-all shadow-sm hover:shadow-md active:scale-95"
-              >
+              <Link to={user ? '/' : '/register/customer'}
+                className="inline-block bg-white text-orange-600 font-bold px-8 py-3.5 rounded-2xl hover:bg-orange-50 transition-all shadow-sm hover:shadow-md active:scale-95">
                 {user ? 'Xem dịch vụ' : 'Đăng ký — Miễn phí'}
               </Link>
               {!user && (
-                <Link
-                  to="/login"
-                  className="inline-block bg-white/20 backdrop-blur-sm text-white font-bold px-8 py-3.5 rounded-2xl hover:bg-white/30 transition-all border border-white/30"
-                >
+                <Link to="/login"
+                  className="inline-block bg-white/20 backdrop-blur-sm text-white font-bold px-8 py-3.5 rounded-2xl hover:bg-white/30 transition-all border border-white/30">
                   Đăng nhập
                 </Link>
               )}

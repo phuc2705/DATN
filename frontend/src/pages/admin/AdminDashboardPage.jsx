@@ -5,6 +5,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import Avatar from '../../components/common/Avatar';
 import { formatPrice } from '../../utils/format';
 import toast from 'react-hot-toast';
+import { User, Sparkles, ClipboardList, Banknote, RefreshCw, CheckCircle } from 'lucide-react';
 
 const MONTH_LABEL = { '01':'T1','02':'T2','03':'T3','04':'T4','05':'T5','06':'T6','07':'T7','08':'T8','09':'T9','10':'T10','11':'T11','12':'T12' };
 
@@ -15,7 +16,7 @@ function RevenueChart({ data }) {
     <div className="flex items-end gap-2 h-32 mt-4">
       {data.map((d) => {
         const pct = (Number(d.revenue) / max) * 100;
-        const [year, mon] = d.month.split('-');
+        const [, mon] = d.month.split('-');
         return (
           <div key={d.month} className="flex-1 flex flex-col items-center gap-1">
             <span className="text-xs text-gray-400 whitespace-nowrap">{pct > 5 ? formatPrice(d.revenue).replace('₫','').trim() : ''}</span>
@@ -69,10 +70,10 @@ export default function AdminDashboardPage() {
     : null;
 
   const STAT_CARDS = [
-    { label: 'Khách hàng', value: stats?.totalCustomers ?? '—', icon: '👤', gradient: 'from-blue-500 to-blue-600', sub: `+${stats?.newCustomersThisMonth ?? 0} tháng này` },
-    { label: 'Người giúp việc', value: stats?.totalHelpers ?? '—', icon: '🧹', gradient: 'from-green-500 to-green-600', sub: `${pendingHelpers.length} chờ xét duyệt` },
-    { label: 'Đơn hàng', value: stats?.totalBookings ?? '—', icon: '📋', gradient: 'from-yellow-500 to-yellow-600', sub: `Tỷ lệ hủy ${stats?.cancelRate ?? 0}%` },
-    { label: 'Doanh thu', value: stats?.totalRevenue != null ? formatPrice(stats.totalRevenue) : '—', icon: '💰', gradient: 'from-orange-500 to-orange-600', sub: growthSign ? `Tháng này ${growthSign} so với tháng trước` : 'Từ đơn hoàn thành' },
+    { label: 'Khách hàng',     value: stats?.totalCustomers ?? '—',   Icon: User,         gradient: 'from-blue-500 to-blue-600',   sub: `+${stats?.newCustomersThisMonth ?? 0} tháng này` },
+    { label: 'Người giúp việc',value: stats?.totalHelpers ?? '—',     Icon: Sparkles,     gradient: 'from-green-500 to-green-600', sub: `${pendingHelpers.length} chờ xét duyệt` },
+    { label: 'Đơn hàng',       value: stats?.totalBookings ?? '—',    Icon: ClipboardList, gradient: 'from-yellow-500 to-yellow-600',sub: `Tỷ lệ hủy ${stats?.cancelRate ?? 0}%` },
+    { label: 'Doanh thu',      value: stats?.totalRevenue != null ? formatPrice(stats.totalRevenue) : '—', Icon: Banknote, gradient: 'from-orange-500 to-orange-600', sub: growthSign ? `Tháng này ${growthSign} so với tháng trước` : 'Từ đơn hoàn thành' },
   ];
 
   const STATUS_META = {
@@ -95,19 +96,17 @@ export default function AdminDashboardPage() {
           <p className="text-gray-500 text-sm mt-1">Tổng quan hệ thống CleanConnect</p>
         </div>
         <button onClick={refresh} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 shadow-sm">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
+          <RefreshCw className="w-4 h-4" />
           Làm mới
         </button>
       </div>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {STAT_CARDS.map(({ label, value, icon, gradient, sub }) => (
+        {STAT_CARDS.map(({ label, value, Icon, gradient, sub }) => (
           <div key={label} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-lg mb-3`}>
-              {icon}
+            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-3`}>
+              <Icon className="w-5 h-5 text-white" />
             </div>
             <p className="text-2xl font-extrabold text-gray-900 leading-tight">{value}</p>
             <p className="text-sm font-medium text-gray-600 mt-0.5">{label}</p>
@@ -140,7 +139,6 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Revenue chart */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-2">
             <h2 className="font-bold text-gray-900">Doanh thu 6 tháng gần nhất</h2>
@@ -148,7 +146,6 @@ export default function AdminDashboardPage() {
           <RevenueChart data={stats?.monthlyRevenue} />
         </div>
 
-        {/* Booking status breakdown */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <h2 className="font-bold text-gray-900 mb-4">Trạng thái đơn hàng</h2>
           <div className="space-y-3">
@@ -168,7 +165,6 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Top services */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <h2 className="font-bold text-gray-900 mb-4">Dịch vụ phổ biến nhất</h2>
           {stats?.topServices?.length > 0 ? (
@@ -196,7 +192,6 @@ export default function AdminDashboardPage() {
           )}
         </div>
 
-        {/* Top helpers */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <h2 className="font-bold text-gray-900 mb-4">Top người giúp việc</h2>
           {stats?.topHelpers?.length > 0 ? (
@@ -241,7 +236,9 @@ export default function AdminDashboardPage() {
 
         {pendingHelpers.length === 0 ? (
           <div className="text-center py-10">
-            <div className="text-3xl mb-2">✅</div>
+            <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-2">
+              <CheckCircle className="w-6 h-6 text-green-600" />
+            </div>
             <p className="text-gray-500 font-medium">Tất cả hồ sơ đã được xét duyệt!</p>
           </div>
         ) : (

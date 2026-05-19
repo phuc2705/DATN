@@ -7,11 +7,12 @@ import { getHelperReviewsApi } from '../../api/review.api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { formatPrice, formatDate } from '../../utils/format';
 import { useAuth } from '../../hooks/useAuth';
+import { Star, User, Sprout, Trophy, Frown, MessageCircle, ArrowLeft } from 'lucide-react';
 
 const EXPERIENCE_LABEL = {
-  beginner:     { text: 'Mới vào nghề',    color: 'bg-gray-100 text-gray-600',   icon: '🌱' },
-  intermediate: { text: 'Có kinh nghiệm',  color: 'bg-blue-100 text-blue-700',   icon: '⭐' },
-  expert:       { text: 'Chuyên nghiệp',   color: 'bg-purple-100 text-purple-700', icon: '🏆' },
+  beginner:     { text: 'Mới vào nghề',    color: 'bg-gray-100 text-gray-600',    Icon: Sprout  },
+  intermediate: { text: 'Có kinh nghiệm',  color: 'bg-blue-100 text-blue-700',    Icon: Star    },
+  expert:       { text: 'Chuyên nghiệp',   color: 'bg-purple-100 text-purple-700', Icon: Trophy  },
 };
 
 const GENDER_LABEL = { female: 'Nữ', male: 'Nam', other: 'Khác' };
@@ -24,11 +25,14 @@ function calcAge(dateOfBirth) {
 
 function StarRow({ rating, size = 'md' }) {
   const r = Number(rating) || 0;
-  const cls = size === 'sm' ? 'text-xs' : 'text-base';
+  const filled = Math.round(r);
+  const sz = size === 'sm' ? 'w-3 h-3' : 'w-4 h-4';
   return (
-    <span className={`text-yellow-400 ${cls}`}>
-      {'★'.repeat(Math.round(r))}{'☆'.repeat(5 - Math.round(r))}
-    </span>
+    <div className="flex">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star key={i} className={`${sz} ${i < filled ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`} />
+      ))}
+    </div>
   );
 }
 
@@ -67,10 +71,12 @@ export default function HelperProfilePage() {
   if (error || !helper) {
     return (
       <div className="text-center py-20">
-        <div className="text-4xl mb-3">😔</div>
+        <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+          <Frown className="w-8 h-8 text-gray-400" />
+        </div>
         <p className="text-gray-500">Không tìm thấy thông tin người giúp việc.</p>
-        <button onClick={() => navigate(-1)} className="mt-4 text-orange-500 hover:underline text-sm">
-          ← Quay lại
+        <button onClick={() => navigate(-1)} className="mt-4 text-orange-500 hover:underline text-sm flex items-center gap-1 justify-center">
+          <ArrowLeft className="w-4 h-4" /> Quay lại
         </button>
       </div>
     );
@@ -79,7 +85,6 @@ export default function HelperProfilePage() {
   const age = calcAge(helper.dateOfBirth);
   const rating = Number(helper.ratingAverage) || 0;
 
-  // Tìm dịch vụ đang xem (nếu có serviceId)
   const currentService = helper.services?.find(
     (s) => String(s.serviceId) === String(serviceId)
   );
@@ -92,17 +97,17 @@ export default function HelperProfilePage() {
   return (
     <div className="max-w-2xl mx-auto animate-fadeIn">
       <button onClick={() => navigate(-1)} className="text-orange-500 hover:text-orange-600 text-sm mb-5 flex items-center gap-1">
-        ← Quay lại danh sách
+        <ArrowLeft className="w-4 h-4" /> Quay lại danh sách
       </button>
 
       {/* Card thông tin chính */}
       <div className="bg-white rounded-2xl shadow-sm p-6 mb-5 border border-gray-100">
         {/* Header: avatar + tên + badge */}
         <div className="flex items-start gap-5 mb-5">
-          <div className="w-20 h-20 rounded-2xl bg-orange-100 flex items-center justify-center text-4xl flex-shrink-0 overflow-hidden">
+          <div className="w-20 h-20 rounded-2xl bg-orange-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
             {helper.avatarUrl
               ? <img src={resolveAvatar(helper.avatarUrl)} alt="" className="w-full h-full object-cover" />
-              : '👩'}
+              : <User className="w-10 h-10 text-orange-400" />}
           </div>
 
           <div className="flex-1 min-w-0">
@@ -176,6 +181,7 @@ export default function HelperProfilePage() {
             <div className="space-y-2">
               {helper.services.map((svc) => {
                 const lvl = EXPERIENCE_LABEL[svc.experienceLevel] || EXPERIENCE_LABEL.beginner;
+                const LvlIcon = lvl.Icon;
                 const isActive = String(svc.serviceId) === String(serviceId);
                 return (
                   <div
@@ -185,7 +191,9 @@ export default function HelperProfilePage() {
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="text-base">{lvl.icon}</span>
+                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${lvl.color.split(' ')[0]} bg-opacity-20`}>
+                        <LvlIcon className={`w-4 h-4 ${lvl.color.split(' ')[1]}`} />
+                      </div>
                       <div>
                         <p className="text-sm font-medium text-gray-800">{svc.serviceName}</p>
                         <span className={`text-xs px-1.5 py-0.5 rounded-full ${lvl.color}`}>{lvl.text}</span>
@@ -235,7 +243,9 @@ export default function HelperProfilePage() {
 
         {reviews.length === 0 ? (
           <div className="text-center py-8">
-            <div className="text-3xl mb-2">💬</div>
+            <div className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-2">
+              <MessageCircle className="w-6 h-6 text-gray-400" />
+            </div>
             <p className="text-gray-400 text-sm">Chưa có đánh giá nào.</p>
           </div>
         ) : (

@@ -8,13 +8,18 @@ import { formatPrice, formatDate, formatDateTime, BOOKING_STATUS_LABEL, PAYMENT_
 import { useAuth } from '../../hooks/useAuth';
 import { getSocket } from '../../socket/socket';
 import toast from 'react-hot-toast';
+import {
+  ClipboardList, CheckCircle, Home, Trophy, XCircle,
+  Calendar, Clock, MapPin, FileText, Phone,
+  Building2, CreditCard, Wallet, Star,
+  Frown, Loader2, ArrowLeft, X,
+} from 'lucide-react';
 
-// Định nghĩa các bước trong timeline theo thứ tự trạng thái
 const STATUS_STEPS = [
-  { key: 'pending',     label: 'Đã đặt lịch',     icon: '📋', desc: 'Đơn đang chờ người giúp việc nhận' },
-  { key: 'confirmed',   label: 'Đã xác nhận',      icon: '✅', desc: 'Người giúp việc đã nhận đơn' },
-  { key: 'in_progress', label: 'Đang thực hiện',   icon: '🏠', desc: 'Người giúp việc đang làm việc' },
-  { key: 'completed',   label: 'Hoàn thành',        icon: '🎉', desc: 'Công việc đã hoàn thành' },
+  { key: 'pending',     label: 'Đã đặt lịch',    Icon: ClipboardList, desc: 'Đơn đang chờ người giúp việc nhận' },
+  { key: 'confirmed',   label: 'Đã xác nhận',     Icon: CheckCircle,   desc: 'Người giúp việc đã nhận đơn' },
+  { key: 'in_progress', label: 'Đang thực hiện',  Icon: Home,          desc: 'Người giúp việc đang làm việc' },
+  { key: 'completed',   label: 'Hoàn thành',       Icon: Trophy,        desc: 'Công việc đã hoàn thành' },
 ];
 
 const STATUS_ORDER = { pending: 0, confirmed: 1, in_progress: 2, completed: 3 };
@@ -23,7 +28,9 @@ function StatusTimeline({ status }) {
   if (status === 'cancelled') {
     return (
       <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-100 rounded-xl">
-        <span className="text-2xl">❌</span>
+        <div className="w-9 h-9 bg-red-100 rounded-full flex items-center justify-center shrink-0">
+          <XCircle className="w-5 h-5 text-red-500" />
+        </div>
         <div>
           <p className="font-semibold text-red-700">Đơn đã bị hủy</p>
           <p className="text-sm text-red-500">Đơn hàng này đã được hủy</p>
@@ -40,24 +47,25 @@ function StatusTimeline({ status }) {
         const isDone = idx < currentIdx;
         const isCurrent = idx === currentIdx;
         const isPending = idx > currentIdx;
+        const IconComp = step.Icon;
 
         return (
           <div key={step.key} className="flex gap-4">
-            {/* Line + dot */}
             <div className="flex flex-col items-center">
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 border-2 transition-all ${
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-all ${
                 isDone    ? 'bg-green-500 border-green-500 text-white' :
                 isCurrent ? 'bg-orange-500 border-orange-500 text-white animate-pulse' :
                             'bg-white border-gray-200 text-gray-300'
               }`}>
-                {isDone ? '✓' : step.icon}
+                {isDone
+                  ? <CheckCircle className="w-4 h-4" />
+                  : <IconComp className="w-4 h-4" />}
               </div>
               {idx < STATUS_STEPS.length - 1 && (
                 <div className={`w-0.5 h-8 mt-1 ${isDone ? 'bg-green-400' : 'bg-gray-100'}`} />
               )}
             </div>
 
-            {/* Content */}
             <div className="pb-5 flex-1">
               <p className={`font-semibold text-sm ${isDone ? 'text-green-700' : isCurrent ? 'text-orange-600' : 'text-gray-300'}`}>
                 {step.label}
@@ -77,8 +85,8 @@ function StarSelector({ value, onChange }) {
     <div className="flex gap-1">
       {[1,2,3,4,5].map((n) => (
         <button key={n} type="button" onClick={() => onChange(n)}
-          className={`text-2xl transition-transform hover:scale-110 ${n <= value ? 'text-yellow-400' : 'text-gray-200'}`}>
-          ★
+          className="transition-transform hover:scale-110">
+          <Star className={`w-7 h-7 ${n <= value ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'}`} />
         </button>
       ))}
     </div>
@@ -104,7 +112,6 @@ export default function BookingDetailPage() {
 
   useEffect(() => { refresh(); }, [bookingId]);
 
-  // Real-time: lắng nghe cập nhật trạng thái qua Socket.io
   useEffect(() => {
     const socket = getSocket();
     if (!socket) return;
@@ -181,7 +188,9 @@ export default function BookingDetailPage() {
   if (loading) return <div className="flex justify-center py-20"><LoadingSpinner /></div>;
   if (!booking) return (
     <div className="text-center py-20">
-      <div className="text-4xl mb-3">😔</div>
+      <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+        <Frown className="w-7 h-7 text-gray-400" />
+      </div>
       <p className="text-gray-500">Không tìm thấy đơn hàng.</p>
       <button onClick={() => navigate('/bookings')} className="mt-4 text-orange-500 hover:underline text-sm">
         ← Về danh sách đơn
@@ -192,10 +201,16 @@ export default function BookingDetailPage() {
   const sl = BOOKING_STATUS_LABEL[booking.status] || {};
   const pl = PAYMENT_STATUS_LABEL[booking.paymentStatus] || {};
 
+  const paymentMethodDisplay = {
+    vnpay:         { Icon: Building2, label: 'VNPay' },
+    bank_transfer: { Icon: CreditCard, label: 'Chuyển khoản' },
+    cash:          { Icon: Wallet, label: 'Tiền mặt' },
+  }[booking.paymentMethod] || { Icon: Wallet, label: booking.paymentMethod };
+
   return (
     <div className="max-w-lg mx-auto animate-fadeIn">
       <button onClick={() => navigate(-1)} className="text-orange-500 hover:text-orange-600 text-sm mb-5 flex items-center gap-1 font-medium">
-        ← Quay lại
+        <ArrowLeft className="w-4 h-4" /> Quay lại
       </button>
 
       {/* Header card */}
@@ -214,26 +229,25 @@ export default function BookingDetailPage() {
             <div className="w-11 h-11 rounded-full bg-orange-100 flex items-center justify-center overflow-hidden flex-shrink-0">
               {booking.helperAvatar
                 ? <img src={booking.helperAvatar} alt="" className="w-full h-full object-cover" />
-                : <span className="text-xl">👩</span>}
+                : <span className="text-xl font-bold text-orange-600">{booking.helperName?.[0]?.toUpperCase()}</span>}
             </div>
             <div className="flex-1">
               <p className="text-xs text-gray-400">Người giúp việc</p>
               <p className="font-semibold text-gray-800 text-sm">{booking.helperName}</p>
               {booking.helperPhone && (
                 <a href={`tel:${booking.helperPhone}`} className="text-xs text-orange-500 hover:underline flex items-center gap-1 mt-0.5">
-                  📞 {booking.helperPhone}
+                  <Phone className="w-3 h-3" /> {booking.helperPhone}
                 </a>
               )}
             </div>
-            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">✓ Xác minh</span>
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium flex items-center gap-1">
+              <CheckCircle className="w-3 h-3" /> Xác minh
+            </span>
           </div>
         ) : booking.status === 'pending' && (
           <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl mb-4">
             <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center">
-              <svg className="w-4 h-4 text-amber-600 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-              </svg>
+              <Loader2 className="w-4 h-4 text-amber-600 animate-spin" />
             </div>
             <div>
               <p className="text-sm font-semibold text-amber-800">Đang tìm người giúp việc</p>
@@ -245,20 +259,20 @@ export default function BookingDetailPage() {
         {/* Booking details */}
         <div className="space-y-2.5 text-sm">
           <div className="flex items-center justify-between">
-            <span className="text-gray-500 flex items-center gap-1.5">📅 Ngày làm</span>
+            <span className="text-gray-500 flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> Ngày làm</span>
             <span className="font-medium text-gray-800">{formatDate(booking.bookingDate)}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-gray-500 flex items-center gap-1.5">⏰ Giờ</span>
+            <span className="text-gray-500 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Giờ</span>
             <span className="font-medium text-gray-800">{booking.startTime} – {booking.endTime} ({booking.hours}h)</span>
           </div>
           <div className="flex items-start justify-between gap-4">
-            <span className="text-gray-500 flex items-center gap-1.5 flex-shrink-0">📍 Địa chỉ</span>
+            <span className="text-gray-500 flex items-center gap-1.5 flex-shrink-0"><MapPin className="w-3.5 h-3.5" /> Địa chỉ</span>
             <span className="font-medium text-gray-800 text-right">{booking.address}</span>
           </div>
           {booking.note && (
             <div className="flex items-start justify-between gap-4">
-              <span className="text-gray-500 flex items-center gap-1.5 flex-shrink-0">📝 Ghi chú</span>
+              <span className="text-gray-500 flex items-center gap-1.5 flex-shrink-0"><FileText className="w-3.5 h-3.5" /> Ghi chú</span>
               <span className="text-gray-600 text-right italic">{booking.note}</span>
             </div>
           )}
@@ -291,10 +305,9 @@ export default function BookingDetailPage() {
           </div>
           <div className="flex justify-between text-gray-600 pt-1">
             <span>Phương thức</span>
-            <span className="font-medium">
-              {booking.paymentMethod === 'vnpay' ? '🏦 VNPay'
-                : booking.paymentMethod === 'bank_transfer' ? '🏧 Chuyển khoản'
-                : '💵 Tiền mặt'}
+            <span className="font-medium flex items-center gap-1.5">
+              <paymentMethodDisplay.Icon className="w-3.5 h-3.5" />
+              {paymentMethodDisplay.label}
             </span>
           </div>
           <div className="flex justify-between text-gray-600">
@@ -319,19 +332,19 @@ export default function BookingDetailPage() {
               {booking.paymentMethod === 'vnpay' && (
                 <button onClick={handleVNPayPayment}
                   className="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 font-semibold flex items-center justify-center gap-2 transition-colors">
-                  🏦 Thanh toán qua VNPay
+                  <Building2 className="w-4 h-4" /> Thanh toán qua VNPay
                 </button>
               )}
               {booking.paymentMethod === 'bank_transfer' && (
                 <button onClick={handleShowBankQR}
                   className="w-full bg-green-600 text-white py-3 rounded-xl hover:bg-green-700 font-semibold flex items-center justify-center gap-2 transition-colors">
-                  🏧 Xem thông tin chuyển khoản
+                  <CreditCard className="w-4 h-4" /> Xem thông tin chuyển khoản
                 </button>
               )}
               {booking.paymentMethod === 'cash' && (
                 <button onClick={handleCashPayment}
-                  className="w-full bg-green-500 text-white py-3 rounded-xl hover:bg-green-600 font-semibold transition-colors">
-                  💵 Xác nhận đã thanh toán tiền mặt
+                  className="w-full bg-green-500 text-white py-3 rounded-xl hover:bg-green-600 font-semibold flex items-center justify-center gap-2 transition-colors">
+                  <Wallet className="w-4 h-4" /> Xác nhận đã thanh toán tiền mặt
                 </button>
               )}
             </>
@@ -339,8 +352,8 @@ export default function BookingDetailPage() {
 
           {booking.status === 'completed' && booking.paymentStatus === 'paid' && !booking.hasReviewed && (
             <button onClick={() => setShowReview(true)}
-              className="w-full bg-gradient-to-r from-yellow-400 to-orange-400 text-white py-3 rounded-xl hover:from-yellow-500 hover:to-orange-500 font-semibold transition-all">
-              ⭐ Đánh giá người giúp việc
+              className="w-full bg-gradient-to-r from-yellow-400 to-orange-400 text-white py-3 rounded-xl hover:from-yellow-500 hover:to-orange-500 font-semibold transition-all flex items-center justify-center gap-2">
+              <Star className="w-4 h-4" /> Đánh giá người giúp việc
             </button>
           )}
         </div>
@@ -352,7 +365,9 @@ export default function BookingDetailPage() {
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm animate-slideUp">
             <div className="p-5 border-b border-gray-100 flex justify-between items-center">
               <h2 className="font-bold text-gray-900 text-lg">Thông tin chuyển khoản</h2>
-              <button onClick={() => setShowBankQR(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200">✕</button>
+              <button onClick={() => setShowBankQR(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200">
+                <X className="w-4 h-4" />
+              </button>
             </div>
             <div className="p-5 space-y-4">
               <div className="flex justify-center">
@@ -402,14 +417,16 @@ export default function BookingDetailPage() {
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm animate-slideUp">
             <div className="p-5 border-b border-gray-100 flex justify-between items-center">
               <h2 className="font-bold text-gray-900 text-lg">Đánh giá dịch vụ</h2>
-              <button onClick={() => setShowReview(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200">✕</button>
+              <button onClick={() => setShowReview(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200">
+                <X className="w-4 h-4" />
+              </button>
             </div>
             <form onSubmit={handleReview} className="p-5 space-y-4">
               <div className="text-center">
                 <p className="text-sm text-gray-500 mb-3">Bạn hài lòng thế nào với {booking.helperName}?</p>
                 <StarSelector value={reviewForm.rating} onChange={(r) => setReviewForm(prev => ({ ...prev, rating: r }))} />
                 <p className="text-xs text-gray-400 mt-2">
-                  {reviewForm.rating === 5 ? '⭐ Xuất sắc!' : reviewForm.rating === 4 ? 'Tốt!' : reviewForm.rating === 3 ? 'Bình thường' : reviewForm.rating === 2 ? 'Không hài lòng' : '😞 Rất tệ'}
+                  {reviewForm.rating === 5 ? 'Xuất sắc!' : reviewForm.rating === 4 ? 'Tốt!' : reviewForm.rating === 3 ? 'Bình thường' : reviewForm.rating === 2 ? 'Không hài lòng' : 'Rất tệ'}
                 </p>
               </div>
               <div>

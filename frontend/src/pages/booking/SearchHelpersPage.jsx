@@ -5,6 +5,7 @@ import { suggestHelpersApi } from '../../api/booking.api';
 import { useAuth } from '../../hooks/useAuth';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { formatPrice } from '../../utils/format';
+import { Zap, Search, User, Star, ArrowLeft } from 'lucide-react';
 
 const _API = import.meta.env.VITE_API_URL || '';
 const resolveAvatar = (url) => (url?.startsWith('/uploads/') ? `${_API}${url}` : url);
@@ -15,19 +16,25 @@ const EXPERIENCE_LABEL = {
   expert:       { text: 'Chuyên nghiệp',   color: 'bg-purple-100 text-purple-700' },
 };
 
-// Badge điểm matching: xanh ≥70, vàng ≥40, đỏ <40
 const ScoreBadge = ({ score }) => {
   const color = score >= 70 ? 'bg-green-100 text-green-700' : score >= 40 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-600';
-  return <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${color}`}>⚡ {score}/100</span>;
+  return (
+    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold flex items-center gap-1 ${color}`}>
+      <Zap className="w-3 h-3" /> {score}/100
+    </span>
+  );
 };
 
 function StarRow({ rating, count }) {
   const r = Number(rating) || 0;
+  const filled = Math.round(r);
   return (
     <div className="flex items-center gap-1">
-      <span className="text-yellow-400 text-sm leading-none">
-        {'★'.repeat(Math.round(r))}{'☆'.repeat(5 - Math.round(r))}
-      </span>
+      <div className="flex">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Star key={i} className={`w-3.5 h-3.5 ${i < filled ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`} />
+        ))}
+      </div>
       <span className="text-gray-500 text-xs">{r.toFixed(1)}</span>
       {count != null && <span className="text-gray-400 text-xs">· {count} lần làm</span>}
     </div>
@@ -44,10 +51,9 @@ export default function SearchHelpersPage() {
   const [startTime, setStartTime]   = useState('');
   const [endTime, setEndTime]       = useState('');
   const [data, setData]             = useState(null);
-  const [suggestedHelpers, setSuggestedHelpers] = useState(null); // null = chưa dùng suggest
+  const [suggestedHelpers, setSuggestedHelpers] = useState(null);
   const [loading, setLoading]       = useState(false);
 
-  // Tìm kiếm thông thường (không cần đăng nhập)
   const search = (cityValue) => {
     setLoading(true);
     setSuggestedHelpers(null);
@@ -57,7 +63,6 @@ export default function SearchHelpersPage() {
       .finally(() => setLoading(false));
   };
 
-  // Gợi ý theo thuật toán matching (cần đăng nhập + đủ date/time)
   const suggest = () => {
     if (!user || !bookingDate || !startTime || !endTime) return;
     setLoading(true);
@@ -74,14 +79,14 @@ export default function SearchHelpersPage() {
 
   return (
     <div className="animate-fadeIn">
-      <button onClick={() => navigate('/')} className="text-primary-600 hover:underline text-sm mb-4 block">
-        ← Quay lại
+      <button onClick={() => navigate('/')} className="text-orange-500 hover:text-orange-600 text-sm mb-4 flex items-center gap-1">
+        <ArrowLeft className="w-4 h-4" /> Quay lại
       </button>
 
       {data && (
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">{data.service?.serviceName}</h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className="text-gray-500 text-sm mt-1 flex items-center gap-1.5 flex-wrap">
             {helpers.length} người giúp việc
             {!isUsingMatch && (
               <> · Giá từ{' '}
@@ -91,7 +96,9 @@ export default function SearchHelpersPage() {
               </>
             )}
             {isUsingMatch && (
-              <span className="ml-2 text-green-600 font-medium">⚡ Xếp hạng theo độ phù hợp</span>
+              <span className="ml-1 text-green-600 font-medium flex items-center gap-1">
+                <Zap className="w-3.5 h-3.5" /> Xếp hạng theo độ phù hợp
+              </span>
             )}
           </p>
         </div>
@@ -99,7 +106,6 @@ export default function SearchHelpersPage() {
 
       {/* Bộ lọc */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6 space-y-3">
-        {/* Lọc thành phố */}
         <div className="flex gap-3">
           <input
             type="text" value={city}
@@ -113,11 +119,11 @@ export default function SearchHelpersPage() {
           </button>
         </div>
 
-        {/* Lọc theo thời gian (matching) — chỉ hiện khi đã đăng nhập */}
         {user && (
           <div className="border-t pt-3">
-            <p className="text-xs text-gray-500 mb-2 font-medium">
-              ⚡ Tìm helper phù hợp theo lịch đặt — chọn ngày & giờ để xếp hạng chính xác hơn
+            <p className="text-xs text-gray-500 mb-2 font-medium flex items-center gap-1">
+              <Zap className="w-3.5 h-3.5 text-orange-500" />
+              Tìm helper phù hợp theo lịch đặt — chọn ngày & giờ để xếp hạng chính xác hơn
             </p>
             <div className="grid grid-cols-3 gap-2">
               <input
@@ -143,9 +149,9 @@ export default function SearchHelpersPage() {
               <button
                 onClick={suggest}
                 disabled={!bookingDate || !startTime || !endTime}
-                className="btn-primary px-5 py-2 text-sm disabled:opacity-40"
+                className="btn-primary px-5 py-2 text-sm disabled:opacity-40 flex items-center gap-1.5"
               >
-                ⚡ Tìm phù hợp nhất
+                <Zap className="w-4 h-4" /> Tìm phù hợp nhất
               </button>
               {isUsingMatch && (
                 <button
@@ -164,7 +170,9 @@ export default function SearchHelpersPage() {
         <div className="flex justify-center py-16"><LoadingSpinner /></div>
       ) : helpers.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
-          <div className="text-4xl mb-3">🔍</div>
+          <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <Search className="w-7 h-7 text-gray-400" />
+          </div>
           <p className="text-gray-500">
             {isUsingMatch ? 'Không có helper trống lịch vào khung giờ này.' : 'Không tìm thấy người giúp việc phù hợp.'}
           </p>
@@ -181,10 +189,10 @@ export default function SearchHelpersPage() {
               >
                 <div className="flex items-start gap-4">
                   {/* Avatar */}
-                  <div className="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+                  <div className="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
                     {h.avatarUrl
                       ? <img src={resolveAvatar(h.avatarUrl)} alt="" className="w-full h-full object-cover" />
-                      : '👩'}
+                      : <User className="w-7 h-7 text-orange-400" />}
                   </div>
 
                   {/* Info */}
