@@ -59,15 +59,21 @@ export default function RegisterHelperPage() {
     setLoading(true);
     try {
       const res = await registerHelperApi({ ...form, serviceIds: selectedServices, avatarFile });
-      setRegisteredEmail(res.data.data?.email || form.email);
+      const data = res.data.data || {};
+      setRegisteredEmail(data.email || form.email);
       setSavedPassword(form.password);
-      if (res.data.data?.skipOtp) {
-        await login(res.data.data.email || form.email, form.password);
+      if (data.skipOtp) {
+        await login(data.email || form.email, form.password);
         navigate('/');
         toast.success('[TEST] Tài khoản kích hoạt ngay, không cần OTP!');
       } else {
         setOtpStep(true);
-        toast.success('Mã OTP đã được gửi đến email của bạn!');
+        if (data.devOtp) {
+          setOtp(data.devOtp);
+          toast('📋 [DEV] OTP tự động điền: ' + data.devOtp, { duration: 8000 });
+        } else {
+          toast.success('Mã OTP đã được gửi đến email của bạn!');
+        }
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Đăng ký thất bại');
