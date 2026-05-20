@@ -30,6 +30,11 @@ const UserModel = {
     await pool.query('DELETE FROM users WHERE email = ? AND is_active = 0', [email]);
   },
 
+  // Xóa tài khoản chưa kích hoạt có cùng số điện thoại (tránh duplicate phone khi đăng ký lại)
+  deleteInactiveByPhone: async (phone) => {
+    await pool.query('DELETE FROM users WHERE phone = ? AND is_active = 0', [phone]);
+  },
+
   // Xóa toàn bộ tài khoản theo email (chỉ dùng cho email test, xem TEST_EMAILS trong .env)
   deleteByEmail: async (email) => {
     await pool.query('DELETE FROM users WHERE email = ?', [email]);

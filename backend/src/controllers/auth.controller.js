@@ -55,13 +55,23 @@ const AuthController = {
         await UserModel.deleteInactiveByEmail(email);
       }
 
+      // Xóa luôn các tài khoản chưa kích hoạt có cùng SĐT (tránh duplicate phone)
+      await UserModel.deleteInactiveByPhone(phone);
+
       // Hash mật khẩu do người dùng tự tạo
       const passwordHash = await bcrypt.hash(password, 12);
 
       // Tạo tài khoản trong DB với is_active = 0 (chưa kích hoạt)
-      await UserModel.createCustomer({
-        email, passwordHash, fullName, phone, address, district, city,
-      });
+      try {
+        await UserModel.createCustomer({
+          email, passwordHash, fullName, phone, address, district, city,
+        });
+      } catch (dbErr) {
+        if (dbErr.code === 'ER_DUP_ENTRY' && dbErr.message.includes('phone')) {
+          return sendError(res, 'Số điện thoại đã được sử dụng bởi tài khoản khác.', 409);
+        }
+        throw dbErr;
+      }
 
       // Sinh OTP và gửi qua Gmail
       const otpCode = generateOtp();
@@ -127,12 +137,21 @@ const AuthController = {
         await UserModel.deleteInactiveByEmail(email);
       }
 
+      await UserModel.deleteInactiveByPhone(phone);
+
       const passwordHash = await bcrypt.hash(password, 12);
 
-      await UserModel.createHelper({
-        email, passwordHash, fullName, phone, dateOfBirth, gender,
-        idCardNumber, address, bio, avatarUrl, pendingServiceIds: serviceIds,
-      });
+      try {
+        await UserModel.createHelper({
+          email, passwordHash, fullName, phone, dateOfBirth, gender,
+          idCardNumber, address, bio, avatarUrl, pendingServiceIds: serviceIds,
+        });
+      } catch (dbErr) {
+        if (dbErr.code === 'ER_DUP_ENTRY' && dbErr.message.includes('phone')) {
+          return sendError(res, 'Số điện thoại đã được sử dụng bởi tài khoản khác.', 409);
+        }
+        throw dbErr;
+      }
 
       // Email test: kích hoạt ngay, bỏ qua OTP, tự duyệt helper + gán dịch vụ, lên lịch tự xóa
       if (isTestEmail(email)) {
