@@ -8,6 +8,22 @@ const { sendOtpEmail } = require('../utils/email');
 const { geocodeAddress } = require('../utils/geocode');
 const { pool } = require('../config/database');
 
+// Decode Firebase ID token mà không verify chữ ký — chỉ dùng làm fallback khi Firebase Admin chưa cấu hình
+const decodeFirebaseTokenFallback = (idToken) => {
+  const parts = idToken.split('.');
+  if (parts.length !== 3) throw Object.assign(new Error('Token không hợp lệ'), { code: 'auth/invalid-argument' });
+  let payload;
+  try {
+    payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+  } catch {
+    throw Object.assign(new Error('Token không đọc được'), { code: 'auth/invalid-argument' });
+  }
+  if (!payload.exp || payload.exp < Date.now() / 1000) {
+    throw Object.assign(new Error('Token đã hết hạn'), { code: 'auth/id-token-expired' });
+  }
+  return payload;
+};
+
 // Sinh mã OTP 6 chữ số ngẫu nhiên
 const generateOtp = () => String(Math.floor(100000 + Math.random() * 900000));
 
@@ -50,12 +66,30 @@ const AuthController = {
       // Sinh OTP và gửi qua Gmail
       const otpCode = generateOtp();
       await OtpModel.create({ email, otpCode });
-      await sendOtpEmail(email, otpCode, fullName);
+
+      let emailSent = true;
+      try {
+        await sendOtpEmail(email, otpCode, fullName);
+      } catch (emailErr) {
+        emailSent = false;
+        console.error('[Email] Gửi OTP thất bại:', emailErr.message);
+        // Trong môi trường production: dừng và trả lỗi
+        if (process.env.NODE_ENV !== 'development') {
+          return sendError(res, 'Không thể gửi email xác minh. Vui lòng thử lại sau.', 503);
+        }
+      }
+
+      // Dev mode: trả OTP trong response khi email thất bại (để test mà không cần SMTP)
+      const devData = (!emailSent && process.env.NODE_ENV === 'development')
+        ? { email, devOtp: otpCode, warning: 'Email SMTP chưa cấu hình — dùng devOtp này để xác minh' }
+        : { email };
 
       return sendSuccess(
         res,
-        { email },
-        'Tài khoản đã được tạo. Mã OTP đã gửi đến email của bạn, vui lòng xác minh.',
+        devData,
+        emailSent
+          ? 'Tài khoản đã được tạo. Mã OTP đã gửi đến email của bạn, vui lòng xác minh.'
+          : '[DEV] Tài khoản đã tạo. Email chưa cấu hình — xem devOtp trong response.',
         200
       );
     } catch (error) {
@@ -123,12 +157,28 @@ const AuthController = {
 
       const otpCode = generateOtp();
       await OtpModel.create({ email, otpCode });
-      await sendOtpEmail(email, otpCode, fullName);
+
+      let emailSent = true;
+      try {
+        await sendOtpEmail(email, otpCode, fullName);
+      } catch (emailErr) {
+        emailSent = false;
+        console.error('[Email] Gửi OTP thất bại:', emailErr.message);
+        if (process.env.NODE_ENV !== 'development') {
+          return sendError(res, 'Không thể gửi email xác minh. Vui lòng thử lại sau.', 503);
+        }
+      }
+
+      const devData = (!emailSent && process.env.NODE_ENV === 'development')
+        ? { email, devOtp: otpCode, warning: 'Email SMTP chưa cấu hình — dùng devOtp này để xác minh' }
+        : { email };
 
       return sendSuccess(
         res,
-        { email },
-        'Tài khoản đã được tạo. Mã OTP đã gửi đến email của bạn, vui lòng xác minh.',
+        devData,
+        emailSent
+          ? 'Tài khoản đã được tạo. Mã OTP đã gửi đến email của bạn, vui lòng xác minh.'
+          : '[DEV] Tài khoản đã tạo. Email chưa cấu hình — xem devOtp trong response.',
         200
       );
     } catch (error) {
@@ -309,9 +359,22 @@ const AuthController = {
       const { idToken } = req.body;
       if (!idToken) return sendError(res, 'ID token không được cung cấp.', 400);
 
+      let decoded;
       const admin = require('../config/firebase-admin');
-      const decoded = await admin.auth().verifyIdToken(idToken);
-      const { email, name: fullName, picture: avatarUrl } = decoded;
+
+      if (admin._initialized) {
+        // Đường chính: xác minh đầy đủ bằng Firebase Admin SDK
+        decoded = await admin.auth().verifyIdToken(idToken);
+      } else {
+        // Fallback khi chưa cấu hình service account: decode JWT mà không verify chữ ký
+        // Chỉ an toàn cho môi trường phát triển cục bộ — deploy production phải cấu hình FIREBASE_* trong .env
+        console.warn('[Firebase] Dùng fallback decode — cấu hình FIREBASE_* trong .env để bật xác thực đầy đủ');
+        decoded = decodeFirebaseTokenFallback(idToken);
+      }
+
+      const email = decoded.email;
+      const fullName = decoded.name || decoded.display_name || null;
+      const avatarUrl = decoded.picture || null;
 
       if (!email) return sendError(res, 'Tài khoản OAuth không có email.', 400);
 

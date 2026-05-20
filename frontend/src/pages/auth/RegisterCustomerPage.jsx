@@ -27,10 +27,16 @@ export default function RegisterCustomerPage() {
     setLoading(true);
     try {
       const res = await registerCustomerApi(form);
-      setRegisteredEmail(res.data.data?.email || form.email);
+      const data = res.data.data || {};
+      setRegisteredEmail(data.email || form.email);
       setSavedPassword(form.password);
       setOtpStep(true);
-      toast.success('Mã OTP đã được gửi đến email của bạn!');
+      if (data.devOtp) {
+        setOtp(data.devOtp);
+        toast('📋 [DEV] OTP tự động điền: ' + data.devOtp, { duration: 8000 });
+      } else {
+        toast.success('Mã OTP đã được gửi đến email của bạn!');
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Đăng ký thất bại');
     } finally {
