@@ -9,7 +9,7 @@ const upload = require('../middleware/upload');
 
 // Validation rules cho đăng ký khách hàng
 const registerCustomerRules = [
-  body('email').isEmail().withMessage('Email không hợp lệ').normalizeEmail(),
+  body('email').isEmail().withMessage('Email không hợp lệ').normalizeEmail({ gmail_remove_dots: false, gmail_remove_subaddress: false }),
   body('password').isLength({ min: 6 }).withMessage('Mật khẩu tối thiểu 6 ký tự'),
   body('fullName').trim().notEmpty().withMessage('Họ tên không được để trống'),
   body('phone').matches(/^[0-9]{10,11}$/).withMessage('Số điện thoại không hợp lệ'),
@@ -19,7 +19,7 @@ const registerCustomerRules = [
 
 // Validation rules cho đăng ký helper
 const registerHelperRules = [
-  body('email').isEmail().withMessage('Email không hợp lệ').normalizeEmail(),
+  body('email').isEmail().withMessage('Email không hợp lệ').normalizeEmail({ gmail_remove_dots: false, gmail_remove_subaddress: false }),
   body('password').isLength({ min: 6 }).withMessage('Mật khẩu tối thiểu 6 ký tự'),
   body('fullName').trim().notEmpty().withMessage('Họ tên không được để trống'),
   body('phone').matches(/^[0-9]{10,11}$/).withMessage('Số điện thoại không hợp lệ'),
@@ -36,18 +36,18 @@ router.post('/register/helper', upload.single('avatar'), registerHelperRules, va
 
 // POST /api/auth/verify-otp - Bước 2: xác minh OTP và tạo tài khoản
 router.post('/verify-otp', [
-  body('email').isEmail().withMessage('Email không hợp lệ').normalizeEmail(),
+  body('email').isEmail().withMessage('Email không hợp lệ').normalizeEmail({ gmail_remove_dots: false, gmail_remove_subaddress: false }),
   body('otp').isLength({ min: 6, max: 6 }).withMessage('Mã OTP phải có 6 chữ số').isNumeric().withMessage('Mã OTP phải là số'),
 ], validate, AuthController.verifyOtp);
 
 // POST /api/auth/resend-otp - Gửi lại OTP
 router.post('/resend-otp', [
-  body('email').isEmail().withMessage('Email không hợp lệ').normalizeEmail(),
+  body('email').isEmail().withMessage('Email không hợp lệ').normalizeEmail({ gmail_remove_dots: false, gmail_remove_subaddress: false }),
 ], validate, AuthController.resendOtp);
 
 // POST /api/auth/login
 router.post('/login', [
-  body('email').isEmail().withMessage('Email không hợp lệ'),
+  body('email').isEmail().withMessage('Email không hợp lệ').normalizeEmail({ gmail_remove_dots: false, gmail_remove_subaddress: false }),
   body('password').notEmpty().withMessage('Mật khẩu không được để trống'),
 ], validate, AuthController.login);
 
