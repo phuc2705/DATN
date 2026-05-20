@@ -2,11 +2,11 @@
 const nodemailer = require('nodemailer');
 
 // Khởi tạo transporter với tài khoản Gmail
-// family: 4 ép dùng IPv4 — Render free tier chặn IPv6 (ENETUNREACH)
+// port 587 + STARTTLS thay vì 465 SSL — Render thường block port 465
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
+  port: 587,
+  secure: false,
   family: 4,
   auth: {
     user: process.env.EMAIL_USER,
