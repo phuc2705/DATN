@@ -17,3 +17,5 @@ export const assignHelperApi = (bookingId, helperId) =>
   api.patch(`/api/admin/bookings/${bookingId}/assign`, { helperId });
 export const getAvailableHelpersApi = (bookingId) =>
   api.get('/api/admin/helpers/available', { params: bookingId ? { bookingId } : {} });
+export const cancelAdminBookingApi = (bookingId) =>
+  api.patch(`/api/admin/bookings/${bookingId}/cancel`);

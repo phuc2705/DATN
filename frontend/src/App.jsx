@@ -13,6 +13,7 @@ import RegisterHelperPage from './pages/auth/RegisterHelperPage';
 import HomePage from './pages/home/HomePage';
 import SearchHelpersPage from './pages/booking/SearchHelpersPage';
 import HelperProfilePage from './pages/booking/HelperProfilePage';
+import ServiceDetailPage from './pages/booking/ServiceDetailPage';
 import CreateBookingPage from './pages/booking/CreateBookingPage';
 import MyBookingsPage from './pages/booking/MyBookingsPage';
 import BookingDetailPage from './pages/booking/BookingDetailPage';
@@ -85,6 +86,7 @@ export default function App() {
           {/* Main layout */}
           <Route element={<Layout />}>
             <Route path="/" element={<HomePage />} />
+            <Route path="/services/:serviceId" element={<ServiceDetailPage />} />
             <Route path="/services/:serviceId/helpers" element={<SearchHelpersPage />} />
             <Route path="/helpers/:helperId" element={<HelperProfilePage />} />
 
