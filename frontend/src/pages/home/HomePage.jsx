@@ -122,7 +122,7 @@ export default function HomePage() {
   }, []);
 
   const handleServiceClick = (serviceId) => {
-    navigate(`/bookings/new?serviceId=${serviceId}`);
+    navigate(`/services/${serviceId}`);
   };
 
   return (
