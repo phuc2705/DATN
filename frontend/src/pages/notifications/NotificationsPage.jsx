@@ -4,26 +4,154 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { formatDateTime } from '../../utils/format';
 import { useAuth } from '../../hooks/useAuth';
 import toast from 'react-hot-toast';
+import {
+  Bell, CheckCheck, Check,
+  ShoppingBag, ClipboardCheck, XCircle,
+  MapPin, Flag, Wallet, Star, Megaphone,
+} from 'lucide-react';
 
+/* ─── Notification type config (lucide icons replacing emojis) ───── */
 const TYPE_CONFIG = {
-  booking_new:       { icon: '🆕', label: 'Việc mới',   bg: 'bg-orange-100', text: 'text-orange-700' },
-  booking_created:   { icon: '📋', label: 'Đơn mới',    bg: 'bg-orange-100', text: 'text-orange-700' },
-  booking_confirmed: { icon: '✅', label: 'Xác nhận',   bg: 'bg-green-100',  text: 'text-green-700'  },
-  booking_cancelled: { icon: '❌', label: 'Hủy đơn',    bg: 'bg-red-100',    text: 'text-red-700'    },
-  checkin:           { icon: '📍', label: 'Check-in',   bg: 'bg-blue-100',   text: 'text-blue-700'   },
-  checkout:          { icon: '🏁', label: 'Check-out',  bg: 'bg-indigo-100', text: 'text-indigo-700' },
-  payment_received:  { icon: '💰', label: 'Thanh toán', bg: 'bg-green-100',  text: 'text-green-700'  },
-  payment_success:   { icon: '💰', label: 'Thanh toán', bg: 'bg-green-100',  text: 'text-green-700'  },
-  new_review:        { icon: '⭐', label: 'Đánh giá',   bg: 'bg-yellow-100', text: 'text-yellow-700' },
-  review_received:   { icon: '⭐', label: 'Đánh giá',   bg: 'bg-yellow-100', text: 'text-yellow-700' },
-  default:           { icon: '🔔', label: 'Thông báo',  bg: 'bg-gray-100',   text: 'text-gray-700'   },
+  booking_new: {
+    Icon:  ShoppingBag,
+    label: 'Việc mới',
+    iconBg:    'bg-orange-50',
+    iconColor: 'text-orange-500',
+    badgeBg:   'bg-orange-50 text-orange-700 border-orange-100',
+  },
+  booking_created: {
+    Icon:  ShoppingBag,
+    label: 'Đơn mới',
+    iconBg:    'bg-orange-50',
+    iconColor: 'text-orange-500',
+    badgeBg:   'bg-orange-50 text-orange-700 border-orange-100',
+  },
+  booking_confirmed: {
+    Icon:  ClipboardCheck,
+    label: 'Xác nhận',
+    iconBg:    'bg-green-50',
+    iconColor: 'text-green-600',
+    badgeBg:   'bg-green-50 text-green-700 border-green-100',
+  },
+  booking_cancelled: {
+    Icon:  XCircle,
+    label: 'Hủy đơn',
+    iconBg:    'bg-red-50',
+    iconColor: 'text-red-500',
+    badgeBg:   'bg-red-50 text-red-700 border-red-100',
+  },
+  checkin: {
+    Icon:  MapPin,
+    label: 'Check-in',
+    iconBg:    'bg-blue-50',
+    iconColor: 'text-blue-500',
+    badgeBg:   'bg-blue-50 text-blue-700 border-blue-100',
+  },
+  checkout: {
+    Icon:  Flag,
+    label: 'Check-out',
+    iconBg:    'bg-indigo-50',
+    iconColor: 'text-indigo-500',
+    badgeBg:   'bg-indigo-50 text-indigo-700 border-indigo-100',
+  },
+  payment_received: {
+    Icon:  Wallet,
+    label: 'Thanh toán',
+    iconBg:    'bg-green-50',
+    iconColor: 'text-green-600',
+    badgeBg:   'bg-green-50 text-green-700 border-green-100',
+  },
+  payment_success: {
+    Icon:  Wallet,
+    label: 'Thanh toán',
+    iconBg:    'bg-green-50',
+    iconColor: 'text-green-600',
+    badgeBg:   'bg-green-50 text-green-700 border-green-100',
+  },
+  new_review: {
+    Icon:  Star,
+    label: 'Đánh giá',
+    iconBg:    'bg-yellow-50',
+    iconColor: 'text-yellow-500',
+    badgeBg:   'bg-yellow-50 text-yellow-700 border-yellow-100',
+  },
+  review_received: {
+    Icon:  Star,
+    label: 'Đánh giá',
+    iconBg:    'bg-yellow-50',
+    iconColor: 'text-yellow-500',
+    badgeBg:   'bg-yellow-50 text-yellow-700 border-yellow-100',
+  },
+  default: {
+    Icon:  Megaphone,
+    label: 'Thông báo',
+    iconBg:    'bg-gray-50',
+    iconColor: 'text-gray-500',
+    badgeBg:   'bg-gray-50 text-gray-600 border-gray-200',
+  },
 };
 
+/* ─── Single notification row ────────────────────────────────────── */
+function NotificationItem({ n, onMarkRead, isUnread }) {
+  const cfg  = TYPE_CONFIG[n.type] || TYPE_CONFIG.default;
+  const Icon = cfg.Icon;
+
+  return (
+    <div
+      onClick={() => isUnread && n.notification_id && onMarkRead(n.notification_id)}
+      className={`flex items-start gap-4 p-4 rounded-2xl border transition-all group ${
+        isUnread
+          ? 'bg-orange-50 border-orange-100 cursor-pointer hover:bg-orange-100'
+          : 'bg-white border-gray-100 hover:bg-gray-50'
+      }`}
+    >
+      {/* Icon */}
+      <div className={`w-11 h-11 rounded-xl ${cfg.iconBg} flex items-center justify-center flex-shrink-0`}>
+        <Icon className={`w-5 h-5 ${cfg.iconColor}`} />
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${cfg.badgeBg}`}>
+            {cfg.label}
+          </span>
+          {isUnread && (
+            <span className="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0" />
+          )}
+        </div>
+
+        <p className={`text-sm font-semibold ${isUnread ? 'text-gray-900' : 'text-gray-700'}`}>
+          {n.title}
+        </p>
+        {n.message && (
+          <p className={`text-sm mt-0.5 ${isUnread ? 'text-gray-600' : 'text-gray-400'}`}>
+            {n.message}
+          </p>
+        )}
+        <p className="text-xs text-gray-400 mt-1.5">{formatDateTime(n.created_at)}</p>
+      </div>
+
+      {/* Mark-read button */}
+      {isUnread && n.notification_id && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onMarkRead(n.notification_id); }}
+          className="flex-shrink-0 w-7 h-7 rounded-full bg-white border border-orange-200 flex items-center justify-center text-orange-400 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all mt-0.5 opacity-0 group-hover:opacity-100"
+          title="Đánh dấu đã đọc"
+        >
+          <Check className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ─── Main Page ──────────────────────────────────────────────────── */
 export default function NotificationsPage() {
-  const { setUnreadCount } = useAuth();
+  const { setUnreadCount }               = useAuth();
   const [notifications, setNotifications] = useState([]);
-  const [unread, setUnread] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [unread,        setUnread]        = useState(0);
+  const [loading,       setLoading]       = useState(true);
 
   const refresh = () => {
     setLoading(true);
@@ -53,7 +181,9 @@ export default function NotificationsPage() {
   const handleMarkOne = async (id) => {
     try {
       await markOneReadApi(id);
-      setNotifications(prev => prev.map(n => n.notification_id === id ? { ...n, is_read: true } : n));
+      setNotifications(prev =>
+        prev.map(n => n.notification_id === id ? { ...n, is_read: true } : n)
+      );
       setUnread(c => Math.max(0, c - 1));
       setUnreadCount(c => Math.max(0, c - 1));
     } catch {}
@@ -63,98 +193,95 @@ export default function NotificationsPage() {
   const readList   = notifications.filter(n => n.is_read);
 
   return (
-    <div className="max-w-2xl mx-auto animate-fadeIn">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Thông báo</h1>
+    <div className="bg-gray-50 min-h-screen">
+      <div className="max-w-2xl mx-auto px-4 py-8">
+
+        {/* Header */}
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Thông báo</h1>
+            {unread > 0 ? (
+              <p className="text-sm text-orange-500 font-medium mt-0.5">
+                {unread} thông báo chưa đọc
+              </p>
+            ) : (
+              <p className="text-sm text-gray-400 mt-0.5">Tất cả đã đọc</p>
+            )}
+          </div>
+
           {unread > 0 && (
-            <p className="text-sm text-orange-500 font-medium mt-0.5">
-              {unread} thông báo chưa đọc
-            </p>
+            <button
+              onClick={handleMarkAll}
+              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 bg-white h-9 px-3 rounded-lg hover:bg-gray-50 transition-colors flex-shrink-0"
+            >
+              <CheckCheck className="w-4 h-4" />
+              <span className="hidden sm:block">Đọc tất cả</span>
+            </button>
           )}
         </div>
-        {unread > 0 && (
-          <button onClick={handleMarkAll}
-            className="text-sm text-orange-500 border border-orange-200 px-4 py-2 rounded-xl hover:bg-orange-50 transition-colors font-medium">
-            Đọc tất cả
-          </button>
+
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <LoadingSpinner />
+          </div>
+        ) : notifications.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-gray-200 p-16 text-center">
+            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Bell className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="font-semibold text-gray-700 mb-1">Chưa có thông báo nào</p>
+            <p className="text-sm text-gray-400">Các cập nhật về đơn hàng sẽ hiển thị ở đây</p>
+          </div>
+        ) : (
+          <div className="space-y-7">
+
+            {/* Chưa đọc */}
+            {unreadList.length > 0 && (
+              <section>
+                <div className="flex items-center gap-3 mb-3">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
+                    Chưa đọc
+                  </p>
+                  <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-semibold">
+                    {unreadList.length}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {unreadList.map((n) => (
+                    <NotificationItem
+                      key={n.notification_id}
+                      n={n}
+                      onMarkRead={handleMarkOne}
+                      isUnread
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Đã đọc */}
+            {readList.length > 0 && (
+              <section>
+                {unreadList.length > 0 && (
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
+                    Đã đọc
+                  </p>
+                )}
+                <div className="space-y-2">
+                  {readList.map((n) => (
+                    <NotificationItem
+                      key={n.notification_id}
+                      n={n}
+                      onMarkRead={handleMarkOne}
+                      isUnread={false}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
         )}
       </div>
-
-      {loading ? (
-        <div className="flex justify-center py-16"><LoadingSpinner /></div>
-      ) : notifications.length === 0 ? (
-        <div className="bg-white rounded-2xl p-14 text-center border border-gray-100 shadow-sm">
-          <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">🔔</div>
-          <p className="text-gray-700 font-semibold mb-1">Chưa có thông báo nào</p>
-          <p className="text-gray-400 text-sm">Các cập nhật về đơn hàng sẽ hiển thị ở đây</p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Chưa đọc */}
-          {unreadList.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Chưa đọc</p>
-              <div className="space-y-2">
-                {unreadList.map((n) => {
-                  const cfg = TYPE_CONFIG[n.type] || TYPE_CONFIG.default;
-                  return (
-                    <div key={n.notification_id} onClick={() => n.notification_id && handleMarkOne(n.notification_id)}
-                      className="flex items-start gap-4 p-4 bg-orange-50 border border-orange-100 rounded-2xl cursor-pointer hover:bg-orange-100 transition-colors group">
-                      <div className={`w-11 h-11 rounded-xl ${cfg.bg} flex items-center justify-center text-xl flex-shrink-0`}>
-                        {cfg.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>
-                            {cfg.label}
-                          </span>
-                          <span className="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0" />
-                        </div>
-                        <p className="text-sm font-semibold text-gray-900">{n.title}</p>
-                        {n.message && <p className="text-sm text-gray-600 mt-0.5">{n.message}</p>}
-                        <p className="text-xs text-gray-400 mt-1">{formatDateTime(n.created_at)}</p>
-                      </div>
-                      <button className="text-xs text-gray-400 group-hover:text-gray-600 flex-shrink-0 mt-1" title="Đánh dấu đã đọc">
-                        ✕
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Đã đọc */}
-          {readList.length > 0 && (
-            <div>
-              {unreadList.length > 0 && (
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Đã đọc</p>
-              )}
-              <div className="space-y-2">
-                {readList.map((n) => {
-                  const cfg = TYPE_CONFIG[n.type] || TYPE_CONFIG.default;
-                  return (
-                    <div key={n.notification_id}
-                      className="flex items-start gap-4 p-4 bg-white border border-gray-100 rounded-2xl opacity-70 hover:opacity-100 transition-opacity">
-                      <div className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-xl flex-shrink-0">
-                        {cfg.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="text-xs font-medium text-gray-400">{cfg.label}</span>
-                        <p className="text-sm text-gray-600 font-medium mt-0.5">{n.title}</p>
-                        {n.message && <p className="text-sm text-gray-400 mt-0.5">{n.message}</p>}
-                        <p className="text-xs text-gray-400 mt-1">{formatDateTime(n.created_at)}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
