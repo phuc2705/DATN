@@ -26,10 +26,30 @@ async function runMigrations(connection) {
   try {
     await connection.query('ALTER TABLE users MODIFY COLUMN phone VARCHAR(15) UNIQUE NULL');
     await connection.query('ALTER TABLE users MODIFY COLUMN password_hash VARCHAR(255) NULL');
-    console.log('✅ Migrations hoàn tất.');
   } catch (err) {
-    console.error('⚠️  Migration warning:', err.message);
+    // ignore — đã chạy rồi
   }
+
+  // Migration v2: cập nhật 12 dịch vụ đầy đủ
+  try {
+    const [[svc1]] = await connection.query('SELECT service_name FROM services WHERE service_id = 1');
+    if (svc1 && svc1.service_name !== 'Giúp việc theo giờ') {
+      console.log('⚙️  Đang chạy migration services v2...');
+      const migPath = require('path').join(__dirname, '../../../database/migrate_services_v2.sql');
+      let sql = require('fs').readFileSync(migPath, 'utf8');
+      sql = sql.replace(/USE\s+\w+;/gi, '').replace(/--[^\n]*/g, '');
+      // Tách thành từng statement riêng để chạy
+      const stmts = sql.split(';').map(s => s.trim()).filter(s => s.length > 10);
+      for (const stmt of stmts) {
+        await connection.query(stmt);
+      }
+      console.log('✅ Migration services v2 hoàn tất — 12 dịch vụ đã cập nhật.');
+    }
+  } catch (err) {
+    console.error('⚠️  Migration services v2 warning:', err.message);
+  }
+
+  console.log('✅ Migrations hoàn tất.');
 }
 
 async function initDatabase() {
