@@ -22,36 +22,49 @@ const MOCK_SERVICE = {
   reviewCount:      234,
   helperCount:      48,
   completedBookings: 1200,
-  description: `Dịch vụ dọn dẹp nhà cửa toàn diện, thực hiện bởi đội ngũ người giúp việc được đào tạo bài bản và xác minh danh tính kỹ lưỡng.
+  description: `Bạn bận rộn — chúng tôi lo phần còn lại. Dịch vụ dọn dẹp nhà theo giờ của CleanConnect kết nối bạn với những người giúp việc được xác minh danh tính, có kinh nghiệm thực tế và được đánh giá bởi cộng đồng khách hàng thật.
 
-Chúng tôi sử dụng sản phẩm vệ sinh an toàn, thân thiện với trẻ em và thú cưng. Mỗi ca làm việc đều được ghi lại qua hệ thống check-in/check-out GPS để đảm bảo tính minh bạch và đúng giờ.
+Mỗi người giúp việc trải qua quy trình xác minh CCCD, kiểm tra lý lịch tư pháp và phỏng vấn trực tiếp trước khi được nhận vào hệ thống. Chúng tôi chỉ chấp nhận những ứng viên đạt điểm đánh giá từ 4.5 trở lên sau giai đoạn thử việc.
 
-Người giúp việc của chúng tôi có kinh nghiệm trung bình 3+ năm, được đánh giá bởi hàng trăm khách hàng thực. Bạn hoàn toàn có thể yên tâm khi rời nhà.`,
+Toàn bộ ca làm việc được theo dõi qua hệ thống check-in/check-out GPS — bạn nhận thông báo khi người giúp việc đến và hoàn thành công việc. Sản phẩm vệ sinh an toàn, không mùi hắc, thân thiện với trẻ nhỏ và thú cưng.`,
   images: [
-    { id: 1, gradient: 'from-orange-100 via-orange-50 to-amber-100', Icon: Home,     label: 'Phòng khách sạch bóng'   },
-    { id: 2, gradient: 'from-sky-100   via-blue-50  to-cyan-100',    Icon: Droplets, label: 'Nhà bếp vệ sinh sâu'      },
-    { id: 3, gradient: 'from-emerald-100 via-green-50 to-teal-100',  Icon: Wind,     label: 'Phòng ngủ gọn gàng'      },
+    {
+      id: 1,
+      url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&auto=format&fit=crop&q=80',
+      label: 'Phòng khách sạch bóng, không tì vết',
+    },
+    {
+      id: 2,
+      url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&auto=format&fit=crop&q=80',
+      label: 'Bếp sáng bóng sau khi vệ sinh sâu',
+    },
+    {
+      id: 3,
+      url: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&auto=format&fit=crop&q=80',
+      label: 'Phòng ngủ gọn gàng, thoáng mát',
+    },
   ],
   includes: [
-    'Lau sàn toàn bộ các phòng',
-    'Vệ sinh nhà bếp (bếp, bồn rửa, tủ lạnh ngoài)',
-    'Lau dọn nhà vệ sinh và phòng tắm',
-    'Hút bụi thảm và sofa',
-    'Lau kính cửa sổ và gương',
-    'Dọn và lau bàn ghế, kệ tủ',
-    'Đổ rác và thay túi rác',
-    'Quét mạng nhện trần nhà và quạt',
+    'Lau sàn toàn bộ các phòng (kể cả góc khuất)',
+    'Vệ sinh nhà bếp: bếp ga/từ, bồn rửa, mặt bàn, tủ lạnh ngoài',
+    'Lau dọn nhà vệ sinh và phòng tắm sạch khuẩn',
+    'Hút bụi thảm, sofa và các góc chân tường',
+    'Lau kính cửa sổ, gương và bề mặt bóng',
+    'Dọn và lau bàn ghế, kệ tủ, đồ trang trí',
+    'Đổ rác, thay túi rác và vệ sinh thùng rác',
+    'Quét mạng nhện trần nhà, quạt trần và cánh cửa',
   ],
   excludes: [
-    'Giặt ủi quần áo (xem dịch vụ riêng)',
-    'Vệ sinh điều hòa',
-    'Vệ sinh bên ngoài tòa nhà',
+    'Giặt ủi quần áo (có dịch vụ riêng)',
+    'Vệ sinh bên trong điều hòa, lò vi sóng, lò nướng',
+    'Vệ sinh bên ngoài tòa nhà, ban công tầng cao',
+    'Di chuyển đồ nặng hoặc lắp ráp nội thất',
   ],
   highlights: [
-    { Icon: Shield,     text: 'Xác minh CCCD & lý lịch' },
-    { Icon: Clock,      text: 'Đúng giờ ± 15 phút'       },
-    { Icon: CreditCard, text: 'Giá cố định, không phí ẩn' },
-    { Icon: Users,      text: '48 người giúp việc sẵn sàng' },
+    { Icon: Shield,     text: 'Xác minh CCCD & lý lịch tư pháp' },
+    { Icon: Clock,      text: 'Đúng giờ, GPS check-in/out thực tế' },
+    { Icon: CreditCard, text: 'Giá cố định theo giờ, không phát sinh' },
+    { Icon: Users,      text: '48 người giúp việc đã xác minh sẵn sàng' },
   ],
   ratingBreakdown: { 5: 178, 4: 38, 3: 12, 2: 4, 1: 2 },
 };
@@ -179,21 +192,34 @@ function PhotoGallery({ images }) {
   const [main, ...thumbs] = images;
   return (
     <div className="rounded-2xl overflow-hidden mb-8">
-      <div className="grid grid-cols-2 grid-rows-2 h-[380px] md:h-[440px] gap-2">
+      <div className="grid grid-cols-2 grid-rows-2 h-[380px] md:h-[460px] gap-2">
         {/* Ảnh chính — chiếm toàn bộ cột trái */}
-        <div className={`row-span-2 bg-gradient-to-br ${main.gradient} flex flex-col items-center justify-center relative group cursor-pointer`}>
-          <main.Icon className="w-16 h-16 text-white/30" />
-          <p className="text-white/50 text-sm mt-2 font-medium">{main.label}</p>
-          {/* Badge "Ảnh thật sẽ hiển thị tại đây" */}
-          <span className="absolute bottom-3 left-3 bg-black/40 text-white text-xs px-2.5 py-1 rounded-full backdrop-blur-sm">
-            Ảnh minh họa
+        <div className="row-span-2 relative group cursor-pointer overflow-hidden bg-gray-100">
+          <img
+            src={main.url}
+            alt={main.label}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+          />
+          {/* Gradient overlay + label */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+          <span className="absolute bottom-3 left-3 bg-black/50 text-white text-xs px-2.5 py-1 rounded-full backdrop-blur-sm font-medium">
+            {main.label}
           </span>
         </div>
         {/* 2 thumbnail nhỏ — cột phải */}
         {thumbs.slice(0, 2).map((img) => (
-          <div key={img.id} className={`bg-gradient-to-br ${img.gradient} flex flex-col items-center justify-center cursor-pointer hover:opacity-90 transition-opacity`}>
-            <img.Icon className="w-10 h-10 text-white/30" />
-            <p className="text-white/40 text-xs mt-1.5">{img.label}</p>
+          <div key={img.id} className="relative group cursor-pointer overflow-hidden bg-gray-100">
+            <img
+              src={img.url}
+              alt={img.label}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+            <span className="absolute bottom-2 left-2 text-white text-xs font-medium drop-shadow">
+              {img.label}
+            </span>
           </div>
         ))}
       </div>
