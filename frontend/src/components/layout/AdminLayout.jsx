@@ -1,4 +1,4 @@
-// Layout shell cho toàn bộ trang admin — Linear dark theme
+// Layout shell cho toàn bộ trang admin — Linear dark theme (inline styles)
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
@@ -7,124 +7,151 @@ import {
   CreditCard, Layers, Tag, ExternalLink, LogOut, Menu, X,
 } from 'lucide-react';
 
+// Design tokens
+const C = {
+  canvas:   '#010102',
+  surface1: '#0f1117',
+  surface2: '#1e2028',
+  hairline: '#23252a',
+  primary:  '#5e6ad2',
+  primary2: '#828fff',
+  ink:      '#f7f8f8',
+  muted:    '#8a8f98',
+  dim:      '#62666d',
+};
+
 const NAV = [
-  { to: '/admin',             end: true, label: 'Dashboard',        icon: LayoutDashboard },
-  { to: '/admin/users',       end: false, label: 'Người dùng',      icon: Users },
-  { to: '/admin/helpers',     end: false, label: 'Người giúp việc', icon: Briefcase },
-  { to: '/admin/bookings',    end: false, label: 'Đơn hàng',        icon: ClipboardList },
-  { to: '/admin/payments',    end: false, label: 'Thanh toán',       icon: CreditCard },
-  { to: '/admin/services',    end: false, label: 'Dịch vụ',         icon: Layers },
-  { to: '/admin/promotions',  end: false, label: 'Khuyến mãi',      icon: Tag },
+  { to: '/admin',            end: true,  label: 'Dashboard',        icon: LayoutDashboard },
+  { to: '/admin/users',      end: false, label: 'Người dùng',       icon: Users },
+  { to: '/admin/helpers',    end: false, label: 'Người giúp việc',  icon: Briefcase },
+  { to: '/admin/bookings',   end: false, label: 'Đơn hàng',         icon: ClipboardList },
+  { to: '/admin/payments',   end: false, label: 'Thanh toán',       icon: CreditCard },
+  { to: '/admin/services',   end: false, label: 'Dịch vụ',          icon: Layers },
+  { to: '/admin/promotions', end: false, label: 'Khuyến mãi',       icon: Tag },
 ];
 
 export default function AdminLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [hoverItem, setHoverItem] = useState(null);
 
   const handleLogout = () => { logout(); navigate('/login'); };
 
   return (
-    <div className="min-h-screen flex bg-[#010102]">
+    <div style={{ minHeight: '100vh', display: 'flex', backgroundColor: C.canvas }}>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-20 lg:hidden"
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 20 }}
+          className="lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* ── Sidebar ─────────────────────────────────────────────────────── */}
       <aside
-        className={`fixed left-0 top-0 bottom-0 z-30 w-64 flex flex-col transition-transform duration-300
-          bg-[#0f1117] border-r border-[#23252a]
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
+        className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
+        style={{
+          position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 30,
+          width: 256, display: 'flex', flexDirection: 'column',
+          backgroundColor: C.surface1,
+          borderRight: `1px solid ${C.hairline}`,
+          transition: 'transform 0.3s',
+        }}
       >
         {/* Logo */}
-        <div className="px-6 py-5 border-b border-[#23252a] flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img
-              src="/logo.png"
-              alt="CleanConnect"
-              className="h-8 w-auto object-contain brightness-0 invert opacity-90"
-            />
-            <span className="text-[10px] font-semibold tracking-widest uppercase text-[#62666d]">
-              Admin
-            </span>
+        <div style={{ padding: '20px 24px', borderBottom: `1px solid ${C.hairline}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <img src="/logo.png" alt="CleanConnect" style={{ height: 32, filter: 'brightness(0) invert(1)', opacity: 0.9 }} />
+            <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.dim }}>Admin</span>
           </div>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-1 rounded-md text-[#8a8f98] hover:text-[#f7f8f8] transition-colors"
-          >
-            <X className="w-4 h-4" />
+          <button className="lg:hidden" onClick={() => setSidebarOpen(false)} style={{ color: C.muted, background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+            <X size={16} />
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+        <nav style={{ flex: 1, padding: '16px 12px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
           {NAV.map(({ to, end, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               end={end}
               onClick={() => setSidebarOpen(false)}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                  isActive
-                    ? 'bg-[#5e6ad2]/10 text-[#828fff]'
-                    : 'text-[#8a8f98] hover:bg-[#1e2028] hover:text-[#f7f8f8]'
-                }`
-              }
+              className={({ isActive }) => isActive ? '__nav-active' : ''}
+              style={({ isActive }) => ({
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '10px 12px', borderRadius: 8,
+                fontSize: 14, fontWeight: 500, textDecoration: 'none',
+                transition: 'all 0.15s',
+                backgroundColor: isActive ? 'rgba(94,106,210,0.15)' : (hoverItem === to ? C.surface2 : 'transparent'),
+                color: isActive ? C.primary2 : (hoverItem === to ? C.ink : C.muted),
+              })}
+              onMouseEnter={() => setHoverItem(to)}
+              onMouseLeave={() => setHoverItem(null)}
             >
-              <Icon className="w-4 h-4 shrink-0" />
+              <Icon size={16} style={{ flexShrink: 0 }} />
               {label}
             </NavLink>
           ))}
         </nav>
 
         {/* Xem trang chính */}
-        <div className="px-3 pb-2">
+        <div style={{ padding: '0 12px 8px' }}>
           <a
             href="/"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#8a8f98] hover:bg-[#1e2028] hover:text-[#f7f8f8] transition-all"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              padding: '10px 12px', borderRadius: 8,
+              fontSize: 14, fontWeight: 500, textDecoration: 'none',
+              color: C.muted, transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = C.surface2; e.currentTarget.style.color = C.ink; }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = C.muted; }}
           >
-            <ExternalLink className="w-4 h-4 shrink-0" />
+            <ExternalLink size={16} style={{ color: C.dim, flexShrink: 0 }} />
             Xem trang chính
           </a>
         </div>
 
         {/* User + Logout */}
-        <div className="px-4 py-4 border-t border-[#23252a]">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-[#5e6ad2] flex items-center justify-center text-white text-xs font-bold shrink-0">
+        <div style={{ padding: '16px', borderTop: `1px solid ${C.hairline}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: C.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
               {user?.fullName?.[0]?.toUpperCase() || 'A'}
             </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-[#f7f8f8] truncate">{user?.fullName || 'Admin'}</p>
-              <p className="text-xs text-[#62666d] truncate">{user?.email}</p>
+            <div style={{ minWidth: 0 }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: C.ink, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.fullName || 'Admin'}</p>
+              <p style={{ fontSize: 12, color: C.dim, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-[#8a8f98] hover:bg-red-500/10 hover:text-red-400 transition-all"
+            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 8, fontSize: 14, color: C.muted, background: 'none', border: 'none', cursor: 'pointer', transition: 'all 0.15s' }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#f87171'; }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = C.muted; }}
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut size={16} />
             Đăng xuất
           </button>
         </div>
       </aside>
 
       {/* ── Main content ─────────────────────────────────────────────────── */}
-      <main className="flex-1 lg:ml-64 min-h-screen flex flex-col bg-[#010102]">
+      <main
+        className="flex-1 lg:ml-64"
+        style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: C.canvas }}
+      >
         {/* Mobile topbar */}
-        <div className="lg:hidden sticky top-0 z-10 bg-[#0f1117] border-b border-[#23252a] px-4 h-14 flex items-center gap-3">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-lg text-[#8a8f98] hover:text-[#f7f8f8] hover:bg-[#1e2028] transition-colors"
-          >
-            <Menu className="w-5 h-5" />
+        <div
+          className="lg:hidden"
+          style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: C.surface1, borderBottom: `1px solid ${C.hairline}`, padding: '0 16px', height: 56, display: 'flex', alignItems: 'center', gap: 12 }}
+        >
+          <button onClick={() => setSidebarOpen(true)} style={{ padding: 8, borderRadius: 8, color: C.muted, background: 'none', border: 'none', cursor: 'pointer' }}>
+            <Menu size={20} />
           </button>
-          <img src="/logo.png" alt="Admin" className="h-7 w-auto brightness-0 invert opacity-90" />
+          <img src="/logo.png" alt="Admin" style={{ height: 28, filter: 'brightness(0) invert(1)', opacity: 0.9 }} />
         </div>
 
         <div className="p-4 md:p-8">
