@@ -1,3 +1,6 @@
+// Layout shell cho toàn bộ trang admin — Linear dark theme
+// Canvas: #010102 | Surface-1: #0f1117 | Surface-2: #1e2028
+// Primary: #5e6ad2 | Hairline: #23252a | Ink: #f7f8f8
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
@@ -27,27 +30,43 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen flex" style={{ backgroundColor: '#010102' }}>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+          className="fixed inset-0 bg-black/60 z-20 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed left-0 top-0 bottom-0 z-30 w-64 bg-gray-900 flex flex-col transition-transform duration-300
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+      <aside
+        className={`fixed left-0 top-0 bottom-0 z-30 w-64 flex flex-col transition-transform duration-300
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
+        style={{ backgroundColor: '#0f1117', borderRight: '1px solid #23252a' }}
+      >
         {/* Logo */}
-        <div className="px-6 py-5 border-b border-gray-800 flex items-center justify-between">
+        <div
+          className="px-6 py-5 flex items-center justify-between"
+          style={{ borderBottom: '1px solid #23252a' }}
+        >
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="CleanConnect" className="h-8 w-auto object-contain brightness-0 invert" />
-            <p className="text-gray-400 text-xs font-medium">Admin Panel</p>
+            <img
+              src="/logo.png"
+              alt="CleanConnect"
+              className="h-8 w-auto object-contain brightness-0 invert opacity-90"
+            />
+            <span
+              className="text-xs font-medium tracking-widest uppercase"
+              style={{ color: '#62666d' }}
+            >
+              Admin
+            </span>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-1 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+            className="lg:hidden p-1 rounded-md transition-colors"
+            style={{ color: '#8a8f98' }}
           >
             <X className="w-4 h-4" />
           </button>
@@ -62,15 +81,25 @@ export default function AdminLayout() {
               end={end}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                  isActive
-                    ? 'bg-orange-500 text-white shadow-sm'
-                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  isActive ? 'active-nav' : 'inactive-nav'
                 }`
               }
+              style={({ isActive }) =>
+                isActive
+                  ? { backgroundColor: 'rgba(94,106,210,0.15)', color: '#828fff' }
+                  : { color: '#8a8f98' }
+              }
             >
-              <Icon className="w-5 h-5 shrink-0" />
-              {label}
+              {({ isActive }) => (
+                <>
+                  <Icon
+                    className="w-4 h-4 shrink-0"
+                    style={{ color: isActive ? '#828fff' : '#62666d' }}
+                  />
+                  {label}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -79,27 +108,52 @@ export default function AdminLayout() {
         <div className="px-3 pb-2">
           <a
             href="/"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white text-sm font-medium transition-all"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all"
+            style={{ color: '#8a8f98' }}
+            onMouseEnter={e => {
+              e.currentTarget.style.backgroundColor = '#1e2028';
+              e.currentTarget.style.color = '#f7f8f8';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = '#8a8f98';
+            }}
           >
-            <ExternalLink className="w-5 h-5 shrink-0" />
+            <ExternalLink className="w-4 h-4 shrink-0" style={{ color: '#62666d' }} />
             Xem trang chính
           </a>
         </div>
 
         {/* User info + logout */}
-        <div className="px-4 py-4 border-t border-gray-800">
+        <div className="px-4 py-4" style={{ borderTop: '1px solid #23252a' }}>
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0"
+              style={{ backgroundColor: '#5e6ad2', color: '#fff' }}
+            >
               {user?.fullName?.[0]?.toUpperCase() || 'A'}
             </div>
             <div className="min-w-0">
-              <p className="text-white text-xs font-semibold truncate">{user?.fullName || 'Admin'}</p>
-              <p className="text-gray-500 text-xs truncate">{user?.email}</p>
+              <p className="text-xs font-semibold truncate" style={{ color: '#f7f8f8' }}>
+                {user?.fullName || 'Admin'}
+              </p>
+              <p className="text-xs truncate" style={{ color: '#62666d' }}>
+                {user?.email}
+              </p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-red-400 text-sm transition-all"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all"
+            style={{ color: '#8a8f98' }}
+            onMouseEnter={e => {
+              e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.08)';
+              e.currentTarget.style.color = '#f87171';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = '#8a8f98';
+            }}
           >
             <LogOut className="w-4 h-4" />
             Đăng xuất
@@ -108,16 +162,30 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 lg:ml-64 min-h-screen flex flex-col">
+      <main
+        className="flex-1 lg:ml-64 min-h-screen flex flex-col"
+        style={{ backgroundColor: '#010102' }}
+      >
         {/* Mobile topbar */}
-        <div className="lg:hidden sticky top-0 z-10 bg-white border-b border-gray-200 px-4 h-14 flex items-center gap-3 shadow-sm">
+        <div
+          className="lg:hidden sticky top-0 z-10 px-4 h-14 flex items-center gap-3"
+          style={{
+            backgroundColor: '#0f1117',
+            borderBottom: '1px solid #23252a',
+          }}
+        >
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: '#8a8f98' }}
           >
             <Menu className="w-5 h-5" />
           </button>
-          <img src="/logo.png" alt="Admin" className="h-7 w-auto" />
+          <img
+            src="/logo.png"
+            alt="Admin"
+            className="h-7 w-auto brightness-0 invert opacity-90"
+          />
         </div>
 
         <div className="p-4 md:p-8">

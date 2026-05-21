@@ -26,26 +26,49 @@ function EditModal({ service, onClose, onSaved }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
-        <h3 className="font-bold text-gray-900 text-lg mb-5">Chỉnh sửa dịch vụ</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
+      <div className="bg-[#0f1117] border border-[#23252a] rounded-lg p-6 w-full max-w-md">
+        <h3 className="font-bold text-[#f7f8f8] text-lg mb-5">Chỉnh sửa dịch vụ</h3>
         <div className="space-y-4">
           <div>
-            <label className="label">Tên dịch vụ</label>
-            <input className="input-field" value={form.serviceName} onChange={(e) => setForm({ ...form, serviceName: e.target.value })} />
+            <label className="block text-xs font-medium text-[#8a8f98] mb-1.5">Tên dịch vụ</label>
+            <input
+              className="w-full bg-[#0a0b0f] border border-[#23252a] text-[#d0d6e0] placeholder-[#62666d] focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm"
+              value={form.serviceName}
+              onChange={(e) => setForm({ ...form, serviceName: e.target.value })}
+            />
           </div>
           <div>
-            <label className="label">Mô tả</label>
-            <textarea className="input-field resize-none" rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <label className="block text-xs font-medium text-[#8a8f98] mb-1.5">Mô tả</label>
+            <textarea
+              className="w-full bg-[#0a0b0f] border border-[#23252a] text-[#d0d6e0] placeholder-[#62666d] focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm resize-none"
+              rows={3}
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+            />
           </div>
           <div>
-            <label className="label">Giá cơ bản (VND/giờ)</label>
-            <input type="number" className="input-field" value={form.basePrice} onChange={(e) => setForm({ ...form, basePrice: e.target.value })} />
+            <label className="block text-xs font-medium text-[#8a8f98] mb-1.5">Giá cơ bản (VND/giờ)</label>
+            <input
+              type="number"
+              className="w-full bg-[#0a0b0f] border border-[#23252a] text-[#d0d6e0] placeholder-[#62666d] focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm"
+              value={form.basePrice}
+              onChange={(e) => setForm({ ...form, basePrice: e.target.value })}
+            />
           </div>
         </div>
         <div className="flex gap-3 mt-6">
-          <button onClick={onClose} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">Hủy</button>
-          <button onClick={handleSave} disabled={saving} className="flex-1 btn-primary py-2.5 text-sm disabled:opacity-60">
+          <button
+            onClick={onClose}
+            className="flex-1 bg-[#1e2028] hover:bg-[#272932] text-[#d0d6e0] border border-[#23252a] text-sm font-medium rounded-md px-4 py-2 transition-colors"
+          >
+            Hủy
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex-1 bg-[#5e6ad2] hover:bg-[#828fff] text-white text-sm font-medium rounded-md px-4 py-2 transition-colors disabled:opacity-60"
+          >
             {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
           </button>
         </div>
@@ -85,8 +108,8 @@ export default function AdminServicesPage() {
   return (
     <div className="animate-fadeIn">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Quản lý dịch vụ</h1>
-        <p className="text-gray-500 text-sm mt-1">{services.length} dịch vụ</p>
+        <h1 className="text-2xl font-bold text-[#f7f8f8]">Quản lý dịch vụ</h1>
+        <p className="text-[#8a8f98] text-sm mt-1">{services.length} dịch vụ</p>
       </div>
 
       {loading ? (
@@ -94,29 +117,36 @@ export default function AdminServicesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {services.map((s, i) => (
-            <div key={s.serviceId} className={`bg-white rounded-2xl p-5 border shadow-sm transition-all ${s.isActive ? 'border-gray-100' : 'border-red-100 opacity-60'}`}>
+            <div
+              key={s.serviceId}
+              className={`bg-[#0f1117] rounded-lg p-5 border border-[#1e2028] transition-all ${!s.isActive ? 'opacity-60' : ''}`}
+            >
               <div className="flex items-start justify-between mb-3">
-                <div className="w-11 h-11 rounded-xl bg-orange-50 flex items-center justify-center text-2xl">
+                <div className="w-11 h-11 rounded-md bg-[#1e2028] flex items-center justify-center text-2xl">
                   {SERVICE_ICONS[i] || '🔧'}
                 </div>
                 {!s.isActive && (
-                  <span className="badge bg-red-50 text-red-500 text-xs">Đã ẩn</span>
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-red-400/10 text-red-400 border border-red-400/20">
+                    Đã ẩn
+                  </span>
                 )}
               </div>
-              <h3 className="font-bold text-gray-900 mb-1">{s.serviceName}</h3>
-              <p className="text-xs text-gray-500 mb-3 line-clamp-2">{s.description}</p>
-              <p className="text-orange-600 font-bold text-sm mb-4">{formatPrice(s.basePrice)}<span className="text-gray-400 font-normal">/giờ</span></p>
+              <h3 className="font-bold text-[#f7f8f8] mb-1">{s.serviceName}</h3>
+              <p className="text-xs text-[#8a8f98] mb-3 line-clamp-2">{s.description}</p>
+              <p className="text-sm font-semibold text-[#828fff] mb-4">
+                {formatPrice(s.basePrice)}<span className="text-[#62666d] font-normal">/giờ</span>
+              </p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setEditing(s)}
-                  className="flex-1 text-xs px-3 py-2 rounded-xl border border-blue-200 text-blue-600 hover:bg-blue-50 font-semibold transition-all"
+                  className="flex-1 text-blue-300 border border-blue-400/20 hover:bg-blue-400/10 text-sm font-medium rounded-md px-3 py-1.5 transition-colors"
                 >
                   Chỉnh sửa
                 </button>
                 {s.isActive && (
                   <button
                     onClick={() => handleDelete(s.serviceId, s.serviceName)}
-                    className="text-xs px-3 py-2 rounded-xl border border-red-200 text-red-500 hover:bg-red-50 font-semibold transition-all"
+                    className="text-red-400 border border-red-400/20 hover:bg-red-400/10 text-sm font-medium rounded-md px-3 py-1.5 transition-colors"
                   >
                     Ẩn
                   </button>

@@ -395,8 +395,7 @@ export default function AdminBookingsPage() {
   ];
 
   return (
-    // Kéo dài nền canvas (#010102) phủ toàn bộ vùng nội dung của AdminLayout
-    <div className="-m-4 md:-m-8 bg-[#010102] min-h-screen px-4 md:px-8 py-6 md:py-8">
+    <div className="animate-fadeIn">
 
       {/* ── Page header ────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between mb-8">
