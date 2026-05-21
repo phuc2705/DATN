@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: cleanconnect
+    env: node
+    buildCommand: npm install --prefix frontend --include=dev && npm run build --prefix frontend && npm install --prefix backend
+    startCommand: node backend/server.js
+    autoDeploy: true
