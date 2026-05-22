@@ -10,6 +10,106 @@ import {
   Home, Briefcase, Droplets, Wind,
 } from 'lucide-react';
 
+// ── Ảnh tương ứng cho từng dịch vụ (theo slug) ───────────────────────────────
+const SERVICE_IMAGES = {
+  'giup-viec-theo-gio': [
+    { id: 1, url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&auto=format&fit=crop&q=80', label: 'Lau dọn nhà cửa sạch sẽ' },
+    { id: 2, url: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&auto=format&fit=crop&q=80', label: 'Vệ sinh bếp tinh tế' },
+    { id: 3, url: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&auto=format&fit=crop&q=80', label: 'Phòng ngủ gọn gàng' },
+  ],
+  'giup-viec-dinh-ky': [
+    { id: 1, url: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=900&auto=format&fit=crop&q=80', label: 'Dọn dẹp định kỳ chuyên nghiệp' },
+    { id: 2, url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&auto=format&fit=crop&q=80', label: 'Nhà sạch mỗi tuần' },
+    { id: 3, url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&auto=format&fit=crop&q=80', label: 'Bếp luôn sạch bóng' },
+  ],
+  'don-dep-nha-cua': [
+    { id: 1, url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&auto=format&fit=crop&q=80', label: 'Dọn dẹp toàn diện' },
+    { id: 2, url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&auto=format&fit=crop&q=80', label: 'Bếp sạch bóng' },
+    { id: 3, url: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&auto=format&fit=crop&q=80', label: 'Phòng ngủ thoáng mát' },
+  ],
+  'tong-ve-sinh': [
+    { id: 1, url: 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=900&auto=format&fit=crop&q=80', label: 'Tổng vệ sinh toàn diện' },
+    { id: 2, url: 'https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=600&auto=format&fit=crop&q=80', label: 'Không gian sạch tinh tươm' },
+    { id: 3, url: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&auto=format&fit=crop&q=80', label: 'Vệ sinh sâu từng góc' },
+  ],
+  'nau-an': [
+    { id: 1, url: 'https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=900&auto=format&fit=crop&q=80', label: 'Bữa ăn gia đình thơm ngon' },
+    { id: 2, url: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=600&auto=format&fit=crop&q=80', label: 'Nấu nướng chuyên nghiệp' },
+    { id: 3, url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&auto=format&fit=crop&q=80', label: 'Bếp sạch sau khi nấu' },
+  ],
+  'nau-an-gia-dinh': [
+    { id: 1, url: 'https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=900&auto=format&fit=crop&q=80', label: 'Bữa cơm gia đình ấm cúng' },
+    { id: 2, url: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=600&auto=format&fit=crop&q=80', label: 'Chế biến món ngon' },
+    { id: 3, url: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&auto=format&fit=crop&q=80', label: 'Nguyên liệu tươi sạch' },
+  ],
+  'cham-soc-tre-em': [
+    { id: 1, url: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=900&auto=format&fit=crop&q=80', label: 'Trông trẻ tận tâm' },
+    { id: 2, url: 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?w=600&auto=format&fit=crop&q=80', label: 'Vui chơi an toàn' },
+    { id: 3, url: 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=600&auto=format&fit=crop&q=80', label: 'Học bài cùng bé' },
+  ],
+  'trong-tre-tai-nha': [
+    { id: 1, url: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=900&auto=format&fit=crop&q=80', label: 'Trông trẻ ngay tại nhà' },
+    { id: 2, url: 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?w=600&auto=format&fit=crop&q=80', label: 'Bé vui chơi an lành' },
+    { id: 3, url: 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=600&auto=format&fit=crop&q=80', label: 'Hỗ trợ học bài' },
+  ],
+  'cham-soc-nguoi-gia': [
+    { id: 1, url: 'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?w=900&auto=format&fit=crop&q=80', label: 'Chăm sóc người cao tuổi ân cần' },
+    { id: 2, url: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=600&auto=format&fit=crop&q=80', label: 'Hỗ trợ sinh hoạt hàng ngày' },
+    { id: 3, url: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=600&auto=format&fit=crop&q=80', label: 'Không khí gia đình ấm áp' },
+  ],
+  'cham-soc-nguoi-cao-tuoi': [
+    { id: 1, url: 'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?w=900&auto=format&fit=crop&q=80', label: 'Chăm sóc người thân yêu' },
+    { id: 2, url: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=600&auto=format&fit=crop&q=80', label: 'Hỗ trợ sinh hoạt tận tình' },
+    { id: 3, url: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=600&auto=format&fit=crop&q=80', label: 'Môi trường an toàn, thoải mái' },
+  ],
+  'giat-ui': [
+    { id: 1, url: 'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?w=900&auto=format&fit=crop&q=80', label: 'Giặt sạch thơm tho' },
+    { id: 2, url: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&auto=format&fit=crop&q=80', label: 'Là ủi phẳng phiu' },
+    { id: 3, url: 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?w=600&auto=format&fit=crop&q=80', label: 'Gấp gọn gàng cẩn thận' },
+  ],
+  've-sinh-sofa-nem-rem': [
+    { id: 1, url: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=900&auto=format&fit=crop&q=80', label: 'Sofa sạch như mới' },
+    { id: 2, url: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&auto=format&fit=crop&q=80', label: 'Nệm thơm thoáng sạch khuẩn' },
+    { id: 3, url: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=600&auto=format&fit=crop&q=80', label: 'Rèm cửa tươi mới' },
+  ],
+  've-sinh-dieu-hoa': [
+    { id: 1, url: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=900&auto=format&fit=crop&q=80', label: 'Vệ sinh điều hòa chuyên nghiệp' },
+    { id: 2, url: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600&auto=format&fit=crop&q=80', label: 'Thợ tay nghề cao' },
+    { id: 3, url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&auto=format&fit=crop&q=80', label: 'Không khí trong lành hơn' },
+  ],
+  've-sinh-may-giat-thiet-bi-bep': [
+    { id: 1, url: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=900&auto=format&fit=crop&q=80', label: 'Máy giặt sạch bóng' },
+    { id: 2, url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&auto=format&fit=crop&q=80', label: 'Thiết bị bếp vệ sinh kỹ lưỡng' },
+    { id: 3, url: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&auto=format&fit=crop&q=80', label: 'Tủ lạnh khử khuẩn sâu' },
+  ],
+  'cham-soc-thu-cung': [
+    { id: 1, url: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=900&auto=format&fit=crop&q=80', label: 'Cún cưng được yêu thương' },
+    { id: 2, url: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600&auto=format&fit=crop&q=80', label: 'Mèo được chăm sóc tận tình' },
+    { id: 3, url: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=600&auto=format&fit=crop&q=80', label: 'Vui đùa, ăn uống đúng giờ' },
+  ],
+  've-sinh-van-phong-shop': [
+    { id: 1, url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&auto=format&fit=crop&q=80', label: 'Văn phòng sạch, chuyên nghiệp' },
+    { id: 2, url: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=600&auto=format&fit=crop&q=80', label: 'Không gian làm việc lý tưởng' },
+    { id: 3, url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&auto=format&fit=crop&q=80', label: 'Sàn bóng, bụi bặm không còn' },
+  ],
+  've-sinh-cong-nghiep': [
+    { id: 1, url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&auto=format&fit=crop&q=80', label: 'Vệ sinh công nghiệp quy mô lớn' },
+    { id: 2, url: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&auto=format&fit=crop&q=80', label: 'Thiết bị chuyên dụng hiện đại' },
+    { id: 3, url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&auto=format&fit=crop&q=80', label: 'Kết quả ấn tượng' },
+  ],
+  'phun-khu-khuan-con-trung': [
+    { id: 1, url: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=900&auto=format&fit=crop&q=80', label: 'Phun khử khuẩn toàn diện' },
+    { id: 2, url: 'https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=600&auto=format&fit=crop&q=80', label: 'Diệt khuẩn 99.9%' },
+    { id: 3, url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&auto=format&fit=crop&q=80', label: 'An toàn cho cả gia đình' },
+  ],
+};
+
+const DEFAULT_IMAGES = [
+  { id: 1, url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&auto=format&fit=crop&q=80', label: 'Dịch vụ chuyên nghiệp' },
+  { id: 2, url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&auto=format&fit=crop&q=80', label: 'Đội ngũ tận tâm' },
+  { id: 3, url: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&auto=format&fit=crop&q=80', label: 'Kết quả hoàn hảo' },
+];
+
 // ── Mock data — swap với API khi backend sẵn sàng ────────────────────────────
 const MOCK_SERVICE = {
   serviceId:        1,
@@ -467,7 +567,7 @@ export default function ServiceDetailPage() {
   if (!service) return null;
 
   // Tách description thành paragraphs
-  const descParagraphs = service.description.trim().split('\n\n');
+  const descParagraphs = (service.description || '').trim().split('\n\n');
   const descShort = descParagraphs[0];
   const descHasMore = descParagraphs.length > 1;
   const shortDesc = service.shortDescription || service.short_description;
@@ -476,6 +576,7 @@ export default function ServiceDetailPage() {
   const excludes = service.excludes || parseExcludes(service.description);
   const totalRatings = Object.values(service.ratingBreakdown || {}).reduce((s, v) => s + v, 0);
   const displayedReviews = showAllReviews ? reviews : reviews.slice(0, 4);
+  const serviceImages = service.images || SERVICE_IMAGES[service.slug] || DEFAULT_IMAGES;
 
   return (
     <div className="animate-fadeIn pb-24 lg:pb-0">
@@ -493,7 +594,7 @@ export default function ServiceDetailPage() {
       </nav>
 
       {/* ── Photo gallery ───────────────────────────────────────────────────── */}
-      <PhotoGallery images={service.images || MOCK_SERVICE.images} />
+      <PhotoGallery images={serviceImages} />
 
       {/* ── Two-column layout ───────────────────────────────────────────────── */}
       <div className="grid lg:grid-cols-[1fr_360px] gap-10 items-start">
