@@ -112,6 +112,19 @@ async function runMigrations(connection) {
     // ignore
   }
 
+  // Populate short_description cho tất cả 12 dịch vụ (idempotent — chỉ update khi NULL)
+  try {
+    const allServices = [...SERVICES_V2, ...NEW_SERVICES_V2];
+    for (const s of allServices) {
+      await connection.query(
+        'UPDATE services SET short_description=? WHERE slug=? AND (short_description IS NULL OR short_description = "")',
+        [s.short, s.slug]
+      );
+    }
+  } catch (err) {
+    console.error('⚠️  Populate short_description warning:', err.message);
+  }
+
   // Migration v2: cập nhật 12 dịch vụ đầy đủ
   try {
     const [[svc1]] = await connection.query('SELECT service_name FROM services WHERE service_id = 1');
