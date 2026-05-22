@@ -32,6 +32,11 @@ const SERVICE_IMAGES = {
     { id: 2, url: 'https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=600&auto=format&fit=crop&q=80', label: 'Không gian sạch tinh tươm' },
     { id: 3, url: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&auto=format&fit=crop&q=80', label: 'Vệ sinh sâu từng góc' },
   ],
+  'tong-ve-sinh-deep-clean': [
+    { id: 1, url: 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=900&auto=format&fit=crop&q=80', label: 'Tổng vệ sinh toàn diện' },
+    { id: 2, url: 'https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=600&auto=format&fit=crop&q=80', label: 'Không gian sạch tinh tươm' },
+    { id: 3, url: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&auto=format&fit=crop&q=80', label: 'Vệ sinh sâu từng góc' },
+  ],
   'nau-an': [
     { id: 1, url: 'https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=900&auto=format&fit=crop&q=80', label: 'Bữa ăn gia đình thơm ngon' },
     { id: 2, url: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=600&auto=format&fit=crop&q=80', label: 'Nấu nướng chuyên nghiệp' },
@@ -109,6 +114,25 @@ const DEFAULT_IMAGES = [
   { id: 2, url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&auto=format&fit=crop&q=80', label: 'Đội ngũ tận tâm' },
   { id: 3, url: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&auto=format&fit=crop&q=80', label: 'Kết quả hoàn hảo' },
 ];
+
+// Fallback theo từ khóa trong tên dịch vụ khi slug không match
+function getImagesByName(name = '') {
+  const n = name.toLowerCase();
+  if (n.includes('trông trẻ') || n.includes('chăm sóc trẻ')) return SERVICE_IMAGES['trong-tre-tai-nha'];
+  if (n.includes('người cao tuổi') || n.includes('người già'))  return SERVICE_IMAGES['cham-soc-nguoi-cao-tuoi'];
+  if (n.includes('nấu ăn'))        return SERVICE_IMAGES['nau-an-gia-dinh'];
+  if (n.includes('giặt'))          return SERVICE_IMAGES['giat-ui'];
+  if (n.includes('thú cưng'))      return SERVICE_IMAGES['cham-soc-thu-cung'];
+  if (n.includes('điều hòa'))      return SERVICE_IMAGES['ve-sinh-dieu-hoa'];
+  if (n.includes('sofa') || n.includes('nệm')) return SERVICE_IMAGES['ve-sinh-sofa-nem-rem'];
+  if (n.includes('máy giặt'))      return SERVICE_IMAGES['ve-sinh-may-giat-thiet-bi-bep'];
+  if (n.includes('văn phòng'))     return SERVICE_IMAGES['ve-sinh-van-phong-shop'];
+  if (n.includes('khử khuẩn') || n.includes('côn trùng')) return SERVICE_IMAGES['phun-khu-khuan-con-trung'];
+  if (n.includes('tổng vệ sinh'))  return SERVICE_IMAGES['tong-ve-sinh-deep-clean'];
+  if (n.includes('định kỳ'))       return SERVICE_IMAGES['giup-viec-dinh-ky'];
+  if (n.includes('theo giờ') || n.includes('giúp việc')) return SERVICE_IMAGES['giup-viec-theo-gio'];
+  return DEFAULT_IMAGES;
+}
 
 // ── Mock data — swap với API khi backend sẵn sàng ────────────────────────────
 const MOCK_SERVICE = {
@@ -576,7 +600,7 @@ export default function ServiceDetailPage() {
   const excludes = service.excludes || parseExcludes(service.description);
   const totalRatings = Object.values(service.ratingBreakdown || {}).reduce((s, v) => s + v, 0);
   const displayedReviews = showAllReviews ? reviews : reviews.slice(0, 4);
-  const serviceImages = service.images || SERVICE_IMAGES[service.slug] || DEFAULT_IMAGES;
+  const serviceImages = service.images || SERVICE_IMAGES[service.slug] || getImagesByName(service.serviceName);
 
   return (
     <div className="animate-fadeIn pb-24 lg:pb-0">
