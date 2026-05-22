@@ -82,24 +82,20 @@ const AuthController = {
         await sendOtpEmail(email, otpCode, fullName);
       } catch (emailErr) {
         emailSent = false;
-        console.error('[Email] Gửi OTP thất bại:', emailErr.message);
-        // Trong môi trường production: dừng và trả lỗi
-        if (process.env.NODE_ENV !== 'development') {
-          return sendError(res, 'Không thể gửi email xác minh. Vui lòng thử lại sau.', 503);
-        }
+        console.error('[Email] Gửi OTP thất bại:', emailErr.message, emailErr.code || '');
       }
 
-      // Dev mode: trả OTP trong response khi email thất bại (để test mà không cần SMTP)
-      const devData = (!emailSent && process.env.NODE_ENV === 'development')
-        ? { email, devOtp: otpCode, warning: 'Email SMTP chưa cấu hình — dùng devOtp này để xác minh' }
-        : { email };
+      // Nếu email gửi thất bại → vẫn trả về OTP trong response để user có thể xác minh
+      const responseData = emailSent
+        ? { email }
+        : { email, otp: otpCode, warning: 'Email không gửi được — dùng mã OTP này để xác minh' };
 
       return sendSuccess(
         res,
-        devData,
+        responseData,
         emailSent
           ? 'Tài khoản đã được tạo. Mã OTP đã gửi đến email của bạn, vui lòng xác minh.'
-          : '[DEV] Tài khoản đã tạo. Email chưa cấu hình — xem devOtp trong response.',
+          : 'Tài khoản đã được tạo. Email gặp sự cố — mã OTP đã có trong phản hồi này.',
         200
       );
     } catch (error) {
@@ -182,22 +178,19 @@ const AuthController = {
         await sendOtpEmail(email, otpCode, fullName);
       } catch (emailErr) {
         emailSent = false;
-        console.error('[Email] Gửi OTP thất bại:', emailErr.message);
-        if (process.env.NODE_ENV !== 'development') {
-          return sendError(res, 'Không thể gửi email xác minh. Vui lòng thử lại sau.', 503);
-        }
+        console.error('[Email] Gửi OTP thất bại:', emailErr.message, emailErr.code || '');
       }
 
-      const devData = (!emailSent && process.env.NODE_ENV === 'development')
-        ? { email, devOtp: otpCode, warning: 'Email SMTP chưa cấu hình — dùng devOtp này để xác minh' }
-        : { email };
+      const responseData = emailSent
+        ? { email }
+        : { email, otp: otpCode, warning: 'Email không gửi được — dùng mã OTP này để xác minh' };
 
       return sendSuccess(
         res,
-        devData,
+        responseData,
         emailSent
           ? 'Tài khoản đã được tạo. Mã OTP đã gửi đến email của bạn, vui lòng xác minh.'
-          : '[DEV] Tài khoản đã tạo. Email chưa cấu hình — xem devOtp trong response.',
+          : 'Tài khoản đã được tạo. Email gặp sự cố — mã OTP đã có trong phản hồi này.',
         200
       );
     } catch (error) {

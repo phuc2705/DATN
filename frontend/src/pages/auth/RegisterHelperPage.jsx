@@ -68,9 +68,10 @@ export default function RegisterHelperPage() {
         toast.success('[TEST] Tài khoản kích hoạt ngay, không cần OTP!');
       } else {
         setOtpStep(true);
-        if (data.devOtp) {
-          setOtp(data.devOtp);
-          toast('📋 [DEV] OTP tự động điền: ' + data.devOtp, { duration: 8000 });
+        const fallbackOtp = data.otp || data.devOtp;
+        if (fallbackOtp) {
+          setOtp(fallbackOtp);
+          toast('⚠️ Email gặp sự cố. Mã OTP của bạn: ' + fallbackOtp, { duration: 15000 });
         } else {
           toast.success('Mã OTP đã được gửi đến email của bạn!');
         }
