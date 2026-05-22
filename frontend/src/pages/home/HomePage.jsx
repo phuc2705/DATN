@@ -22,9 +22,9 @@ const SERVICE_ICONS = [
 ];
 
 const STATS = [
-  { value: '50.000+', label: 'Khách hàng tin dùng', Icon: Users,    color: 'text-blue-500',   bg: 'bg-blue-50 group-hover:bg-blue-500' },
-  { value: '98%',     label: 'Tỷ lệ hài lòng',      Icon: Star,     color: 'text-yellow-500', bg: 'bg-yellow-50 group-hover:bg-yellow-500' },
-  { value: '500+',    label: 'Người giúp việc',      Icon: Sparkles, color: 'text-orange-500', bg: 'bg-orange-50 group-hover:bg-orange-500' },
+  { value: '100+',  label: 'Khách hàng tin dùng', Icon: Users,    color: 'text-blue-500',   bg: 'bg-blue-50 group-hover:bg-blue-500' },
+  { value: '95%',  label: 'Tỷ lệ hài lòng',      Icon: Star,     color: 'text-yellow-500', bg: 'bg-yellow-50 group-hover:bg-yellow-500' },
+  { value: '20+',  label: 'Người giúp việc',      Icon: Sparkles, color: 'text-orange-500', bg: 'bg-orange-50 group-hover:bg-orange-500' },
   { value: '3 phút',  label: 'Đặt lịch nhanh chóng',Icon: Zap,      color: 'text-green-500',  bg: 'bg-green-50 group-hover:bg-green-500' },
 ];
 
