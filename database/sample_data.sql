@@ -58,12 +58,12 @@ INSERT IGNORE INTO services (service_name, description, base_price, slug, is_act
 (
   'Vệ sinh Văn phòng & Shop',
   'Duy trì không gian làm việc sạch sẽ, chuyên nghiệp để nâng cao hiệu suất nhân viên và tạo ấn tượng tốt với đối tác, khách hàng. Phù hợp cho văn phòng vừa và nhỏ, cửa hàng bán lẻ, showroom cần dọn dẹp định kỳ ngoài giờ làm việc hoặc hàng ngày.\n\nBAO GỒM: Quét và lau sàn toàn bộ khu vực làm việc, sảnh đón khách; Lau bụi bàn làm việc, tủ tài liệu, máy in, máy tính bên ngoài; Thu gom rác tại các bàn làm việc, thay túi rác mới và tập kết đúng nơi; Vệ sinh khu vực WC chung; Lau chùi khu vực Pantry (bồn rửa chén của nhân viên).\n\nKHÔNG BAO GỒM: Lau kính mặt ngoài tòa nhà cao tầng bằng dây đu, Sắp xếp lại tài liệu mật trên bàn làm việc.\n\nLƯU Ý: Có thể tính theo diện tích hoặc ký hợp đồng khoán theo giờ cố định hàng tháng. Thường thực hiện sáng sớm hoặc buổi tối sau khi đóng cửa.',
-  12000.00, 've-sinh-van-phong-shop', TRUE
+  20000.00, 've-sinh-van-phong-shop', TRUE
 ),
 (
   'Phun khử khuẩn & Kiểm soát côn trùng',
   'Bảo vệ gia đình khỏi mầm bệnh truyền nhiễm và sự phiền toái từ côn trùng (muỗi, gián, kiến, mối). Sử dụng máy phun sương hạt siêu nhỏ (ULV) kết hợp thuốc sinh học nhập khẩu được Bộ Y Tế cấp phép, diệt tận gốc nhưng tuyệt đối an toàn cho người và vật nuôi.\n\nBAO GỒM: Che phủ bảo vệ giường chiếu, đồ ăn, bể cá trước khi phun; Phun tồn lưu dọc tường, khe kẽ, gầm tủ để diệt kiến, gián, mối; Phun không gian (sương mù) toàn bộ các phòng để diệt muỗi; Phun khử khuẩn Nano bạc toàn bộ bề mặt (nếu chọn gói combo); Bảo hành dịch vụ 1–3 tháng tùy khu vực.\n\nKHÔNG BAO GỒM: Đào hào chống mối cho móng nhà công trình lớn, Thu dọn xác chuột chết ẩn trong trần thạch cao.\n\nLƯU Ý: Diện tích phun tối thiểu từ 50m² trở lên. Sau khi phun, di tản khỏi nhà tối thiểu 1–2 tiếng.',
-  5000.00, 'phun-khu-khuan-con-trung', TRUE
+  10000.00, 'phun-khu-khuan-con-trung', TRUE
 );
 
 -- ============================================================
