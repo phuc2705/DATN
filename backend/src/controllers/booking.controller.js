@@ -9,6 +9,42 @@ const { sendSuccess, sendError } = require('../utils/response');
 const { pushNotification } = require('../utils/notify');
 const { emitToUser } = require('../socket');
 
+// Chuyển snake_case từ DB sang camelCase cho client
+function mapBooking(b) {
+  if (!b) return null;
+  return {
+    bookingId:      b.booking_id,
+    serviceId:      b.service_id,
+    serviceName:    b.service_name,
+    customerId:     b.customer_id,
+    customerName:   b.customer_name,
+    customerPhone:  b.customer_phone,
+    helperId:       b.helper_id,
+    helperName:     b.helper_name,
+    helperAvatar:   b.helper_avatar,
+    helperPhone:    b.helper_phone,
+    bookingDate:    b.booking_date,
+    startTime:      b.start_time,
+    endTime:        b.end_time,
+    hours:          b.hours,
+    address:        b.address,
+    note:           b.note,
+    status:         b.status,
+    basePrice:      b.base_price,
+    totalPrice:     b.total_price,
+    discountAmount: b.discount_amount,
+    paymentMethod:  b.payment_method,
+    paymentStatus:  b.payment_status,
+    paidAt:         b.paid_at,
+    checkinAt:      b.checkin_at,
+    checkoutAt:     b.checkout_at,
+    hasReviewed:    b.has_reviewed || false,
+    isRequested:    Boolean(b.is_requested),
+    createdAt:      b.created_at,
+    logs:           b.logs || [],
+  };
+}
+
 // State machine: định nghĩa chuyển trạng thái hợp lệ
 const VALID_TRANSITIONS = {
   pending:     ['confirmed', 'cancelled'],
@@ -108,6 +144,21 @@ const BookingController = {
         startTime, endTime, helperRate, promo
       );
 
+      // Đếm số helper có thể nhận đơn này (available + verified + đăng ký dịch vụ + không bị xung đột giờ)
+      const [availRows] = await pool.query(
+        `SELECT COUNT(DISTINCT h.helper_id) AS cnt
+         FROM helpers h
+         JOIN helper_services hs ON h.helper_id = hs.helper_id
+         WHERE h.is_available = TRUE AND h.is_verified = TRUE AND hs.service_id = ?
+           AND h.helper_id NOT IN (
+             SELECT DISTINCT helper_id FROM bookings
+             WHERE booking_date = ? AND status NOT IN ('cancelled') AND helper_id IS NOT NULL
+               AND start_time < ? AND end_time > ?
+           )`,
+        [serviceId, bookingDate, endTime, startTime]
+      );
+      const availableHelperCount = Number(availRows[0].cnt);
+
       const bookingId = await BookingModel.create({
         customerId: customerProfile.customer_id,
         helperId: helperId || null,
@@ -157,12 +208,13 @@ const BookingController = {
         }
       }).catch(() => {});
 
-      // Đơn ở trạng thái pending — hiển thị trên job board để helpers tự nhận
-      // hoặc admin chỉ định thủ công từ trang quản trị
-      const message = 'Đặt lịch thành công! Đơn đã được đăng lên hệ thống. Người giúp việc sẽ nhận đơn sớm.';
+      const message = availableHelperCount > 0
+        ? 'Đặt lịch thành công! Đơn đã được đăng lên hệ thống, người giúp việc sẽ nhận đơn sớm.'
+        : 'Đặt lịch thành công! Hiện chưa có người giúp việc rảnh trong khung giờ này. Chúng tôi sẽ thông báo ngay khi có nhân viên phù hợp.';
 
       return sendSuccess(res, {
         bookingId,
+        availableHelperCount,
         summary: { hours, basePrice, discountAmount, totalPrice },
       }, message, 201);
     } catch (error) {
@@ -178,7 +230,7 @@ const BookingController = {
       const customerProfile = await UserModel.getCustomerProfile(user_id);
       if (!customerProfile) return sendError(res, 'Không tìm thấy thông tin khách hàng.', 404);
       const bookings = await BookingModel.findByCustomer(customerProfile.customer_id, status);
-      return sendSuccess(res, bookings);
+      return sendSuccess(res, bookings.map(mapBooking));
     } catch (error) {
       next(error);
     }
@@ -192,7 +244,7 @@ const BookingController = {
       const [helperRows] = await pool.query('SELECT helper_id FROM helpers WHERE user_id = ?', [user_id]);
       if (!helperRows[0]) return sendError(res, 'Không tìm thấy thông tin helper.', 404);
       const bookings = await BookingModel.findByHelper(helperRows[0].helper_id, status);
-      return sendSuccess(res, bookings);
+      return sendSuccess(res, bookings.map(mapBooking));
     } catch (error) {
       next(error);
     }
@@ -204,7 +256,15 @@ const BookingController = {
       const { bookingId } = req.params;
       const booking = await BookingModel.findById(bookingId);
       if (!booking) return sendError(res, 'Không tìm thấy booking.', 404);
-      return sendSuccess(res, booking);
+
+      // Kiểm tra xem customer đã review booking này chưa
+      const [[reviewRow]] = await pool.query(
+        'SELECT COUNT(*) AS cnt FROM reviews WHERE booking_id = ?',
+        [bookingId]
+      );
+      booking.has_reviewed = (reviewRow.cnt > 0);
+
+      return sendSuccess(res, mapBooking(booking));
     } catch (error) {
       next(error);
     }
@@ -361,7 +421,7 @@ const BookingController = {
       if (!helperRows[0].is_verified) return sendError(res, 'Tài khoản chưa được Admin xác minh.', 403);
 
       const jobs = await BookingModel.findAvailableJobsForHelper(helperRows[0].helper_id);
-      return sendSuccess(res, jobs);
+      return sendSuccess(res, jobs.map(mapBooking));
     } catch (error) {
       next(error);
     }

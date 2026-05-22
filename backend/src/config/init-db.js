@@ -144,6 +144,13 @@ async function runMigrations(connection) {
     console.error('⚠️  Migration services v2 warning:', err.message);
   }
 
+  // Thêm cột reminder_sent để theo dõi đã gửi nhắc nhở chưa
+  try {
+    await connection.query('ALTER TABLE bookings ADD COLUMN reminder_sent TINYINT NOT NULL DEFAULT 0');
+  } catch (err) {
+    // ignore — cột đã tồn tại
+  }
+
   console.log('✅ Migrations hoàn tất.');
 }
 

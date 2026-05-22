@@ -34,7 +34,22 @@ const ServiceController = {
       const service = await ServiceModel.findById(serviceId);
       if (!service) return sendError(res, 'Dịch vụ không tồn tại.', 404);
 
-      const helpers = await ServiceModel.findHelpersByService(serviceId, city);
+      const rawHelpers = await ServiceModel.findHelpersByService(serviceId, city);
+      const helpers = rawHelpers.map((h) => ({
+        userId:          h.user_id,
+        helperId:        h.helper_id,
+        fullName:        h.full_name,
+        avatarUrl:       h.avatar_url,
+        lastSeenAt:      h.last_seen_at,
+        ratingAverage:   Number(h.rating_average) || 0,
+        totalBookings:   h.total_bookings || 0,
+        experienceYears: h.experience_years || 0,
+        isVerified:      h.is_verified,
+        isAvailable:     h.is_available,
+        bio:             h.bio,
+        effectivePrice:  Number(h.effective_price) || 0,
+        experienceLevel: h.experience_level,
+      }));
       return sendSuccess(res, { service, helpers });
     } catch (error) {
       next(error);

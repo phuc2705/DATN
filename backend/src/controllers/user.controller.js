@@ -89,16 +89,33 @@ const UserController = {
       if (!rows[0]) return sendError(res, 'Không tìm thấy helper.', 404);
 
       // Lấy danh sách dịch vụ helper cung cấp
-      const [services] = await pool.query(
-        `SELECT s.service_id, s.service_name, s.icon_url,
-                hs.experience_level, COALESCE(hs.custom_price, s.base_price) AS price
+      const [serviceRows] = await pool.query(
+        `SELECT s.service_id AS serviceId, s.service_name AS serviceName, s.icon_url AS iconUrl,
+                hs.experience_level AS experienceLevel, COALESCE(hs.custom_price, s.base_price) AS price
          FROM helper_services hs
          JOIN services s ON hs.service_id = s.service_id
          WHERE hs.helper_id = ?`,
         [helperId]
       );
 
-      return sendSuccess(res, { ...rows[0], services });
+      const raw = rows[0];
+      return sendSuccess(res, {
+        userId:          raw.user_id,
+        helperId:        raw.helper_id,
+        fullName:        raw.full_name,
+        avatarUrl:       raw.avatar_url,
+        lastSeenAt:      raw.last_seen_at,
+        ratingAverage:   Number(raw.rating_average) || 0,
+        totalBookings:   raw.total_bookings || 0,
+        experienceYears: raw.experience_years || 0,
+        isVerified:      raw.is_verified,
+        isAvailable:     raw.is_available,
+        hourlyRate:      raw.hourly_rate,
+        bio:             raw.bio,
+        gender:          raw.gender,
+        dateOfBirth:     raw.date_of_birth,
+        services:        serviceRows,
+      });
     } catch (error) {
       next(error);
     }

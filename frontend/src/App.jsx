@@ -10,6 +10,7 @@ import RoleRoute from './components/common/RoleRoute';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterCustomerPage from './pages/auth/RegisterCustomerPage';
 import RegisterHelperPage from './pages/auth/RegisterHelperPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import HomePage from './pages/home/HomePage';
 import SearchHelpersPage from './pages/booking/SearchHelpersPage';
 import HelperProfilePage from './pages/booking/HelperProfilePage';
@@ -28,6 +29,10 @@ import AdminBookingsPage from './pages/admin/AdminBookingsPage';
 import AdminPaymentsPage from './pages/admin/AdminPaymentsPage';
 import AdminServicesPage from './pages/admin/AdminServicesPage';
 import AdminPromotionsPage from './pages/admin/AdminPromotionsPage';
+import HelpPage from './pages/HelpPage';
+import AboutPage from './pages/AboutPage';
+import TermsPage from './pages/TermsPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 // Trang kết quả VNPay — đọc query params từ redirect của backend
 function VNPayReturnPage() {
@@ -68,6 +73,7 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register/customer" element={<RegisterCustomerPage />} />
           <Route path="/register/helper" element={<RegisterHelperPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/payment/vnpay-return" element={<VNPayReturnPage />} />
 
           {/* Admin — sidebar riêng */}
@@ -86,6 +92,9 @@ export default function App() {
           {/* Main layout */}
           <Route element={<Layout />}>
             <Route path="/" element={<HomePage />} />
+            <Route path="/help" element={<HelpPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/terms" element={<TermsPage />} />
             <Route path="/services/:serviceId" element={<ServiceDetailPage />} />
             <Route path="/services/:serviceId/helpers" element={<SearchHelpersPage />} />
             <Route path="/helpers/:helperId" element={<HelperProfilePage />} />
@@ -109,7 +118,7 @@ export default function App() {
               <Route path="/helper/earnings" element={<HelperEarningsPage />} />
             </Route>
 
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

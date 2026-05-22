@@ -240,7 +240,14 @@ export default function CreateBookingPage() {
         paymentMethod,
         promoCode: promoApplied ? promoCode.trim() : undefined,
       });
-      toast.success('Đặt lịch thành công!');
+      if (data.data.availableHelperCount === 0) {
+        toast('Đặt lịch thành công! Hiện chưa có nhân viên rảnh trong khung giờ này — chúng tôi sẽ thông báo khi có người phù hợp.', {
+          icon: '⚠️',
+          duration: 6000,
+        });
+      } else {
+        toast.success(data.message || 'Đặt lịch thành công!');
+      }
       navigate(`/bookings/${data.data.bookingId}`);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Đặt lịch thất bại');

@@ -130,7 +130,15 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label htmlFor="login-password" className="label">Mật khẩu</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label htmlFor="login-password" className="label mb-0">Mật khẩu</label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs text-orange-500 hover:text-orange-600 font-medium transition-colors"
+                  >
+                    Quên mật khẩu?
+                  </Link>
+                </div>
                 <div className="relative">
                   <input
                     id="login-password"

@@ -15,3 +15,5 @@ export const getMeApi = () => api.get('/api/auth/me');
 export const verifyOtpApi = (data) => api.post('/api/auth/verify-otp', data);
 export const resendOtpApi = (data) => api.post('/api/auth/resend-otp', data);
 export const firebaseLoginApi = (data) => api.post('/api/auth/firebase', data);
+export const forgotPasswordApi = (data) => api.post('/api/auth/forgot-password', data);
+export const resetPasswordApi = (data) => api.post('/api/auth/reset-password', data);

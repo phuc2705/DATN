@@ -75,7 +75,17 @@ const ReviewController = {
         [helperId]
       );
 
-      return sendSuccess(res, { reviews, total, distribution, limit, offset });
+      const mappedReviews = reviews.map((r) => ({
+        reviewId:       r.review_id,
+        rating:         r.rating,
+        comment:        r.comment,
+        createdAt:      r.created_at,
+        customerName:   r.customer_name,
+        customerAvatar: r.customer_avatar,
+        bookingId:      r.booking_id,
+      }));
+
+      return sendSuccess(res, { reviews: mappedReviews, total, distribution, limit, offset });
     } catch (error) {
       next(error);
     }

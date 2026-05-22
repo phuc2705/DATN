@@ -3,9 +3,25 @@ import Navbar from './Navbar';
 import { Phone, Mail, MapPin } from 'lucide-react';
 
 const FOOTER_LINKS = {
-  'Dịch vụ': ['Dọn dẹp nhà', 'Nấu ăn theo giờ', 'Giặt ủi', 'Vệ sinh điều hòa', 'Vệ sinh tổng thể'],
-  'Hỗ trợ':  ['Câu hỏi thường gặp', 'Liên hệ hỗ trợ', 'Hướng dẫn đặt lịch', 'Chính sách hoàn tiền'],
-  'Về chúng tôi': ['Giới thiệu', 'Tuyển dụng', 'Blog', 'Báo chí'],
+  'Dịch vụ': [
+    { label: 'Dọn dẹp nhà',       to: '/services/1'  },
+    { label: 'Nấu ăn theo giờ',   to: '/services/2'  },
+    { label: 'Giặt ủi',           to: '/services/3'  },
+    { label: 'Vệ sinh điều hòa',  to: '/services/4'  },
+    { label: 'Vệ sinh tổng thể',  to: '/services/5'  },
+  ],
+  'Hỗ trợ': [
+    { label: 'Câu hỏi thường gặp',    to: '/help'  },
+    { label: 'Liên hệ hỗ trợ',        to: '/help'  },
+    { label: 'Hướng dẫn đặt lịch',    to: '/help'  },
+    { label: 'Chính sách hoàn tiền',   to: '/terms' },
+  ],
+  'Về chúng tôi': [
+    { label: 'Giới thiệu',  to: '/about' },
+    { label: 'Điều khoản',  to: '/terms' },
+    { label: 'Đăng ký làm helper', to: '/register/helper' },
+    { label: 'FAQ',         to: '/help'  },
+  ],
 };
 
 export default function Layout() {
@@ -49,11 +65,11 @@ export default function Layout() {
               <div key={category}>
                 <h3 className="text-white font-semibold mb-4">{category}</h3>
                 <ul className="space-y-2">
-                  {links.map((link) => (
-                    <li key={link}>
-                      <a href="#" className="text-sm text-gray-400 hover:text-orange-400 transition-colors">
-                        {link}
-                      </a>
+                  {links.map(({ label, to }) => (
+                    <li key={label}>
+                      <Link to={to} className="text-sm text-gray-400 hover:text-orange-400 transition-colors">
+                        {label}
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -87,10 +103,10 @@ export default function Layout() {
 
           {/* Bottom bar */}
           <div className="border-t border-gray-800 pt-6 flex flex-col md:flex-row justify-between items-center gap-3 text-sm text-gray-500">
-            <p>© 2026 ConnectClean - ĐATN của Nguyễn Trọng Phúc</p>
+            <p>© 2026 ConnectClean — ĐATN của Nguyễn Trọng Phúc</p>
             <div className="flex gap-4">
-              <a href="#" className="hover:text-gray-300 transition-colors">Điều khoản sử dụng</a>
-              <a href="#" className="hover:text-gray-300 transition-colors">Chính sách bảo mật</a>
+              <Link to="/terms" className="hover:text-gray-300 transition-colors">Điều khoản sử dụng</Link>
+              <Link to="/terms" className="hover:text-gray-300 transition-colors">Chính sách bảo mật</Link>
             </div>
           </div>
         </div>

@@ -417,6 +417,68 @@ const AuthController = {
     }
   },
 
+  // Quên mật khẩu - gửi OTP xác minh đến email để đặt lại mật khẩu
+  forgotPassword: async (req, res, next) => {
+    try {
+      const { email } = req.body;
+
+      const user = await UserModel.findByEmail(email);
+      if (!user) {
+        // Không tiết lộ email có tồn tại hay không (bảo mật)
+        return sendSuccess(res, { email }, 'Nếu email tồn tại, mã OTP đã được gửi đến hộp thư của bạn.', 200);
+      }
+
+      const otpCode = generateOtp();
+      // Dùng prefix 'reset_' để phân biệt với OTP đăng ký trong cùng bảng otp_verifications
+      await OtpModel.create({ email: `reset_${email}`, otpCode });
+
+      let emailSent = true;
+      try {
+        await sendOtpEmail(email, otpCode, user.full_name, 'reset');
+      } catch (emailErr) {
+        emailSent = false;
+        console.error('[Email] Gửi OTP reset thất bại:', emailErr.message);
+      }
+
+      const responseData = emailSent
+        ? { email }
+        : { email, otp: otpCode, warning: 'Email không gửi được — dùng mã OTP này để đặt lại mật khẩu' };
+
+      return sendSuccess(res, responseData, 'Mã OTP đặt lại mật khẩu đã được gửi đến email của bạn.', 200);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Đặt lại mật khẩu - xác minh OTP và cập nhật mật khẩu mới
+  resetPassword: async (req, res, next) => {
+    try {
+      const { email, otp, newPassword } = req.body;
+
+      const record = await OtpModel.findByEmail(`reset_${email}`);
+      if (!record) {
+        return sendError(res, 'Mã OTP không tồn tại hoặc đã được sử dụng. Vui lòng yêu cầu lại.', 400);
+      }
+
+      if (new Date() > new Date(record.expires_at)) {
+        return sendError(res, 'Mã OTP đã hết hạn. Vui lòng yêu cầu mã mới.', 400);
+      }
+
+      if (record.otp_code !== String(otp)) {
+        return sendError(res, 'Mã OTP không đúng.', 400);
+      }
+
+      await OtpModel.markUsed(record.id);
+
+      const passwordHash = await bcrypt.hash(newPassword, 12);
+      await UserModel.updatePassword(email, passwordHash);
+
+      return sendSuccess(res, { email }, 'Mật khẩu đã được đặt lại thành công! Vui lòng đăng nhập lại.', 200);
+    } catch (error) {
+      next(error);
+    }
+  },
+
   // Lấy thông tin user hiện tại (từ token)
   getMe: async (req, res, next) => {
     try {
@@ -424,14 +486,60 @@ const AuthController = {
       let profile;
 
       if (user_type === 'customer') {
-        profile = await UserModel.getCustomerProfile(user_id);
+        const raw = await UserModel.getCustomerProfile(user_id);
+        if (!raw) return sendError(res, 'Không tìm thấy thông tin người dùng.', 404);
+        profile = {
+          userId:           raw.user_id,
+          email:            raw.email,
+          fullName:         raw.full_name,
+          phone:            raw.phone,
+          avatarUrl:        raw.avatar_url,
+          userType:         raw.user_type,
+          isActive:         raw.is_active,
+          createdAt:        raw.created_at,
+          address:          raw.address,
+          district:         raw.district,
+          city:             raw.city,
+          preferredPayment: raw.preferred_payment,
+          loyaltyPoints:    raw.loyalty_points,
+        };
       } else if (user_type === 'helper') {
-        profile = await UserModel.getHelperProfile(user_id);
+        const raw = await UserModel.getHelperProfile(user_id);
+        if (!raw) return sendError(res, 'Không tìm thấy thông tin người dùng.', 404);
+        profile = {
+          userId:          raw.user_id,
+          email:           raw.email,
+          fullName:        raw.full_name,
+          phone:           raw.phone,
+          avatarUrl:       raw.avatar_url,
+          userType:        raw.user_type,
+          isActive:        raw.is_active,
+          createdAt:       raw.created_at,
+          helperId:        raw.helper_id,
+          dateOfBirth:     raw.date_of_birth,
+          gender:          raw.gender,
+          experienceYears: raw.experience_years,
+          ratingAverage:   raw.rating_average,
+          totalBookings:   raw.total_bookings,
+          hourlyRate:      raw.hourly_rate,
+          isVerified:      raw.is_verified,
+          isAvailable:     raw.is_available,
+          bio:             raw.bio,
+        };
       } else {
-        profile = await UserModel.findById(user_id);
+        const raw = await UserModel.findById(user_id);
+        if (!raw) return sendError(res, 'Không tìm thấy thông tin người dùng.', 404);
+        profile = {
+          userId:    raw.user_id,
+          email:     raw.email,
+          fullName:  raw.full_name,
+          phone:     raw.phone,
+          avatarUrl: raw.avatar_url,
+          userType:  raw.user_type,
+          isActive:  raw.is_active,
+          createdAt: raw.created_at,
+        };
       }
-
-      if (!profile) return sendError(res, 'Không tìm thấy thông tin người dùng.', 404);
 
       await UserModel.updateLastSeen(user_id);
       return sendSuccess(res, profile);

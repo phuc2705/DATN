@@ -182,16 +182,46 @@ const PaymentController = {
   getHelperEarnings: async (req, res, next) => {
     try {
       const { user_id } = req.user;
-      const [helperRows] = await pool.query(
-        'SELECT helper_id FROM helpers WHERE user_id = ?',
+      const [[helperRow]] = await pool.query(
+        'SELECT helper_id, rating_average, total_bookings FROM helpers WHERE user_id = ?',
         [user_id]
       );
-      if (!helperRows[0]) return sendError(res, 'Không tìm thấy thông tin helper.', 404);
+      if (!helperRow) return sendError(res, 'Không tìm thấy thông tin helper.', 404);
 
-      const payments = await PaymentModel.findByHelper(helperRows[0].helper_id);
-      const totalEarned = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+      const rows = await PaymentModel.findByHelper(helperRow.helper_id);
 
-      return sendSuccess(res, { payments, totalEarned });
+      // Tính thu nhập helper (90% doanh thu)
+      const PLATFORM_FEE = 0.1;
+      const payments = rows.map((p) => ({
+        paymentId:     p.payment_id,
+        bookingId:     p.booking_id,
+        amount:        Number(p.amount),
+        helperEarning: Math.round(Number(p.amount) * (1 - PLATFORM_FEE)),
+        paymentMethod: p.payment_method,
+        paymentStatus: p.payment_status,
+        paidAt:        p.paid_at,
+        bookingDate:   p.booking_date,
+        serviceName:   p.service_name,
+        customerName:  p.customer_name,
+      }));
+
+      const totalEarnings = payments.reduce((s, p) => s + p.helperEarning, 0);
+
+      // Thu nhập tháng hiện tại
+      const now = new Date();
+      const monthlyEarnings = payments
+        .filter((p) => p.paidAt && new Date(p.paidAt).getMonth() === now.getMonth() && new Date(p.paidAt).getFullYear() === now.getFullYear())
+        .reduce((s, p) => s + p.helperEarning, 0);
+
+      return sendSuccess(res, {
+        summary: {
+          totalEarnings,
+          monthlyEarnings,
+          completedBookings: payments.length,
+          ratingAverage: Number(helperRow.rating_average) || 0,
+        },
+        payments,
+      });
     } catch (error) {
       next(error);
     }

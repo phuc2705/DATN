@@ -45,6 +45,18 @@ router.post('/resend-otp', [
   body('email').isEmail().withMessage('Email không hợp lệ').normalizeEmail({ gmail_remove_dots: false, gmail_remove_subaddress: false }),
 ], validate, AuthController.resendOtp);
 
+// POST /api/auth/forgot-password - Gửi OTP đặt lại mật khẩu
+router.post('/forgot-password', [
+  body('email').isEmail().withMessage('Email không hợp lệ').normalizeEmail({ gmail_remove_dots: false, gmail_remove_subaddress: false }),
+], validate, AuthController.forgotPassword);
+
+// POST /api/auth/reset-password - Xác minh OTP và đặt mật khẩu mới
+router.post('/reset-password', [
+  body('email').isEmail().withMessage('Email không hợp lệ').normalizeEmail({ gmail_remove_dots: false, gmail_remove_subaddress: false }),
+  body('otp').isLength({ min: 6, max: 6 }).withMessage('Mã OTP phải có 6 chữ số').isNumeric().withMessage('Mã OTP phải là số'),
+  body('newPassword').isLength({ min: 6 }).withMessage('Mật khẩu mới tối thiểu 6 ký tự'),
+], validate, AuthController.resetPassword);
+
 // POST /api/auth/login
 router.post('/login', [
   body('email').isEmail().withMessage('Email không hợp lệ').normalizeEmail({ gmail_remove_dots: false, gmail_remove_subaddress: false }),
