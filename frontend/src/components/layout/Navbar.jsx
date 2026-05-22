@@ -37,8 +37,9 @@ function NavLink({ to, children }) {
 }
 
 function UserAvatar({ name, avatarUrl }) {
-  if (avatarUrl) {
-    return <img src={avatarUrl} alt={name} className="w-8 h-8 rounded-full object-cover" />;
+  const validUrl = avatarUrl && !avatarUrl.includes('placeholder.com') ? avatarUrl : null;
+  if (validUrl) {
+    return <img src={validUrl} alt={name} className="w-8 h-8 rounded-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />;
   }
   const initials = name?.split(' ').map((w) => w[0]).slice(-2).join('').toUpperCase() || '?';
   return (
