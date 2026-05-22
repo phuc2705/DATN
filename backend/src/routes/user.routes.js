@@ -28,6 +28,9 @@ router.put('/change-password', [
 // PATCH /api/users/helper/availability - Bật/tắt nhận việc (helper only)
 router.patch('/helper/availability', authorize('helper'), UserController.toggleAvailability);
 
+// GET /api/users/helper/schedule - Lấy lịch làm việc hiện tại (helper only)
+router.get('/helper/schedule', authorize('helper'), UserController.getSchedule);
+
 // PUT /api/users/helper/schedule - Cập nhật lịch làm việc (helper only)
 router.put('/helper/schedule', authorize('helper'), [
   body('schedules').isArray().withMessage('schedules phải là mảng'),
@@ -35,5 +38,18 @@ router.put('/helper/schedule', authorize('helper'), [
   body('schedules.*.startTime').matches(/^\d{2}:\d{2}$/).withMessage('Giờ bắt đầu không hợp lệ'),
   body('schedules.*.endTime').matches(/^\d{2}:\d{2}$/).withMessage('Giờ kết thúc không hợp lệ'),
 ], validate, UserController.updateSchedule);
+
+// GET  /api/users/helper/shifts          - Lấy danh sách ca đã đăng ký
+router.get('/helper/shifts', authorize('helper'), UserController.getShifts);
+
+// POST /api/users/helper/shifts          - Đăng ký ca mới
+router.post('/helper/shifts', authorize('helper'), [
+  body('shiftDate').matches(/^\d{4}-\d{2}-\d{2}$/).withMessage('Ngày không hợp lệ (YYYY-MM-DD)'),
+  body('startTime').matches(/^\d{2}:\d{2}$/).withMessage('Giờ bắt đầu không hợp lệ'),
+  body('endTime').matches(/^\d{2}:\d{2}$/).withMessage('Giờ kết thúc không hợp lệ'),
+], validate, UserController.registerShift);
+
+// DELETE /api/users/helper/shifts/:shiftId - Hủy ca
+router.delete('/helper/shifts/:shiftId', authorize('helper'), UserController.cancelShift);
 
 module.exports = router;

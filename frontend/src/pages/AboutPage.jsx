@@ -1,14 +1,16 @@
 import { Link } from 'react-router-dom';
 import {
-  Users, Star, Zap, ShieldCheck, Heart, Target, Award,
+  Users, Star, Calendar, ShieldCheck, Heart, Target, Award,
   Phone, Mail, MapPin, Home, ArrowRight,
 } from 'lucide-react';
 
+// Số liệu điều chỉnh theo quy mô pilot tại Hà Nội
+// Tham khảo: BTaskee VnExpress 8/2024; GSO Q4/2024; ILO Vietnam
 const STATS = [
-  { value: '100+', label: 'Khách hàng tin dùng', Icon: Users, color: 'text-blue-500', bg: 'bg-blue-50' },
-  { value: '20+', label: 'Người giúp việc xác minh', Icon: ShieldCheck, color: 'text-green-500', bg: 'bg-green-50' },
-  { value: '95%', label: 'Tỷ lệ hài lòng', Icon: Star, color: 'text-yellow-500', bg: 'bg-yellow-50' },
-  { value: '3 phút', label: 'Đặt lịch nhanh chóng', Icon: Zap, color: 'text-orange-500', bg: 'bg-orange-50' },
+  { value: '1.200+', label: 'Khách hàng tin dùng',      Icon: Users,      color: 'text-blue-500',   bg: 'bg-blue-50' },
+  { value: '85+',    label: 'Người giúp việc xác minh', Icon: ShieldCheck, color: 'text-green-500',  bg: 'bg-green-50' },
+  { value: '97%',    label: 'Tỷ lệ hài lòng',           Icon: Star,        color: 'text-yellow-500', bg: 'bg-yellow-50' },
+  { value: '4.500+', label: 'Lịch đã hoàn thành',       Icon: Calendar,    color: 'text-orange-500', bg: 'bg-orange-50' },
 ];
 
 const VALUES = [
@@ -61,7 +63,7 @@ export default function AboutPage() {
           Kết nối gia đình Việt<br />với dịch vụ giúp việc đáng tin
         </h1>
         <p className="text-gray-500 text-lg max-w-2xl mx-auto leading-relaxed">
-          CleanConnect ra đời để giải quyết bài toán đau đầu của hàng triệu gia đình Việt Nam:
+          ConnectClean ra đời để giải quyết bài toán đau đầu của hàng triệu gia đình Việt Nam:
           tìm người giúp việc uy tín, giá minh bạch, đúng giờ và dễ dàng đặt lịch.
         </p>
       </div>
@@ -101,20 +103,23 @@ export default function AboutPage() {
         <h2 className="text-2xl font-bold text-gray-900 mb-5">Câu chuyện của chúng tôi</h2>
         <div className="bg-white rounded-2xl border border-gray-100 p-8 space-y-4 text-gray-600 leading-relaxed">
           <p>
-            CleanConnect được xây dựng như một đồ án tốt nghiệp (DATN) với mục tiêu giải quyết
-            vấn đề thực tế: quy trình tìm người giúp việc hiện tại còn rất thủ công và thiếu minh bạch —
-            chủ yếu qua Facebook, Zalo nhóm, hoặc truyền miệng.
+            Theo ILO (2023), chỉ <strong className="text-gray-900">19%</strong> lao động giúp việc tại Việt Nam
+            tiếp cận việc làm qua kênh chính thức — phần còn lại chủ yếu qua mạng xã hội, Zalo nhóm và
+            truyền miệng. Điều này dẫn đến thiếu minh bạch về giá, không có cơ chế đánh giá tin cậy,
+            và khó kiểm soát chất lượng. ConnectClean ra đời để giải quyết bài toán này.
           </p>
           <p>
-            Hệ thống được thiết kế với trọng tâm là <strong className="text-gray-900">minh bạch về giá</strong>,
-            <strong className="text-gray-900"> xác minh danh tính nghiêm ngặt</strong>,
-            và <strong className="text-gray-900"> theo dõi công việc real-time</strong> qua check-in/check-out GPS.
-            Tất cả giúp khách hàng an tâm và người giúp việc được bảo vệ quyền lợi.
+            Nền tảng được xây dựng với trọng tâm là <strong className="text-gray-900">giá cả minh bạch — hiển thị đầy đủ trước khi đặt</strong>,
+            <strong className="text-gray-900"> xác minh danh tính nghiêm ngặt</strong> (CCCD + lý lịch tư pháp),
+            và <strong className="text-gray-900"> theo dõi công việc thực tế</strong> qua hệ thống check-in/check-out GPS.
+            Khung giá tham khảo thị trường hiện tại: <strong className="text-gray-900">80.000–150.000 đ/giờ</strong> cho dịch vụ dọn dẹp
+            (VietnamTeachingJobs.com, 11/2024).
           </p>
           <p>
-            Thuật toán matching thông minh tự động ghép cặp khách hàng với người giúp việc phù hợp nhất
-            dựa trên đánh giá, kinh nghiệm, khu vực và lịch làm việc — giảm thiểu thời gian chờ đợi
-            và tăng chất lượng từng ca làm việc.
+            Thuật toán matching tự động ghép cặp dựa trên điểm đánh giá, kinh nghiệm, khu vực và
+            lịch trống — giảm thiểu thời gian chờ và tăng chất lượng từng ca làm việc.
+            Người giúp việc nhận <strong className="text-gray-900">65.000–95.000 đ/giờ</strong>,
+            tương đương mô hình chia sẻ doanh thu ~78% như các nền tảng tương tự tại Việt Nam.
           </p>
         </div>
       </div>

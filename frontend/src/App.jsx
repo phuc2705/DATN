@@ -20,6 +20,7 @@ import MyBookingsPage from './pages/booking/MyBookingsPage';
 import BookingDetailPage from './pages/booking/BookingDetailPage';
 import HelperJobsPage from './pages/helper/HelperJobsPage';
 import HelperEarningsPage from './pages/helper/HelperEarningsPage';
+import HelperSchedulePage from './pages/helper/HelperSchedulePage';
 import NotificationsPage from './pages/notifications/NotificationsPage';
 import UserProfilePage from './pages/profile/UserProfilePage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
@@ -114,8 +115,9 @@ export default function App() {
 
             {/* Helper only */}
             <Route element={<RoleRoute roles={['helper']} />}>
-              <Route path="/helper/jobs" element={<HelperJobsPage />} />
+              <Route path="/helper/jobs"     element={<HelperJobsPage />} />
               <Route path="/helper/earnings" element={<HelperEarningsPage />} />
+              <Route path="/helper/schedule" element={<HelperSchedulePage />} />
             </Route>
 
             <Route path="*" element={<NotFoundPage />} />

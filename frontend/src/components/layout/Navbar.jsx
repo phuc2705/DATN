@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import {
   Bell, Menu, X, ChevronDown, User, LogOut, LogIn, UserPlus,
-  Home, ClipboardList, Briefcase, Wallet, LayoutDashboard,
+  Home, ClipboardList, Briefcase, Wallet, LayoutDashboard, CalendarDays,
 } from 'lucide-react';
 
 function BellIcon({ unread }) {
@@ -112,6 +112,7 @@ export default function Navbar() {
               <>
                 <NavLink to="/helper/jobs">Công việc</NavLink>
                 <NavLink to="/helper/earnings">Thu nhập</NavLink>
+                <NavLink to="/helper/schedule">Lịch làm việc</NavLink>
               </>
             )}
 
@@ -262,9 +263,10 @@ export default function Navbar() {
 
               {user?.userType === 'helper' && (
                 <>
-                  <MobileLink to="/helper/jobs" icon={Briefcase} onClick={closeAll}>Công việc</MobileLink>
-                  <MobileLink to="/helper/earnings" icon={Wallet} onClick={closeAll}>Thu nhập</MobileLink>
-                  <MobileLink to="/profile" icon={User} onClick={closeAll}>Hồ sơ cá nhân</MobileLink>
+                  <MobileLink to="/helper/jobs"     icon={Briefcase}    onClick={closeAll}>Công việc</MobileLink>
+                  <MobileLink to="/helper/earnings" icon={Wallet}       onClick={closeAll}>Thu nhập</MobileLink>
+                  <MobileLink to="/helper/schedule" icon={CalendarDays} onClick={closeAll}>Lịch làm việc</MobileLink>
+                  <MobileLink to="/profile"         icon={User}         onClick={closeAll}>Hồ sơ cá nhân</MobileLink>
                 </>
               )}
 

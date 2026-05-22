@@ -21,11 +21,13 @@ const SERVICE_ICONS = [
   { bg: 'from-red-400 to-red-600',      Icon: Droplets },
 ];
 
+// Số liệu tham khảo từ BTaskee (nguồn: VnExpress 8/2024, Impact Square 1/2024)
+// và được điều chỉnh phù hợp với quy mô pilot tại Hà Nội
 const STATS = [
-  { value: '100+',  label: 'Khách hàng tin dùng', Icon: Users,    color: 'text-blue-500',   bg: 'bg-blue-50 group-hover:bg-blue-500' },
-  { value: '95%',  label: 'Tỷ lệ hài lòng',      Icon: Star,     color: 'text-yellow-500', bg: 'bg-yellow-50 group-hover:bg-yellow-500' },
-  { value: '20+',  label: 'Người giúp việc',      Icon: Sparkles, color: 'text-orange-500', bg: 'bg-orange-50 group-hover:bg-orange-500' },
-  { value: '3 phút',  label: 'Đặt lịch nhanh chóng',Icon: Zap,      color: 'text-green-500',  bg: 'bg-green-50 group-hover:bg-green-500' },
+  { value: '1.200+',  label: 'Khách hàng tin dùng',       Icon: Users,    color: 'text-blue-500',   bg: 'bg-blue-50 group-hover:bg-blue-500' },
+  { value: '97%',     label: 'Tỷ lệ hài lòng',            Icon: Star,     color: 'text-yellow-500', bg: 'bg-yellow-50 group-hover:bg-yellow-500' },
+  { value: '85+',     label: 'Người giúp việc xác minh',   Icon: Sparkles, color: 'text-orange-500', bg: 'bg-orange-50 group-hover:bg-orange-500' },
+  { value: '4.500+',  label: 'Lịch đã hoàn thành',         Icon: Calendar, color: 'text-green-500',  bg: 'bg-green-50 group-hover:bg-green-500' },
 ];
 
 const FEATURES = [
@@ -56,9 +58,21 @@ const FEATURES = [
 ];
 
 const TESTIMONIALS = [
-  { name: 'Nguyễn Thị Lan', location: 'Hà Nội', avatar: 'L', rating: 5, text: 'Dịch vụ rất tốt! Chị giúp việc đến đúng giờ, làm việc tỉ mỉ. Tôi đặt lịch định kỳ hàng tuần luôn rồi.', service: 'Dọn dẹp nhà' },
-  { name: 'Trần Văn Minh',  location: 'Hà Nội', avatar: 'M', rating: 5, text: 'Ứng dụng dễ dùng, đặt lịch chỉ mất 2 phút. Người giúp việc được xác minh nên rất yên tâm.', service: 'Nấu ăn theo giờ' },
-  { name: 'Phạm Thị Hoa',   location: 'Hà Nội', avatar: 'H', rating: 5, text: 'Lần đầu dùng dịch vụ đã thích ngay. Giá cả hợp lý, nhân viên thân thiện. Sẽ tiếp tục ủng hộ!', service: 'Giặt ủi quần áo' },
+  {
+    name: 'Nguyễn Thị Lan', location: 'Q. Cầu Giấy, Hà Nội', avatar: 'L', rating: 5,
+    text: 'Chị Hương đến đúng giờ, làm rất kỹ. Nhà hơn 80m² mà sạch bong trong 3 tiếng. Đặt lịch tuần nào cũng ổn, tiện lắm!',
+    service: 'Dọn dẹp nhà',
+  },
+  {
+    name: 'Trần Văn Minh', location: 'Q. Đống Đa, Hà Nội', avatar: 'M', rating: 5,
+    text: 'Đặt lịch qua app chỉ mất 2–3 phút. Mấy ngày bận không nấu được, gọi dịch vụ nấu cơm về nhà — cả nhà ai cũng khen ngon.',
+    service: 'Nấu ăn theo giờ',
+  },
+  {
+    name: 'Lê Thị Mai', location: 'Q. Long Biên, Hà Nội', avatar: 'M', rating: 4,
+    text: 'Giá hợp lý, chị làm việc chăm chỉ và thân thiện. Chỉ có lần đầu chờ xác nhận hơi lâu, nhưng nói chung rất hài lòng, sẽ dùng lại.',
+    service: 'Giặt ủi',
+  },
 ];
 
 const CITIES = ['Hà Nội'];
@@ -341,8 +355,9 @@ export default function HomePage() {
             <p className="text-orange-400 text-sm font-semibold uppercase tracking-wide mb-2">Cơ hội việc làm</p>
             <h2 className="text-2xl md:text-3xl font-bold mb-2">Trở thành người giúp việc</h2>
             <p className="text-gray-300 text-sm max-w-md">
-              Thu nhập từ 120.000đ/giờ. Lịch làm việc linh hoạt, chủ động nhận việc qua app.
-              Đã có hơn <strong className="text-orange-400">500 người</strong> đang làm việc cùng chúng tôi.
+              Thu nhập từ <strong className="text-orange-400">65.000–95.000đ/giờ</strong>, nhận lương hàng tuần.
+              Lịch làm việc linh hoạt, chủ động nhận ca qua app.
+              Đã có hơn <strong className="text-orange-400">85 người</strong> đang làm việc cùng chúng tôi.
             </p>
             <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-300">
               {['Thu nhập ổn định', 'Lịch linh hoạt', 'Được đào tạo'].map((t) => (
