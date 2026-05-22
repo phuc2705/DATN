@@ -9,6 +9,9 @@ const validate = require('../middleware/validate');
 // GET /api/services - Lấy tất cả dịch vụ (public)
 router.get('/', ServiceController.getAllServices);
 
+// GET /api/services/:serviceId - Lấy chi tiết 1 dịch vụ (public)
+router.get('/:serviceId', ServiceController.getServiceById);
+
 // GET /api/services/:serviceId/helpers?city=HCM - Tìm helper theo dịch vụ
 router.get('/:serviceId/helpers', ServiceController.searchHelpers);
 

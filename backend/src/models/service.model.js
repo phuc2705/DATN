@@ -1,13 +1,36 @@
 // Model Service - quản lý dịch vụ và lịch làm việc của helper
 const { pool } = require('../config/database');
 
+// Chuyển snake_case từ DB sang camelCase cho frontend
+function mapService(row) {
+  if (!row) return null;
+  return {
+    serviceId:        row.service_id,
+    serviceName:      row.service_name,
+    description:      row.description,
+    shortDescription: row.short_description,
+    basePrice:        Number(row.base_price),
+    priceUnit:        row.price_unit || 'giờ',
+    iconUrl:          row.icon_url,
+    slug:             row.slug,
+    isActive:         row.is_active,
+    rating:           Number(row.rating_average) || 0,
+    reviewCount:      Number(row.review_count) || 0,
+    helperCount:      Number(row.helper_count) || 0,
+    completedBookings: Number(row.completed_bookings) || 0,
+    city:             row.city || 'Hà Nội',
+    tagline:          row.tagline || row.category || '',
+    category:         row.category || '',
+  };
+}
+
 const ServiceModel = {
   // Lấy tất cả dịch vụ đang hoạt động
   findAll: async () => {
     const [rows] = await pool.query(
       'SELECT * FROM services WHERE is_active = TRUE ORDER BY service_name'
     );
-    return rows;
+    return rows.map(mapService);
   },
 
   // Tìm dịch vụ theo ID
@@ -16,7 +39,7 @@ const ServiceModel = {
       'SELECT * FROM services WHERE service_id = ? AND is_active = TRUE',
       [serviceId]
     );
-    return rows[0] || null;
+    return mapService(rows[0]);
   },
 
   // Admin: tạo dịch vụ mới

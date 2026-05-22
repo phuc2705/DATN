@@ -13,6 +13,18 @@ const ServiceController = {
     }
   },
 
+  // Lấy chi tiết 1 dịch vụ theo ID (public)
+  getServiceById: async (req, res, next) => {
+    try {
+      const { serviceId } = req.params;
+      const service = await ServiceModel.findById(serviceId);
+      if (!service) return sendError(res, 'Dịch vụ không tồn tại.', 404);
+      return sendSuccess(res, service);
+    } catch (error) {
+      next(error);
+    }
+  },
+
   // Tìm kiếm helper theo dịch vụ + thành phố
   searchHelpers: async (req, res, next) => {
     try {
