@@ -151,6 +151,26 @@ async function runMigrations(connection) {
     // ignore — cột đã tồn tại
   }
 
+  // Tạo bảng đăng ký ca làm việc theo ngày cụ thể (helper tự đăng ký)
+  try {
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS helper_shift_registrations (
+        id          INT AUTO_INCREMENT PRIMARY KEY,
+        helper_id   INT NOT NULL,
+        shift_date  DATE NOT NULL,
+        start_time  TIME NOT NULL,
+        end_time    TIME NOT NULL,
+        status      ENUM('active','cancelled') NOT NULL DEFAULT 'active',
+        created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY  uniq_shift (helper_id, shift_date, start_time),
+        FOREIGN KEY (helper_id) REFERENCES helpers(helper_id) ON DELETE CASCADE,
+        INDEX idx_helper_date (helper_id, shift_date, status)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+  } catch (err) {
+    // ignore — bảng đã tồn tại
+  }
+
   console.log('✅ Migrations hoàn tất.');
 }
 

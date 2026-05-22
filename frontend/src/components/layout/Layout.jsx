@@ -11,10 +11,10 @@ const FOOTER_LINKS = {
     { label: 'Vệ sinh tổng thể',  to: '/services/5'  },
   ],
   'Hỗ trợ': [
-    { label: 'Câu hỏi thường gặp',    to: '/help'  },
-    { label: 'Liên hệ hỗ trợ',        to: '/help'  },
-    { label: 'Hướng dẫn đặt lịch',    to: '/help'  },
-    { label: 'Chính sách hoàn tiền',   to: '/terms' },
+    { label: 'Câu hỏi thường gặp',    to: '/help'               },
+    { label: 'Liên hệ hỗ trợ',        to: '/help#contact'       },
+    { label: 'Hướng dẫn đặt lịch',    to: '/help?cat=booking'   },
+    { label: 'Chính sách hoàn tiền',   to: '/help?cat=payment'   },
   ],
   'Về chúng tôi': [
     { label: 'Giới thiệu',  to: '/about' },

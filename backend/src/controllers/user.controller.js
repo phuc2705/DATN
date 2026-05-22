@@ -121,6 +121,111 @@ const UserController = {
     }
   },
 
+  // Lấy lịch làm việc hiện tại của helper
+  getSchedule: async (req, res, next) => {
+    try {
+      const { user_id } = req.user;
+      const [[helperRow]] = await pool.query('SELECT helper_id FROM helpers WHERE user_id = ?', [user_id]);
+      if (!helperRow) return sendError(res, 'Không tìm thấy thông tin helper.', 404);
+
+      const [rows] = await pool.query(
+        'SELECT day_of_week AS dayOfWeek, start_time AS startTime, end_time AS endTime, is_available AS isAvailable FROM schedules WHERE helper_id = ?',
+        [helperRow.helper_id]
+      );
+      return sendSuccess(res, { schedules: rows });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Lấy danh sách ca đã đăng ký (date-specific shifts)
+  getShifts: async (req, res, next) => {
+    try {
+      const { user_id } = req.user;
+      const [[helperRow]] = await pool.query('SELECT helper_id FROM helpers WHERE user_id = ?', [user_id]);
+      if (!helperRow) return sendError(res, 'Không tìm thấy thông tin helper.', 404);
+
+      // Lấy các ca từ hôm nay trở về sau, sắp xếp theo ngày tăng dần
+      const [rows] = await pool.query(
+        `SELECT id, shift_date AS shiftDate, start_time AS startTime, end_time AS endTime,
+                status, created_at AS createdAt
+         FROM helper_shift_registrations
+         WHERE helper_id = ? AND shift_date >= CURDATE()
+         ORDER BY shift_date ASC, start_time ASC`,
+        [helperRow.helper_id]
+      );
+      return sendSuccess(res, { shifts: rows });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Đăng ký một ca làm cụ thể theo ngày
+  registerShift: async (req, res, next) => {
+    try {
+      const { user_id } = req.user;
+      const { shiftDate, startTime, endTime } = req.body;
+
+      if (!shiftDate || !startTime || !endTime)
+        return sendError(res, 'Thiếu thông tin ca làm (ngày, giờ bắt đầu, giờ kết thúc).', 400);
+
+      // Không cho đăng ký ca trong quá khứ
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      if (new Date(shiftDate) < today)
+        return sendError(res, 'Không thể đăng ký ca trong quá khứ.', 400);
+
+      const [[helperRow]] = await pool.query('SELECT helper_id FROM helpers WHERE user_id = ?', [user_id]);
+      if (!helperRow) return sendError(res, 'Không tìm thấy thông tin helper.', 404);
+
+      try {
+        const [result] = await pool.query(
+          `INSERT INTO helper_shift_registrations (helper_id, shift_date, start_time, end_time)
+           VALUES (?, ?, ?, ?)`,
+          [helperRow.helper_id, shiftDate, startTime, endTime]
+        );
+        return sendSuccess(res, { shiftId: result.insertId }, 'Đăng ký ca làm thành công!');
+      } catch (err) {
+        if (err.code === 'ER_DUP_ENTRY')
+          return sendError(res, 'Ca này đã được đăng ký trước đó.', 409);
+        throw err;
+      }
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Hủy ca đã đăng ký (chỉ được hủy trước giờ vào ca 12 tiếng)
+  cancelShift: async (req, res, next) => {
+    try {
+      const { user_id } = req.user;
+      const { shiftId } = req.params;
+
+      const [[helperRow]] = await pool.query('SELECT helper_id FROM helpers WHERE user_id = ?', [user_id]);
+      if (!helperRow) return sendError(res, 'Không tìm thấy thông tin helper.', 404);
+
+      const [[shift]] = await pool.query(
+        'SELECT id, shift_date, start_time, status FROM helper_shift_registrations WHERE id = ? AND helper_id = ?',
+        [shiftId, helperRow.helper_id]
+      );
+      if (!shift) return sendError(res, 'Không tìm thấy ca làm.', 404);
+      if (shift.status === 'cancelled') return sendError(res, 'Ca này đã bị hủy.', 400);
+
+      // Kiểm tra điều kiện 12 tiếng
+      const shiftStart = new Date(`${shift.shift_date.toISOString().slice(0, 10)}T${shift.start_time}`);
+      const diffHours = (shiftStart - Date.now()) / 36e5;
+      if (diffHours < 12)
+        return sendError(res, 'Chỉ được hủy ca trước giờ vào ca ít nhất 12 tiếng.', 400);
+
+      await pool.query(
+        "UPDATE helper_shift_registrations SET status = 'cancelled' WHERE id = ?",
+        [shiftId]
+      );
+      return sendSuccess(res, null, 'Hủy ca làm thành công!');
+    } catch (error) {
+      next(error);
+    }
+  },
+
   // Cập nhật lịch làm việc của helper (schedule)
   updateSchedule: async (req, res, next) => {
     try {

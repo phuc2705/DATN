@@ -207,19 +207,44 @@ const PaymentController = {
 
       const totalEarnings = payments.reduce((s, p) => s + p.helperEarning, 0);
 
-      // Thu nhập tháng hiện tại
       const now = new Date();
+
+      // Thu nhập tháng hiện tại
       const monthlyEarnings = payments
         .filter((p) => p.paidAt && new Date(p.paidAt).getMonth() === now.getMonth() && new Date(p.paidAt).getFullYear() === now.getFullYear())
         .reduce((s, p) => s + p.helperEarning, 0);
+
+      // Thu nhập tuần hiện tại (từ thứ Hai)
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+      startOfWeek.setHours(0, 0, 0, 0);
+      const weeklyEarnings = payments
+        .filter((p) => p.paidAt && new Date(p.paidAt) >= startOfWeek)
+        .reduce((s, p) => s + p.helperEarning, 0);
+
+      // Thống kê thu nhập theo từng dịch vụ
+      const byServiceMap = {};
+      payments.forEach((p) => {
+        const key = p.serviceName || 'Khác';
+        if (!byServiceMap[key]) byServiceMap[key] = { serviceName: key, count: 0, earning: 0 };
+        byServiceMap[key].count++;
+        byServiceMap[key].earning += p.helperEarning;
+      });
+      const byService = Object.values(byServiceMap).sort((a, b) => b.earning - a.earning);
+
+      // Thu nhập trung bình mỗi đơn
+      const avgPerOrder = payments.length > 0 ? Math.round(totalEarnings / payments.length) : 0;
 
       return sendSuccess(res, {
         summary: {
           totalEarnings,
           monthlyEarnings,
+          weeklyEarnings,
+          avgPerOrder,
           completedBookings: payments.length,
           ratingAverage: Number(helperRow.rating_average) || 0,
         },
+        byService,
         payments,
       });
     } catch (error) {

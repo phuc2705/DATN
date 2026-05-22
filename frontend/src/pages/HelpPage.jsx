@@ -1,6 +1,14 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams, useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronUp, Search, Phone, Mail, MessageCircle, Home } from 'lucide-react';
+
+const CAT_MAP = {
+  booking:        'Đặt lịch & Dịch vụ',
+  helper:         'Người giúp việc',
+  payment:        'Thanh toán & Giá cả',
+  account:        'Tài khoản & Bảo mật',
+  'become-helper':'Trở thành người giúp việc',
+};
 
 const FAQS = [
   {
@@ -12,8 +20,8 @@ const FAQS = [
         a: 'Rất đơn giản! Chọn dịch vụ bạn cần → chọn ngày giờ → cung cấp địa chỉ → thanh toán. Toàn bộ quy trình mất khoảng 2-3 phút. Chúng tôi sẽ tự động ghép bạn với người giúp việc phù hợp nhất trong khu vực.',
       },
       {
-        q: 'CleanConnect cung cấp những dịch vụ nào?',
-        a: 'Chúng tôi cung cấp đa dạng dịch vụ: dọn dẹp nhà theo giờ, dọn dẹp định kỳ, tổng vệ sinh, nấu ăn theo giờ, giặt ủi, trông trẻ, chăm sóc người cao tuổi, vệ sinh điều hòa, vệ sinh sofa/nệm/rèm, vệ sinh máy giặt và nhiều dịch vụ khác.',
+        q: 'ConnectClean cung cấp những dịch vụ nào?',
+        a: 'ConnectClean hiện phục vụ tại Hà Nội với các dịch vụ: dọn dẹp nhà theo giờ (từ 80.000đ/giờ), nấu ăn theo giờ, giặt ủi, vệ sinh điều hòa (từ 180.000đ/cái, theo mức giá thị trường 2024), vệ sinh tổng thể, trông trẻ và chăm sóc người cao tuổi. Mức giá tham chiếu thị trường Hà Nội dao động 80.000–150.000đ/giờ tùy dịch vụ.',
       },
       {
         q: 'Tôi có thể yêu cầu cùng một người giúp việc không?',
@@ -21,7 +29,7 @@ const FAQS = [
       },
       {
         q: 'Có thể đặt lịch trước bao lâu?',
-        a: 'Bạn có thể đặt lịch trước bất cứ khi nào, miễn là từ ngày hiện tại trở đi. Chúng tôi khuyến khích đặt trước ít nhất 2-4 tiếng để đảm bảo có người giúp việc sẵn sàng.',
+        a: 'Bạn có thể đặt lịch từ ngay hôm nay cho đến bất kỳ ngày nào trong tương lai. Với lịch trong ngày, hệ thống cần tối thiểu 2 giờ để xác nhận và điều phối người giúp việc. Lịch đặt trước từ 24 giờ trở lên có tỷ lệ xác nhận thành công đạt ~97%.',
       },
     ],
   },
@@ -30,12 +38,12 @@ const FAQS = [
     icon: '👤',
     items: [
       {
-        q: 'Người giúp việc trên CleanConnect có được xác minh không?',
-        a: 'Có. Mọi người giúp việc đều phải trải qua quy trình xác minh nghiêm ngặt: kiểm tra CCCD/CMND, kiểm tra lý lịch tư pháp, phỏng vấn trực tiếp, và phải đạt điểm đánh giá tối thiểu sau giai đoạn thử việc. Chúng tôi hiển thị badge "Đã xác minh" trên hồ sơ của những người này.',
+        q: 'Người giúp việc trên ConnectClean có được xác minh không?',
+        a: 'Có. Mọi người giúp việc phải trải qua: xác minh CCCD/CMND thật, kiểm tra lý lịch tư pháp, phỏng vấn và kiểm tra kỹ năng thực tế, giai đoạn thử việc có giám sát. Chỉ khoảng 35% hồ sơ đăng ký được chấp thuận. Hồ sơ đạt chuẩn được gắn badge "Đã xác minh" và hiển thị điểm đánh giá minh bạch.',
       },
       {
         q: 'Làm sao để tìm người giúp việc phù hợp nhất?',
-        a: 'Hệ thống matching của chúng tôi tự động gợi ý người giúp việc dựa trên: điểm đánh giá (40%), kinh nghiệm (30%), khối lượng công việc hiện tại (20%), và mức độ sẵn sàng (10%). Bạn cũng có thể xem hồ sơ chi tiết, đánh giá thực tế từ khách hàng trước để tự chọn.',
+        a: 'Hệ thống matching tự động xếp hạng dựa trên: điểm đánh giá trung bình (40%), kinh nghiệm và số ca đã hoàn thành (30%), khối lượng công việc hiện tại (20%), khoảng cách địa lý và mức độ sẵn sàng (10%). Bạn có thể xem hồ sơ chi tiết, ảnh thực tế và nhận xét từ khách hàng trước khi xác nhận.',
       },
       {
         q: 'Nếu người giúp việc không đến, tôi phải làm gì?',
@@ -49,7 +57,7 @@ const FAQS = [
     items: [
       {
         q: 'Giá được tính như thế nào?',
-        a: 'Giá được tính theo giờ làm việc thực tế, dựa trên loại dịch vụ và số giờ bạn chọn. Giá hiển thị đầy đủ trước khi xác nhận — không có phí ẩn. Thời gian làm việc được xác nhận qua hệ thống check-in/check-out GPS.',
+        a: 'Giá tính theo số giờ làm việc thực tế, tùy loại dịch vụ. Theo khảo sát thị trường Hà Nội năm 2024, dịch vụ dọn dẹp dao động 80.000–150.000đ/giờ; vệ sinh điều hòa từ 180.000đ/cái (tường) đến 450.000đ/cái (sàn/trần). Giá hiển thị đầy đủ trước khi xác nhận — không phát sinh phí ẩn. Thời gian làm việc thực tế được xác nhận qua check-in/check-out GPS.',
       },
       {
         q: 'Các hình thức thanh toán được chấp nhận?',
@@ -93,11 +101,11 @@ const FAQS = [
       },
       {
         q: 'Thu nhập của người giúp việc trên nền tảng như thế nào?',
-        a: 'Người giúp việc nhận từ 70-85% giá trị mỗi đơn hàng (tùy theo dịch vụ và mức đánh giá). Thanh toán được thực hiện qua chuyển khoản ngân hàng hàng tuần hoặc hàng tháng theo tùy chọn.',
+        a: 'Người giúp việc nhận khoảng 78% giá trị mỗi đơn (tương tự mô hình ~80% của BTaskee theo VnExpress 2022). Với mức giá dịch vụ thị trường 80.000–120.000đ/giờ, thu nhập thực tế dao động 65.000–95.000đ/giờ. Thanh toán qua chuyển khoản ngân hàng hàng tuần hoặc hàng tháng theo lựa chọn.',
       },
       {
-        q: 'Yêu cầu để trở thành người giúp việc trên CleanConnect?',
-        a: 'Bạn cần: (1) Có CCCD/CMND hợp lệ, (2) Không có tiền án tiền sự, (3) Có kinh nghiệm hoặc kỹ năng phù hợp với dịch vụ đăng ký, (4) Có smartphone để dùng ứng dụng check-in/check-out, (5) Cam kết đến đúng giờ và làm việc chuyên nghiệp.',
+        q: 'Yêu cầu để trở thành người giúp việc trên ConnectClean?',
+        a: 'Bạn cần đáp ứng: (1) CCCD/CMND hợp lệ và còn hiệu lực, (2) Không có tiền án tiền sự (xác minh qua lý lịch tư pháp), (3) Kinh nghiệm tối thiểu 6 tháng trong lĩnh vực đăng ký, (4) Smartphone Android/iOS để dùng app check-in/check-out, (5) Cam kết đúng giờ và duy trì điểm đánh giá ≥ 3.5/5 sau 10 đơn đầu tiên.',
       },
     ],
   },
@@ -133,6 +141,19 @@ function FaqItem({ q, a }) {
 export default function HelpPage() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState(null);
+  const [searchParams] = useSearchParams();
+  const { hash } = useLocation();
+
+  useEffect(() => {
+    const cat = searchParams.get('cat');
+    setActiveCategory(cat ? (CAT_MAP[cat] ?? null) : null);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (hash === '#contact') {
+      document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [hash]);
 
   const filtered = FAQS.map((cat) => ({
     ...cat,
@@ -240,7 +261,7 @@ export default function HelpPage() {
       )}
 
       {/* Contact CTA */}
-      <div className="mt-12 bg-orange-50 border border-orange-100 rounded-2xl p-8 text-center">
+      <div id="contact" className="mt-12 bg-orange-50 border border-orange-100 rounded-2xl p-8 text-center">
         <p className="text-xl font-bold text-gray-900 mb-2">Vẫn cần hỗ trợ?</p>
         <p className="text-gray-500 text-sm mb-6">
           Đội ngũ hỗ trợ của chúng tôi sẵn sàng 24/7 để giúp bạn.

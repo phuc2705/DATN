@@ -11,6 +11,7 @@ const { initDatabase } = require('./src/config/init-db');
 const { errorHandler, notFound } = require('./src/middleware/errorHandler');
 const { initSocket } = require('./src/socket');
 const { sendBookingReminders } = require('./src/jobs/reminderJob');
+const { autoAssignExpiredBookings } = require('./src/jobs/autoAssignJob');
 
 // Import các router
 const authRoutes = require('./src/routes/auth.routes');
@@ -108,6 +109,10 @@ const startServer = async () => {
   // Job nhắc nhở lịch đặt (mỗi 30 phút)
   sendBookingReminders();
   setInterval(sendBookingReminders, 30 * 60 * 1000);
+
+  // Job tự động giao việc: booking pending > 30 phút không có helper → gán tự động hoặc báo admin
+  autoAssignExpiredBookings();
+  setInterval(autoAssignExpiredBookings, 30 * 60 * 1000);
 };
 
 startServer();

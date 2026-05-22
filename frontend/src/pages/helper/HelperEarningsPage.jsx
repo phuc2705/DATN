@@ -4,7 +4,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { formatPrice, formatDate } from '../../utils/format';
 import {
   Banknote, Calendar, CheckCircle, Star,
-  CreditCard, Wallet, Info, TrendingUp,
+  CreditCard, Wallet, Info, TrendingUp, PieChart, ArrowUpRight,
 } from 'lucide-react';
 
 /* ─── Stat card ──────────────────────────────────────────────────── */
@@ -119,6 +119,20 @@ export default function HelperEarningsPage() {
       bg:    'bg-blue-50',
     },
     {
+      label: 'Tuần này',
+      value: formatPrice(data?.summary?.weeklyEarnings || 0),
+      Icon: TrendingUp,
+      color: 'text-purple-600',
+      bg:    'bg-purple-50',
+    },
+    {
+      label: 'TB / đơn',
+      value: formatPrice(data?.summary?.avgPerOrder || 0),
+      Icon: ArrowUpRight,
+      color: 'text-pink-600',
+      bg:    'bg-pink-50',
+    },
+    {
       label: 'Đơn hoàn thành',
       value: data?.summary?.completedBookings || 0,
       Icon: CheckCircle,
@@ -134,7 +148,8 @@ export default function HelperEarningsPage() {
     },
   ];
 
-  const payments = data?.payments || [];
+  const payments  = data?.payments  || [];
+  const byService = data?.byService || [];
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -147,12 +162,47 @@ export default function HelperEarningsPage() {
         </div>
 
         {/* Stats grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-5">
           {stats.map((s) => <StatCard key={s.label} {...s} />)}
         </div>
 
         {/* Bar chart */}
         <EarningsBar payments={payments} />
+
+        {/* Thu nhập theo dịch vụ */}
+        {byService.length > 0 && (
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-5">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center">
+                <PieChart className="w-4 h-4 text-purple-500" />
+              </div>
+              <h2 className="font-semibold text-gray-900">Thu nhập theo dịch vụ</h2>
+            </div>
+            <div className="space-y-3">
+              {byService.map((svc) => {
+                const pct = data?.summary?.totalEarnings > 0
+                  ? Math.round((svc.earning / data.summary.totalEarnings) * 100)
+                  : 0;
+                return (
+                  <div key={svc.serviceName}>
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span className="text-gray-700 font-medium truncate">{svc.serviceName}</span>
+                      <span className="text-gray-500 flex-shrink-0 ml-2">
+                        {svc.count} đơn · {formatPrice(svc.earning)}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-orange-400 rounded-full transition-all"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Payment history */}
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
@@ -220,7 +270,7 @@ export default function HelperEarningsPage() {
         <div className="mt-4 flex items-start gap-3 p-4 bg-blue-50 border border-blue-100 rounded-xl">
           <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
           <p className="text-sm text-blue-600">
-            Thu nhập được tính sau khi khách hàng xác nhận thanh toán. Nền tảng giữ phí dịch vụ 10%.
+            Thu nhập được tính sau khi khách hàng xác nhận thanh toán. Nền tảng giữ phí dịch vụ 10% (bạn nhận 90% giá trị đơn).
           </p>
         </div>
       </div>
