@@ -68,10 +68,11 @@ CREATE TABLE helpers (
 -- ============================================================
 
 CREATE TABLE services (
-    service_id   INT AUTO_INCREMENT PRIMARY KEY,
-    service_name VARCHAR(100) NOT NULL,
-    description  TEXT NULL,
-    base_price   DECIMAL(10,2) NOT NULL,
+    service_id        INT AUTO_INCREMENT PRIMARY KEY,
+    service_name      VARCHAR(100) NOT NULL,
+    description       TEXT NULL,
+    short_description TEXT NULL,
+    base_price        DECIMAL(10,2) NOT NULL,
     icon_url     VARCHAR(255) NULL,
     -- Slug phục vụ SEO cho trang dịch vụ
     slug         VARCHAR(150) UNIQUE NULL,

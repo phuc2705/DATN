@@ -22,6 +22,7 @@ const MOCK_SERVICE = {
   reviewCount:      234,
   helperCount:      48,
   completedBookings: 1200,
+  short_description: 'Dịch vụ dọn dẹp nhà cửa toàn diện theo khung giờ linh hoạt, thực hiện bởi đội ngũ người giúp việc được đào tạo bài bản và xác minh danh tính kỹ lưỡng. Chúng tôi sử dụng sản phẩm vệ sinh an toàn, thân thiện với trẻ em và thú cưng. Mỗi ca làm việc đều được ghi lại qua hệ thống check-in/check-out GPS để đảm bảo tính minh bạch và đúng giờ.',
   description: `Bạn bận rộn — chúng tôi lo phần còn lại. Dịch vụ dọn dẹp nhà theo giờ của CleanConnect kết nối bạn với những người giúp việc được xác minh danh tính, có kinh nghiệm thực tế và được đánh giá bởi cộng đồng khách hàng thật.
 
 Mỗi người giúp việc trải qua quy trình xác minh CCCD, kiểm tra lý lịch tư pháp và phỏng vấn trực tiếp trước khi được nhận vào hệ thống. Chúng tôi chỉ chấp nhận những ứng viên đạt điểm đánh giá từ 4.5 trở lên sau giai đoạn thử việc.
@@ -539,12 +540,14 @@ export default function ServiceDetailPage() {
           <section className="mb-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Về dịch vụ này</h2>
             <div className="text-base text-gray-700 leading-relaxed space-y-3">
-              {descExpanded
-                ? descParagraphs.map((p, i) => <p key={i}>{p}</p>)
-                : <p>{descShort}</p>
+              {service.short_description
+                ? <p>{service.short_description}</p>
+                : descExpanded
+                  ? descParagraphs.map((p, i) => <p key={i}>{p}</p>)
+                  : <p>{descShort}</p>
               }
             </div>
-            {descHasMore && (
+            {!service.short_description && descHasMore && (
               <button
                 onClick={() => setDescExpanded((v) => !v)}
                 className="flex items-center gap-1.5 mt-4 text-sm font-semibold text-gray-900 hover:text-orange-500 transition-colors underline"
