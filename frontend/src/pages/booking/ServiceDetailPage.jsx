@@ -22,7 +22,8 @@ const MOCK_SERVICE = {
   reviewCount:      234,
   helperCount:      48,
   completedBookings: 1200,
-  short_description: 'Dịch vụ dọn dẹp nhà cửa toàn diện theo khung giờ linh hoạt, thực hiện bởi đội ngũ người giúp việc được đào tạo bài bản và xác minh danh tính kỹ lưỡng. Chúng tôi sử dụng sản phẩm vệ sinh an toàn, thân thiện với trẻ em và thú cưng. Mỗi ca làm việc đều được ghi lại qua hệ thống check-in/check-out GPS để đảm bảo tính minh bạch và đúng giờ.',
+  shortDescription: 'Dịch vụ dọn dẹp nhà cửa toàn diện theo khung giờ linh hoạt, thực hiện bởi đội ngũ người giúp việc được đào tạo bài bản và xác minh danh tính kỹ lưỡng. Chúng tôi sử dụng sản phẩm vệ sinh an toàn, thân thiện với trẻ em và thú cưng. Mỗi ca làm việc đều được ghi lại qua hệ thống check-in/check-out GPS để đảm bảo tính minh bạch và đúng giờ.',
+  priceUnit: 'giờ',
   description: `Bạn bận rộn — chúng tôi lo phần còn lại. Dịch vụ dọn dẹp nhà theo giờ của CleanConnect kết nối bạn với những người giúp việc được xác minh danh tính, có kinh nghiệm thực tế và được đánh giá bởi cộng đồng khách hàng thật.
 
 Mỗi người giúp việc trải qua quy trình xác minh CCCD, kiểm tra lý lịch tư pháp và phỏng vấn trực tiếp trước khi được nhận vào hệ thống. Chúng tôi chỉ chấp nhận những ứng viên đạt điểm đánh giá từ 4.5 trở lên sau giai đoạn thử việc.
@@ -97,6 +98,20 @@ const MOCK_REVIEWS = [
   },
 ];
 // ─────────────────────────────────────────────────────────────────────────────
+
+// Tách danh sách BAO GỒM / KHÔNG BAO GỒM từ trường description khi API không trả includes[]
+function parseIncludes(description) {
+  if (!description) return [];
+  const m = description.match(/BAO GỒM:\s*([^\n]+)/);
+  if (!m) return [];
+  return m[1].split(';').map(s => s.trim()).filter(Boolean);
+}
+function parseExcludes(description) {
+  if (!description) return [];
+  const m = description.match(/KHÔNG BAO GỒM:\s*([^\n]+)/);
+  if (!m) return [];
+  return m[1].split(',').map(s => s.trim()).filter(Boolean);
+}
 
 // ── Sub-component: StarRating ────────────────────────────────────────────────
 function StarRating({ rating, size = 'md', showEmpty = true }) {
@@ -278,7 +293,7 @@ function BookingWidget({ service }) {
       <div className="mb-5">
         <div className="flex items-baseline gap-1.5">
           <span className="text-2xl font-bold text-gray-900">{formatPrice(service.basePrice)}</span>
-          <span className="text-gray-500 text-sm font-normal">/giờ</span>
+          <span className="text-gray-500 text-sm font-normal">/{service.priceUnit || service.price_unit || 'giờ'}</span>
         </div>
         <div className="flex items-center gap-1 mt-1">
           <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
@@ -455,6 +470,10 @@ export default function ServiceDetailPage() {
   const descParagraphs = service.description.trim().split('\n\n');
   const descShort = descParagraphs[0];
   const descHasMore = descParagraphs.length > 1;
+  const shortDesc = service.shortDescription || service.short_description;
+  const priceUnit = service.priceUnit || service.price_unit || 'giờ';
+  const includes = service.includes || parseIncludes(service.description);
+  const excludes = service.excludes || parseExcludes(service.description);
   const totalRatings = Object.values(service.ratingBreakdown || {}).reduce((s, v) => s + v, 0);
   const displayedReviews = showAllReviews ? reviews : reviews.slice(0, 4);
 
@@ -540,14 +559,14 @@ export default function ServiceDetailPage() {
           <section className="mb-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Về dịch vụ này</h2>
             <div className="text-base text-gray-700 leading-relaxed space-y-3">
-              {service.short_description
-                ? <p>{service.short_description}</p>
+              {shortDesc
+                ? <p>{shortDesc}</p>
                 : descExpanded
                   ? descParagraphs.map((p, i) => <p key={i}>{p}</p>)
                   : <p>{descShort}</p>
               }
             </div>
-            {!service.short_description && descHasMore && (
+            {!shortDesc && descHasMore && (
               <button
                 onClick={() => setDescExpanded((v) => !v)}
                 className="flex items-center gap-1.5 mt-4 text-sm font-semibold text-gray-900 hover:text-orange-500 transition-colors underline"
@@ -565,7 +584,7 @@ export default function ServiceDetailPage() {
           <section className="mb-6">
             <h2 className="text-xl font-bold text-gray-900 mb-5">Dịch vụ bao gồm</h2>
             <div className="grid sm:grid-cols-2 gap-x-8 gap-y-3 mb-5">
-              {(service.includes || MOCK_SERVICE.includes).map((item) => (
+              {includes.map((item) => (
                 <div key={item} className="flex items-start gap-3">
                   <div className="w-5 h-5 rounded-full bg-gray-900 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Check className="w-3 h-3 text-white" strokeWidth={3} />
@@ -576,13 +595,13 @@ export default function ServiceDetailPage() {
             </div>
 
             {/* Không bao gồm */}
-            {(service.excludes || MOCK_SERVICE.excludes).length > 0 && (
+            {excludes.length > 0 && (
               <>
                 <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
                   Không bao gồm
                 </p>
                 <div className="space-y-2">
-                  {(service.excludes || MOCK_SERVICE.excludes).map((item) => (
+                  {excludes.map((item) => (
                     <div key={item} className="flex items-center gap-3">
                       <X className="w-4 h-4 text-gray-300 flex-shrink-0" />
                       <span className="text-sm text-gray-500">{item}</span>
@@ -688,7 +707,7 @@ function MobileStickyBar({ service }) {
       <div>
         <div className="flex items-baseline gap-1">
           <span className="text-lg font-bold text-gray-900">{formatPrice(service.basePrice)}</span>
-          <span className="text-sm text-gray-500">/giờ</span>
+          <span className="text-sm text-gray-500">/{service.priceUnit || service.price_unit || 'giờ'}</span>
         </div>
         <div className="flex items-center gap-1 mt-0.5">
           <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
