@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: import.meta.env.DEV ? (import.meta.env.VITE_API_URL || '') : '',
-  timeout: 10000,
+  timeout: 15000,
 });
 
 // Gắn access token vào mỗi request
