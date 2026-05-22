@@ -56,10 +56,10 @@ const NEW_SERVICES_V2 = [
   { name: 'Chăm sóc Thú cưng', price: 65000, slug: 'cham-soc-thu-cung',
     short: 'Dịch vụ chăm sóc thú cưng tại nhà hoàn hảo khi bạn đi du lịch, công tác hoặc bận rộn cả ngày. Nhân viên am hiểu và yêu động vật của chúng tôi sẽ đến tận nơi cho các bé ăn uống đúng giờ, dọn dẹp khay vệ sinh, chơi đùa cùng các bé để giảm stress, đảm bảo thú cưng luôn khỏe mạnh khi bạn vắng nhà.',
     desc: 'Dịch vụ Pet Sitting hoàn hảo khi bạn đi du lịch, công tác hoặc bận rộn cả ngày. Nhân viên yêu động vật đến tận nhà chăm sóc chó, mèo, đảm bảo các bé được ăn uống đúng giờ và không bị cô đơn khi chủ vắng.\n\nBAO GỒM: Cho thú cưng ăn, uống nước theo đúng định lượng và giờ giấc; Dọn dẹp khay cát (mèo), lau dọn khu vực vệ sinh của chó; Chải lông, chơi đùa với các bé để giảm stress; Dắt chó đi dạo (nếu yêu cầu ca 2 tiếng trở lên); Chụp ảnh, quay video báo cáo tình hình cho chủ mỗi ca.\n\nKHÔNG BAO GỒM: Tắm rửa cắt tỉa lông chuyên nghiệp, Chữa bệnh hoặc tiêm vaccine tại nhà.\n\nLƯU Ý: Khách hàng cần chuẩn bị sẵn thức ăn và dụng cụ riêng. Thú cưng không có bệnh truyền nhiễm hoặc tiền sử cắn người nguy hiểm.' },
-  { name: 'Vệ sinh Văn phòng & Shop', price: 12000, slug: 've-sinh-van-phong-shop',
+  { name: 'Vệ sinh Văn phòng & Shop', price: 20000, slug: 've-sinh-van-phong-shop',
     short: 'Duy trì không gian làm việc sạch sẽ, chuyên nghiệp để nâng cao hiệu suất làm việc của nhân viên và tạo ấn tượng tốt với đối tác. Dịch vụ linh hoạt, kinh tế, phù hợp cho các văn phòng vừa và nhỏ, cửa hàng bán lẻ hoặc showroom cần dọn dẹp định kỳ hàng ngày ngoài giờ hành chính.',
     desc: 'Duy trì không gian làm việc sạch sẽ, chuyên nghiệp để nâng cao hiệu suất nhân viên và tạo ấn tượng tốt với đối tác, khách hàng. Phù hợp cho văn phòng vừa và nhỏ, cửa hàng bán lẻ, showroom cần dọn dẹp định kỳ.\n\nBAO GỒM: Quét và lau sàn toàn bộ khu vực làm việc, sảnh đón khách; Lau bụi bàn làm việc, tủ tài liệu, máy in, máy tính bên ngoài; Thu gom rác tại các bàn làm việc, thay túi rác mới; Vệ sinh khu vực WC chung; Lau chùi khu vực Pantry.\n\nKHÔNG BAO GỒM: Lau kính mặt ngoài tòa nhà cao tầng bằng dây đu, Sắp xếp lại tài liệu mật trên bàn làm việc.\n\nLƯU Ý: Có thể tính theo diện tích hoặc ký hợp đồng khoán theo giờ cố định hàng tháng. Thường thực hiện sáng sớm hoặc buổi tối sau khi đóng cửa.' },
-  { name: 'Phun khử khuẩn & Kiểm soát côn trùng', price: 5000, slug: 'phun-khu-khuan-con-trung',
+  { name: 'Phun khử khuẩn & Kiểm soát côn trùng', price: 10000, slug: 'phun-khu-khuan-con-trung',
     short: 'Bảo vệ gia đình bạn khỏi các mầm bệnh truyền nhiễm và sự phiền toái từ côn trùng (muỗi, gián, kiến, mối). Chúng tôi sử dụng máy phun sương hạt siêu nhỏ (ULV) kết hợp với các loại thuốc sinh học cao cấp nhập khẩu, được Bộ Y Tế cấp phép, đảm bảo diệt tận gốc nhưng tuyệt đối an toàn cho sức khỏe con người và vật nuôi.',
     desc: 'Bảo vệ gia đình khỏi mầm bệnh truyền nhiễm và sự phiền toái từ côn trùng (muỗi, gián, kiến, mối). Sử dụng máy phun sương hạt siêu nhỏ (ULV) kết hợp thuốc sinh học nhập khẩu được Bộ Y Tế cấp phép, diệt tận gốc nhưng tuyệt đối an toàn cho người và vật nuôi.\n\nBAO GỒM: Che phủ bảo vệ giường chiếu, đồ ăn, bể cá trước khi phun; Phun tồn lưu dọc tường, khe kẽ, gầm tủ để diệt kiến, gián, mối; Phun không gian (sương mù) toàn bộ các phòng để diệt muỗi; Phun khử khuẩn Nano bạc toàn bộ bề mặt (gói combo); Bảo hành dịch vụ 1–3 tháng tùy khu vực.\n\nKHÔNG BAO GỒM: Đào hào chống mối cho móng nhà công trình lớn, Thu dọn xác chuột chết ẩn trong trần thạch cao.\n\nLƯU Ý: Diện tích phun tối thiểu từ 50m² trở lên. Sau khi phun, di tản khỏi nhà tối thiểu 1–2 tiếng.' },
 ];
@@ -102,6 +102,14 @@ async function runMigrations(connection) {
     await connection.query('ALTER TABLE services ADD COLUMN short_description TEXT NULL AFTER description');
   } catch (err) {
     // ignore — cột đã tồn tại
+  }
+
+  // Sửa giá: Vệ sinh Văn phòng → 20.000/m², Phun khử khuẩn → 10.000/m²
+  try {
+    await connection.query("UPDATE services SET base_price=20000 WHERE slug='ve-sinh-van-phong-shop' AND base_price<>20000");
+    await connection.query("UPDATE services SET base_price=10000 WHERE slug='phun-khu-khuan-con-trung' AND base_price<>10000");
+  } catch (err) {
+    // ignore
   }
 
   // Migration v2: cập nhật 12 dịch vụ đầy đủ
