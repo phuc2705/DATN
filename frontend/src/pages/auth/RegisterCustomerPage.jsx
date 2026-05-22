@@ -31,9 +31,10 @@ export default function RegisterCustomerPage() {
       setRegisteredEmail(data.email || form.email);
       setSavedPassword(form.password);
       setOtpStep(true);
-      if (data.devOtp) {
-        setOtp(data.devOtp);
-        toast('📋 [DEV] OTP tự động điền: ' + data.devOtp, { duration: 8000 });
+      const fallbackOtp = data.otp || data.devOtp;
+      if (fallbackOtp) {
+        setOtp(fallbackOtp);
+        toast('⚠️ Email gặp sự cố. Mã OTP của bạn: ' + fallbackOtp, { duration: 15000 });
       } else {
         toast.success('Mã OTP đã được gửi đến email của bạn!');
       }
