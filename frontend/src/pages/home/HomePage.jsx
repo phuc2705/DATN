@@ -237,12 +237,12 @@ export default function HomePage() {
                     <Icon className="w-7 h-7 text-white" />
                   </div>
                   <h3 className="font-semibold text-gray-900 text-base mb-1 group-hover:text-orange-600 transition-colors">{svc.serviceName}</h3>
-                  {svc.description && (
-                    <p className="text-xs text-gray-400 line-clamp-2 mb-3 leading-relaxed">{svc.description}</p>
+                  {(svc.shortDescription || svc.description) && (
+                    <p className="text-xs text-gray-400 line-clamp-2 mb-3 leading-relaxed">{svc.shortDescription || svc.description}</p>
                   )}
                   <div className="flex items-center justify-between">
                     <span className="text-orange-500 font-bold text-sm">
-                      Từ {formatPrice(svc.basePrice)}/giờ
+                      Từ {formatPrice(svc.basePrice)}/{svc.priceUnit || 'giờ'}
                     </span>
                     <span className="w-7 h-7 rounded-full bg-orange-50 flex items-center justify-center text-orange-400 group-hover:bg-orange-500 group-hover:text-white transition-all duration-200">
                       <ArrowRight className="w-3.5 h-3.5" />

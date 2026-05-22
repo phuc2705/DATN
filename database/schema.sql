@@ -73,10 +73,11 @@ CREATE TABLE services (
     description       TEXT NULL,
     short_description TEXT NULL,
     base_price        DECIMAL(10,2) NOT NULL,
-    icon_url     VARCHAR(255) NULL,
+    price_unit        VARCHAR(10) NOT NULL DEFAULT 'giờ',
+    icon_url          VARCHAR(255) NULL,
     -- Slug phục vụ SEO cho trang dịch vụ
-    slug         VARCHAR(150) UNIQUE NULL,
-    is_active    BOOLEAN DEFAULT TRUE,
+    slug              VARCHAR(150) UNIQUE NULL,
+    is_active         BOOLEAN DEFAULT TRUE,
     INDEX idx_service_name (service_name),
     INDEX idx_slug (slug)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
