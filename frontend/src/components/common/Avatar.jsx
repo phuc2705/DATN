@@ -2,7 +2,11 @@
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
 // Đường dẫn /uploads/... được serve từ backend, cần thêm origin
-const resolveUrl = (url) => (url?.startsWith('/uploads/') ? `${API_BASE}${url}` : url);
+// via.placeholder.com thường bị chặn → trả null để show initials
+const resolveUrl = (url) => {
+  if (!url || url.includes('via.placeholder.com') || url.includes('placeholder.com')) return null;
+  return url.startsWith('/uploads/') ? `${API_BASE}${url}` : url;
+};
 
 export default function Avatar({ name = '', avatarUrl = '', size = 'md', className = '' }) {
   const sizeClass = { sm: 'w-8 h-8 text-xs', md: 'w-9 h-9 text-sm', lg: 'w-12 h-12 text-base', xl: 'w-16 h-16 text-lg' }[size] || 'w-9 h-9 text-sm';
@@ -10,11 +14,12 @@ export default function Avatar({ name = '', avatarUrl = '', size = 'md', classNa
 
   const fallbackLetter = name?.[0]?.toUpperCase() || '?';
 
-  if (avatarUrl) {
+  const resolvedUrl = resolveUrl(avatarUrl);
+  if (resolvedUrl) {
     return (
       <div className={base} style={{ position: 'relative' }}>
         <img
-          src={resolveUrl(avatarUrl)}
+          src={resolvedUrl}
           alt={name}
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
           onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'flex'; }}
