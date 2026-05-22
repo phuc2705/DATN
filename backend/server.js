@@ -10,6 +10,7 @@ const { testConnection, pool } = require('./src/config/database');
 const { initDatabase } = require('./src/config/init-db');
 const { errorHandler, notFound } = require('./src/middleware/errorHandler');
 const { initSocket } = require('./src/socket');
+const { sendBookingReminders } = require('./src/jobs/reminderJob');
 
 // Import các router
 const authRoutes = require('./src/routes/auth.routes');
@@ -103,6 +104,10 @@ const startServer = async () => {
   });
   cleanupExpiredAccounts();
   setInterval(cleanupExpiredAccounts, 60 * 1000);
+
+  // Job nhắc nhở lịch đặt (mỗi 30 phút)
+  sendBookingReminders();
+  setInterval(sendBookingReminders, 30 * 60 * 1000);
 };
 
 startServer();

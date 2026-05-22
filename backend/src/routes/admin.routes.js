@@ -123,6 +123,11 @@ router.get('/payments', AdminController.listAllPayments);
 
 // ─── Quản lý Dịch vụ ──────────────────────────────────────────────────────────
 router.get('/services', AdminController.listServices);
+// POST /api/admin/services - Tạo dịch vụ mới
+router.post('/services', [
+  body('serviceName').trim().notEmpty().withMessage('Tên dịch vụ không được để trống'),
+  body('basePrice').isFloat({ min: 0 }).withMessage('Giá không hợp lệ'),
+], validate, AdminController.createService);
 // PUT /api/admin/services/:serviceId
 router.put('/services/:serviceId', [
   body('serviceName').optional().trim().notEmpty(),

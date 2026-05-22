@@ -101,10 +101,14 @@ const PaymentModel = {
   // Admin: tất cả giao dịch với bộ lọc
   findAll: async ({ status, startDate, endDate, limit = 50, offset = 0 }) => {
     let query = `
-      SELECT p.*, b.booking_date,
-             uc.full_name AS customer_name,
-             uh.full_name AS helper_name,
-             s.service_name
+      SELECT p.payment_id AS paymentId, p.booking_id AS bookingId,
+             p.amount, p.payment_method AS paymentMethod,
+             p.payment_status AS paymentStatus, p.paid_at AS paidAt,
+             p.created_at AS createdAt,
+             b.booking_date AS bookingDate,
+             uc.full_name AS customerName,
+             uh.full_name AS helperName,
+             s.service_name AS serviceName
       FROM payments p
       JOIN bookings b ON p.booking_id = b.booking_id
       JOIN customers c ON b.customer_id = c.customer_id

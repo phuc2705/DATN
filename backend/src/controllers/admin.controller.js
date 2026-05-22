@@ -28,7 +28,7 @@ const AdminController = {
 
       // Dịch vụ phổ biến nhất
       const [topServices] = await pool.query(`
-        SELECT s.service_name, COUNT(b.booking_id) AS bookingCount
+        SELECT s.service_name AS serviceName, COUNT(b.booking_id) AS bookingCount
         FROM bookings b JOIN services s ON b.service_id = s.service_id
         GROUP BY s.service_id ORDER BY bookingCount DESC LIMIT 5
       `);
@@ -146,12 +146,14 @@ const AdminController = {
     try {
       const { status, startDate, endDate, limit = 20, offset = 0 } = req.query;
       let query = `
-        SELECT b.booking_id, b.booking_date, b.start_time, b.end_time, b.status,
-               b.total_price, b.helper_id, b.created_at,
-               s.service_name,
-               uc.full_name AS customer_name,
-               uh.full_name AS helper_name,
-               p.payment_status
+        SELECT b.booking_id AS bookingId, b.booking_date AS bookingDate,
+               b.start_time AS startTime, b.end_time AS endTime, b.status,
+               b.total_price AS totalPrice, b.helper_id AS helperId, b.created_at AS createdAt,
+               b.address,
+               s.service_name AS serviceName,
+               uc.full_name AS customerName,
+               uh.full_name AS helperName,
+               p.payment_status AS paymentStatus
         FROM bookings b
         JOIN services s ON b.service_id = s.service_id
         JOIN customers c ON b.customer_id = c.customer_id
@@ -287,8 +289,28 @@ const AdminController = {
   // Lấy danh sách dịch vụ
   listServices: async (req, res, next) => {
     try {
-      const [rows] = await pool.query('SELECT * FROM services ORDER BY service_id');
+      const [rows] = await pool.query(`
+        SELECT service_id AS serviceId, service_name AS serviceName,
+               description, base_price AS basePrice, icon_url AS iconUrl,
+               is_active AS isActive, slug
+        FROM services ORDER BY service_id
+      `);
       return sendSuccess(res, { services: rows });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Tạo dịch vụ mới
+  createService: async (req, res, next) => {
+    try {
+      const { serviceName, description, basePrice, iconUrl } = req.body;
+      const slug = serviceName.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const [result] = await pool.query(
+        'INSERT INTO services (service_name, description, base_price, icon_url, slug) VALUES (?, ?, ?, ?, ?)',
+        [serviceName, description || null, basePrice, iconUrl || null, slug]
+      );
+      return sendSuccess(res, { serviceId: result.insertId }, 'Đã tạo dịch vụ mới!');
     } catch (error) {
       next(error);
     }

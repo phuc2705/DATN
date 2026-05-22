@@ -40,6 +40,14 @@ const UserModel = {
     await pool.query('DELETE FROM users WHERE email = ?', [email]);
   },
 
+  // Cập nhật mật khẩu mới sau khi đặt lại (reset password)
+  updatePassword: async (email, passwordHash) => {
+    await pool.query(
+      'UPDATE users SET password_hash = ? WHERE email = ? AND is_active = 1',
+      [passwordHash, email]
+    );
+  },
+
   // Tìm user theo ID
   findById: async (userId) => {
     const [rows] = await pool.query(
@@ -115,6 +123,7 @@ const UserModel = {
   getCustomerProfile: async (userId) => {
     const [rows] = await pool.query(
       `SELECT u.user_id, u.email, u.full_name, u.phone, u.avatar_url, u.created_at,
+              u.user_type, u.is_active,
               c.customer_id, c.address, c.district, c.city, c.preferred_payment, c.loyalty_points
        FROM users u
        JOIN customers c ON u.user_id = c.user_id
@@ -128,6 +137,7 @@ const UserModel = {
   getHelperProfile: async (userId) => {
     const [rows] = await pool.query(
       `SELECT u.user_id, u.email, u.full_name, u.phone, u.avatar_url, u.created_at,
+              u.user_type, u.is_active,
               h.helper_id, h.date_of_birth, h.gender, h.experience_years, h.rating_average,
               h.total_bookings, h.hourly_rate, h.is_verified, h.is_available, h.bio
        FROM users u
@@ -190,9 +200,11 @@ const UserModel = {
   // Admin: danh sách tất cả user với bộ lọc
   adminListUsers: async ({ userType, isActive, isVerified, search, limit = 20, offset = 0 }) => {
     let query = `
-      SELECT u.user_id, u.email, u.full_name, u.phone, u.user_type,
-             u.is_active, u.avatar_url, u.created_at, u.last_seen_at,
-             h.helper_id, h.is_verified, h.hourly_rate, h.rating_average, h.total_bookings
+      SELECT u.user_id AS userId, u.email, u.full_name AS fullName, u.phone,
+             u.user_type AS userType, u.is_active AS isActive,
+             u.avatar_url AS avatarUrl, u.created_at AS createdAt, u.last_seen_at AS lastSeenAt,
+             h.helper_id AS helperId, h.is_verified AS isVerified,
+             h.hourly_rate AS hourlyRate, h.rating_average AS ratingAverage, h.total_bookings AS totalBookings
       FROM users u
       LEFT JOIN helpers h ON u.user_id = h.user_id AND u.user_type = 'helper'
       WHERE 1=1
