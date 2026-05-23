@@ -11,9 +11,12 @@ const { emitToUser } = require('../socket');
 const {
   sendBookingCreatedEmail,
   sendBookingConfirmedEmail,
+  sendHelperConfirmedEmail,
   sendCheckinEmail,
   sendCompletedEmail,
+  sendHelperCompletedEmail,
   sendCancelledEmail,
+  sendCancellationReceiptEmail,
 } = require('../utils/email');
 
 // Chuyển snake_case từ DB sang camelCase cho client
@@ -319,12 +322,16 @@ const BookingController = {
       });
       emitToUser(booking.customer_user_id, 'booking:update', { bookingId: parseInt(bookingId), status: 'confirmed' });
 
+      const bookingInfoConfirm = {
+        bookingId, serviceName: booking.service_name, bookingDate: booking.booking_date,
+        startTime: booking.start_time, endTime: booking.end_time,
+        address: booking.address, totalPrice: booking.total_price,
+      };
       if (booking.customer_email) {
-        sendBookingConfirmedEmail(booking.customer_email, booking.customer_name, {
-          bookingId, serviceName: booking.service_name, bookingDate: booking.booking_date,
-          startTime: booking.start_time, endTime: booking.end_time,
-          address: booking.address, totalPrice: booking.total_price,
-        }, booking.helper_name).catch(() => {});
+        sendBookingConfirmedEmail(booking.customer_email, booking.customer_name, bookingInfoConfirm, booking.helper_name).catch(() => {});
+      }
+      if (booking.helper_email) {
+        sendHelperConfirmedEmail(booking.helper_email, booking.helper_name, bookingInfoConfirm, booking.customer_name).catch(() => {});
       }
 
       return sendSuccess(res, null, 'Đã xác nhận đơn hàng.');
@@ -400,12 +407,16 @@ const BookingController = {
       });
       emitToUser(booking.customer_user_id, 'booking:update', { bookingId: parseInt(bookingId), status: 'completed' });
 
+      const bookingInfoDone = {
+        bookingId, serviceName: booking.service_name, bookingDate: booking.booking_date,
+        startTime: booking.start_time, endTime: booking.end_time,
+        address: booking.address, totalPrice: booking.total_price,
+      };
       if (booking.customer_email) {
-        sendCompletedEmail(booking.customer_email, booking.customer_name, {
-          bookingId, serviceName: booking.service_name, bookingDate: booking.booking_date,
-          startTime: booking.start_time, endTime: booking.end_time,
-          address: booking.address, totalPrice: booking.total_price,
-        }, booking.helper_name).catch(() => {});
+        sendCompletedEmail(booking.customer_email, booking.customer_name, bookingInfoDone, booking.helper_name).catch(() => {});
+      }
+      if (booking.helper_email) {
+        sendHelperCompletedEmail(booking.helper_email, booking.helper_name, bookingInfoDone, booking.customer_name).catch(() => {});
       }
 
       return sendSuccess(res, null, 'Check-out thành công! Đơn hàng đã hoàn thành.');
@@ -448,18 +459,29 @@ const BookingController = {
         emitToUser(notifyUserId, 'booking:update', { bookingId: parseInt(bookingId), status: 'cancelled' });
       }
 
-      // Gửi email cho bên bị ảnh hưởng
+      // Gửi email cho cả 2 bên khi hủy
+      const bookingInfoCancel = {
+        bookingId, serviceName: booking.service_name, bookingDate: booking.booking_date,
+        startTime: booking.start_time, endTime: booking.end_time, address: booking.address,
+      };
       const cancelledBy = user_type === 'customer' ? booking.customer_name : 'Quản trị viên';
-      if (user_type === 'customer' && booking.helper_email) {
-        sendCancelledEmail(booking.helper_email, booking.helper_name, {
-          bookingId, serviceName: booking.service_name, bookingDate: booking.booking_date,
-          startTime: booking.start_time, endTime: booking.end_time, address: booking.address,
-        }, cancelledBy).catch(() => {});
-      } else if (user_type !== 'customer' && booking.customer_email) {
-        sendCancelledEmail(booking.customer_email, booking.customer_name, {
-          bookingId, serviceName: booking.service_name, bookingDate: booking.booking_date,
-          startTime: booking.start_time, endTime: booking.end_time, address: booking.address,
-        }, cancelledBy).catch(() => {});
+
+      if (user_type === 'customer') {
+        // Customer hủy: gửi xác nhận cho customer + thông báo cho helper
+        if (booking.customer_email) {
+          sendCancellationReceiptEmail(booking.customer_email, booking.customer_name, bookingInfoCancel).catch(() => {});
+        }
+        if (booking.helper_email) {
+          sendCancelledEmail(booking.helper_email, booking.helper_name, bookingInfoCancel, cancelledBy).catch(() => {});
+        }
+      } else {
+        // Admin hủy: thông báo cho cả khách hàng và helper
+        if (booking.customer_email) {
+          sendCancelledEmail(booking.customer_email, booking.customer_name, bookingInfoCancel, cancelledBy).catch(() => {});
+        }
+        if (booking.helper_email) {
+          sendCancelledEmail(booking.helper_email, booking.helper_name, bookingInfoCancel, cancelledBy).catch(() => {});
+        }
       }
 
       return sendSuccess(res, null, 'Đã hủy đơn hàng.');

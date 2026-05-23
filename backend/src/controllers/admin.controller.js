@@ -297,13 +297,44 @@ const AdminController = {
       const { user_id } = req.user;
       const allowed = ['confirmed', 'cancelled'];
       if (!allowed.includes(status)) return sendError(res, 'Trạng thái không hợp lệ.', 400);
-      const [[current]] = await pool.query('SELECT status FROM bookings WHERE booking_id = ?', [bookingId]);
-      if (!current) return sendError(res, 'Không tìm thấy đơn hàng.', 404);
+
+      const [[booking]] = await pool.query(
+        `SELECT b.*, s.service_name,
+                uc.email AS customer_email, uc.full_name AS customer_name,
+                uh.email AS helper_email, uh.full_name AS helper_name
+         FROM bookings b
+         JOIN services s ON b.service_id = s.service_id
+         JOIN customers c ON b.customer_id = c.customer_id
+         JOIN users uc ON c.user_id = uc.user_id
+         LEFT JOIN helpers h ON b.helper_id = h.helper_id
+         LEFT JOIN users uh ON h.user_id = uh.user_id
+         WHERE b.booking_id = ?`,
+        [bookingId]
+      );
+      if (!booking) return sendError(res, 'Không tìm thấy đơn hàng.', 404);
+
       await pool.query('UPDATE bookings SET status = ? WHERE booking_id = ?', [status, bookingId]);
       await pool.query(
         'INSERT INTO booking_logs (booking_id, changed_by, old_status, new_status, note) VALUES (?, ?, ?, ?, ?)',
-        [bookingId, user_id, current.status, status, 'Admin cập nhật trạng thái']
+        [bookingId, user_id, booking.status, status, 'Admin cập nhật trạng thái']
       );
+
+      // Gửi email cho cả 2 bên khi admin hủy đơn
+      if (status === 'cancelled') {
+        const { sendCancelledEmail } = require('../utils/email');
+        const bookingInfo = {
+          bookingId, serviceName: booking.service_name,
+          bookingDate: booking.booking_date, startTime: booking.start_time, endTime: booking.end_time,
+          address: booking.address,
+        };
+        if (booking.customer_email) {
+          sendCancelledEmail(booking.customer_email, booking.customer_name, bookingInfo, 'Quản trị viên').catch(() => {});
+        }
+        if (booking.helper_email) {
+          sendCancelledEmail(booking.helper_email, booking.helper_name, bookingInfo, 'Quản trị viên').catch(() => {});
+        }
+      }
+
       return sendSuccess(res, null, 'Cập nhật trạng thái thành công!');
     } catch (error) {
       next(error);
