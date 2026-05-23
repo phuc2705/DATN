@@ -201,12 +201,67 @@ const sendHelperAssignedEmail = async (toEmail, helperName, booking) => {
   await sendMail(toEmail, `[CleanConnect] Bạn có đơn mới – ${booking.bookingId}`, html).catch(() => {});
 };
 
+// Helper: tự xác nhận nhận đơn thành công
+const sendHelperConfirmedEmail = async (toEmail, helperName, booking, customerName) => {
+  const html = layout(`
+    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${helperName}</strong>,</h2>
+    <p style="color:#4b5563;line-height:1.6;">
+      Bạn đã xác nhận nhận đơn của khách hàng <strong>${customerName}</strong>.
+      ${statusBadge('Đã xác nhận', '#16a34a')}
+    </p>
+    ${bookingTable(booking)}
+    <div style="background:#f0fdf4;border-left:4px solid #16a34a;padding:12px 16px;border-radius:4px;margin-top:8px;">
+      <p style="margin:0;color:#15803d;font-size:14px;">
+        Vui lòng có mặt đúng giờ tại địa điểm và nhớ check-in khi đến nơi.
+      </p>
+    </div>
+  `);
+  await sendMail(toEmail, `[CleanConnect] Xác nhận nhận đơn ${booking.bookingId} thành công`, html).catch(() => {});
+};
+
+// Helper: hoàn thành công việc
+const sendHelperCompletedEmail = async (toEmail, helperName, booking, customerName) => {
+  const html = layout(`
+    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${helperName}</strong>,</h2>
+    <p style="color:#4b5563;line-height:1.6;">
+      Bạn đã hoàn thành công việc cho khách hàng <strong>${customerName}</strong>.
+      ${statusBadge('Hoàn thành', '#16a34a')}
+    </p>
+    ${bookingTable(booking)}
+    ${booking.totalPrice ? `
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin-top:12px;text-align:center;">
+      <p style="margin:0 0 4px;color:#6b7280;font-size:13px;">Thu nhập từ đơn này</p>
+      <p style="margin:0;font-size:24px;font-weight:700;color:#16a34a;">${Number(booking.totalPrice).toLocaleString('vi-VN')}đ</p>
+    </div>` : ''}
+    <p style="color:#6b7280;font-size:14px;margin-top:16px;">Cảm ơn bạn đã cống hiến dịch vụ chất lượng!</p>
+  `);
+  await sendMail(toEmail, `[CleanConnect] Hoàn thành đơn ${booking.bookingId}`, html).catch(() => {});
+};
+
+// Xác nhận hủy cho chính người hủy (customer tự hủy)
+const sendCancellationReceiptEmail = async (toEmail, recipientName, booking) => {
+  const html = layout(`
+    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${recipientName}</strong>,</h2>
+    <p style="color:#4b5563;line-height:1.6;">
+      Đơn hàng của bạn đã được hủy thành công. ${statusBadge('Đã hủy', '#dc2626')}
+    </p>
+    ${bookingTable(booking)}
+    <p style="color:#6b7280;font-size:14px;">
+      Nếu bạn cần đặt lại dịch vụ, hãy vào CleanConnect và tạo đơn mới bất cứ lúc nào.
+    </p>
+  `);
+  await sendMail(toEmail, `[CleanConnect] Đã hủy đơn ${booking.bookingId}`, html).catch(() => {});
+};
+
 module.exports = {
   sendOtpEmail,
   sendBookingCreatedEmail,
   sendBookingConfirmedEmail,
+  sendHelperConfirmedEmail,
   sendCheckinEmail,
   sendCompletedEmail,
+  sendHelperCompletedEmail,
   sendCancelledEmail,
+  sendCancellationReceiptEmail,
   sendHelperAssignedEmail,
 };
