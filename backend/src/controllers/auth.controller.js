@@ -77,27 +77,14 @@ const AuthController = {
       const otpCode = generateOtp();
       await OtpModel.create({ email, otpCode });
 
-      let emailSent = true;
       try {
         await sendOtpEmail(email, otpCode, fullName);
       } catch (emailErr) {
-        emailSent = false;
         console.error('[Email] Gửi OTP thất bại:', emailErr.message, emailErr.code || '');
+        return sendError(res, 'Không thể gửi email xác minh. Vui lòng kiểm tra địa chỉ email và thử lại.', 500);
       }
 
-      // Nếu email gửi thất bại → vẫn trả về OTP trong response để user có thể xác minh
-      const responseData = emailSent
-        ? { email }
-        : { email, otp: otpCode, warning: 'Email không gửi được — dùng mã OTP này để xác minh' };
-
-      return sendSuccess(
-        res,
-        responseData,
-        emailSent
-          ? 'Tài khoản đã được tạo. Mã OTP đã gửi đến email của bạn, vui lòng xác minh.'
-          : 'Tài khoản đã được tạo. Email gặp sự cố — mã OTP đã có trong phản hồi này.',
-        200
-      );
+      return sendSuccess(res, { email }, 'Tài khoản đã được tạo. Mã OTP đã gửi đến email của bạn, vui lòng xác minh.', 200);
     } catch (error) {
       next(error);
     }
@@ -173,26 +160,14 @@ const AuthController = {
       const otpCode = generateOtp();
       await OtpModel.create({ email, otpCode });
 
-      let emailSent = true;
       try {
         await sendOtpEmail(email, otpCode, fullName);
       } catch (emailErr) {
-        emailSent = false;
         console.error('[Email] Gửi OTP thất bại:', emailErr.message, emailErr.code || '');
+        return sendError(res, 'Không thể gửi email xác minh. Vui lòng kiểm tra địa chỉ email và thử lại.', 500);
       }
 
-      const responseData = emailSent
-        ? { email }
-        : { email, otp: otpCode, warning: 'Email không gửi được — dùng mã OTP này để xác minh' };
-
-      return sendSuccess(
-        res,
-        responseData,
-        emailSent
-          ? 'Tài khoản đã được tạo. Mã OTP đã gửi đến email của bạn, vui lòng xác minh.'
-          : 'Tài khoản đã được tạo. Email gặp sự cố — mã OTP đã có trong phản hồi này.',
-        200
-      );
+      return sendSuccess(res, { email }, 'Tài khoản đã được tạo. Mã OTP đã gửi đến email của bạn, vui lòng xác minh.', 200);
     } catch (error) {
       next(error);
     }
@@ -279,22 +254,14 @@ const AuthController = {
       const otpCode = generateOtp();
       await OtpModel.create({ email, otpCode });
 
-      let emailSent = true;
       try {
         await sendOtpEmail(email, otpCode, user.full_name);
       } catch (emailErr) {
-        emailSent = false;
         console.error('[Email] Gửi lại OTP thất bại:', emailErr.message);
+        return sendError(res, 'Không thể gửi email. Vui lòng thử lại sau.', 500);
       }
 
-      const responseData = emailSent
-        ? { email }
-        : { email, otp: otpCode, warning: 'Email không gửi được — dùng mã OTP này để xác minh' };
-
-      return sendSuccess(res, responseData,
-        emailSent ? 'Mã OTP mới đã được gửi đến email của bạn.' : 'Email gặp sự cố — mã OTP đã có trong phản hồi này.',
-        200
-      );
+      return sendSuccess(res, { email }, 'Mã OTP mới đã được gửi đến email của bạn.', 200);
     } catch (error) {
       next(error);
     }
@@ -446,19 +413,14 @@ const AuthController = {
       // Dùng prefix 'reset_' để phân biệt với OTP đăng ký trong cùng bảng otp_verifications
       await OtpModel.create({ email: `reset_${email}`, otpCode });
 
-      let emailSent = true;
       try {
         await sendOtpEmail(email, otpCode, user.full_name, 'reset');
       } catch (emailErr) {
-        emailSent = false;
         console.error('[Email] Gửi OTP reset thất bại:', emailErr.message);
+        return sendError(res, 'Không thể gửi email. Vui lòng thử lại sau.', 500);
       }
 
-      const responseData = emailSent
-        ? { email }
-        : { email, otp: otpCode, warning: 'Email không gửi được — dùng mã OTP này để đặt lại mật khẩu' };
-
-      return sendSuccess(res, responseData, 'Mã OTP đặt lại mật khẩu đã được gửi đến email của bạn.', 200);
+      return sendSuccess(res, { email }, 'Mã OTP đặt lại mật khẩu đã được gửi đến email của bạn.', 200);
     } catch (error) {
       next(error);
     }

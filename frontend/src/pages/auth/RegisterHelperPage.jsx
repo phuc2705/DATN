@@ -34,7 +34,6 @@ export default function RegisterHelperPage() {
   const [registeredEmail, setRegisteredEmail] = useState('');
   const [savedPassword, setSavedPassword] = useState('');
   const [resending, setResending] = useState(false);
-  const [fallbackOtp, setFallbackOtp] = useState('');
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
@@ -69,13 +68,7 @@ export default function RegisterHelperPage() {
         toast.success('[TEST] Tài khoản kích hoạt ngay, không cần OTP!');
       } else {
         setOtpStep(true);
-        const fb = data.otp || data.devOtp;
-        if (fb) {
-          setFallbackOtp(fb);
-          setOtp(fb);
-        } else {
-          toast.success('Mã OTP đã được gửi đến email của bạn!');
-        }
+        toast.success('Mã OTP đã được gửi đến email của bạn!');
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Đăng ký thất bại');
@@ -102,16 +95,8 @@ export default function RegisterHelperPage() {
   const handleResend = async () => {
     setResending(true);
     try {
-      const res = await resendOtpApi({ email: registeredEmail });
-      const data = res.data.data || {};
-      const fb = data.otp;
-      if (fb) {
-        setFallbackOtp(fb);
-        setOtp(fb);
-      } else {
-        setFallbackOtp('');
-        toast.success('Đã gửi lại mã OTP!');
-      }
+      await resendOtpApi({ email: registeredEmail });
+      toast.success('Đã gửi lại mã OTP!');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Không thể gửi lại');
     } finally {
@@ -181,18 +166,10 @@ export default function RegisterHelperPage() {
               <div className="text-center mb-6">
                 <div className="text-4xl mb-3">📧</div>
                 <h1 className="text-2xl font-bold text-gray-900">Xác minh email</h1>
-                {fallbackOtp ? (
-                  <div className="mt-3 bg-orange-50 border border-orange-200 rounded-xl p-4">
-                    <p className="text-xs text-orange-600 font-medium mb-2">⚠️ Email không gửi được — mã OTP của bạn là:</p>
-                    <p className="text-3xl font-bold tracking-[0.3em] text-orange-600 font-mono">{fallbackOtp}</p>
-                    <p className="text-xs text-orange-500 mt-1">Mã đã được điền sẵn vào ô bên dưới</p>
-                  </div>
-                ) : (
-                  <p className="text-gray-500 text-sm mt-2">
-                    Mã OTP 6 chữ số đã được gửi đến<br />
-                    <span className="font-semibold text-gray-800">{registeredEmail}</span>
-                  </p>
-                )}
+                <p className="text-gray-500 text-sm mt-2">
+                  Mã OTP 6 chữ số đã được gửi đến<br />
+                  <span className="font-semibold text-gray-800">{registeredEmail}</span>
+                </p>
               </div>
 
               <form onSubmit={handleVerifyOtp} className="space-y-4">
