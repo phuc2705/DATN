@@ -397,6 +397,20 @@ const AdminController = {
     }
   },
 
+  // Bật/tắt trạng thái dịch vụ
+  toggleServiceStatus: async (req, res, next) => {
+    try {
+      const { serviceId } = req.params;
+      const [[svc]] = await pool.query('SELECT is_active FROM services WHERE service_id = ?', [serviceId]);
+      if (!svc) return sendError(res, 'Không tìm thấy dịch vụ.', 404);
+      const newStatus = !svc.is_active;
+      await pool.query('UPDATE services SET is_active = ? WHERE service_id = ?', [newStatus, serviceId]);
+      return sendSuccess(res, null, newStatus ? 'Đã hiện dịch vụ.' : 'Đã ẩn dịch vụ.');
+    } catch (error) {
+      next(error);
+    }
+  },
+
   // Danh sách mã khuyến mãi
   listPromotions: async (req, res, next) => {
     try {
@@ -430,16 +444,39 @@ const AdminController = {
     }
   },
 
-  // Cập nhật / bật-tắt mã khuyến mãi
+  // Cập nhật mã khuyến mãi (bật/tắt hoặc sửa thông tin)
   updatePromotion: async (req, res, next) => {
     try {
       const { promoId } = req.params;
-      const { isActive, endDate, maxUses } = req.body;
+      const { isActive, code, discountType, discountValue, minOrderAmount, maxUses, startDate, endDate } = req.body;
       await pool.query(
-        'UPDATE promotions SET is_active = COALESCE(?, is_active), end_date = COALESCE(?, end_date), max_uses = COALESCE(?, max_uses) WHERE promo_id = ?',
-        [isActive, endDate, maxUses, promoId]
+        `UPDATE promotions SET
+           is_active       = COALESCE(?, is_active),
+           code            = COALESCE(?, code),
+           discount_type   = COALESCE(?, discount_type),
+           discount_value  = COALESCE(?, discount_value),
+           min_order_value = COALESCE(?, min_order_value),
+           max_uses        = COALESCE(?, max_uses),
+           start_date      = COALESCE(?, start_date),
+           end_date        = COALESCE(?, end_date)
+         WHERE promo_id = ?`,
+        [isActive ?? null, code || null, discountType || null, discountValue ?? null,
+         minOrderAmount ?? null, maxUses ?? null, startDate || null, endDate || null, promoId]
       );
       return sendSuccess(res, null, 'Cập nhật khuyến mãi thành công!');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Xóa mã khuyến mãi
+  deletePromotion: async (req, res, next) => {
+    try {
+      const { promoId } = req.params;
+      const [[promo]] = await pool.query('SELECT promo_id FROM promotions WHERE promo_id = ?', [promoId]);
+      if (!promo) return sendError(res, 'Không tìm thấy mã khuyến mãi.', 404);
+      await pool.query('DELETE FROM promotions WHERE promo_id = ?', [promoId]);
+      return sendSuccess(res, null, 'Đã xóa mã khuyến mãi.');
     } catch (error) {
       next(error);
     }

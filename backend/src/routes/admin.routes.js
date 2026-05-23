@@ -137,8 +137,11 @@ router.put('/services/:serviceId', [
   body('basePrice').optional().isFloat({ min: 0 }),
 ], validate, AdminController.updateService);
 
-// DELETE /api/admin/services/:serviceId (soft delete)
+// DELETE /api/admin/services/:serviceId (soft delete / toggle off)
 router.delete('/services/:serviceId', AdminController.deleteService);
+
+// PATCH /api/admin/services/:serviceId/toggle (bật lại dịch vụ đã ẩn)
+router.patch('/services/:serviceId/toggle', AdminController.toggleServiceStatus);
 
 // ─── Quản lý Khuyến mãi ───────────────────────────────────────────────────────
 // GET /api/admin/promotions
@@ -155,5 +158,8 @@ router.post('/promotions', [
 
 // PATCH /api/admin/promotions/:promoId
 router.patch('/promotions/:promoId', AdminController.updatePromotion);
+
+// DELETE /api/admin/promotions/:promoId
+router.delete('/promotions/:promoId', AdminController.deletePromotion);
 
 module.exports = router;
