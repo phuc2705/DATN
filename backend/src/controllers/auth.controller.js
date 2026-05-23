@@ -149,10 +149,6 @@ const AuthController = {
           await UserModel.adminVerifyHelper(helperRow.helper_id);
         }
 
-        const delayMs = (parseInt(process.env.TEST_CLEANUP_MINUTES) || 30) * 60 * 1000;
-        setTimeout(async () => {
-          try { await UserModel.deleteByEmail(email); } catch { /* đã bị xóa trước đó */ }
-        }, delayMs);
         return sendSuccess(res, { email, skipOtp: true },
           '[TEST] Tài khoản đã được kích hoạt và duyệt tự động. Không cần xác minh OTP.', 200);
       }
@@ -199,14 +195,6 @@ const AuthController = {
 
       // Kích hoạt tài khoản trong DB
       await UserModel.activateUser(email);
-
-      // Email test → tự động xóa tài khoản sau TEST_CLEANUP_MINUTES phút
-      if (isTestEmail(email)) {
-        const delayMs = (parseInt(process.env.TEST_CLEANUP_MINUTES) || 30) * 60 * 1000;
-        setTimeout(async () => {
-          try { await UserModel.deleteByEmail(email); } catch { /* đã bị xóa trước đó */ }
-        }, delayMs);
-      }
 
       // Lấy thông tin user sau khi kích hoạt
       const activatedUser = await UserModel.findByEmailAny(email);
