@@ -85,12 +85,23 @@ app.get('*', (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
-// ─── Dọn dẹp tài khoản chưa xác minh sau 5 phút (OTP hết hạn) ───────────────
+// ─── Dọn dẹp tài khoản chưa xác minh (OTP hết hạn) và tài khoản test hết giờ ──
 const cleanupExpiredAccounts = async () => {
   try {
+    // Xóa tài khoản chưa kích hoạt sau 5 phút (OTP hết hạn)
     await pool.query(
       `DELETE FROM users WHERE is_active = 0 AND created_at < NOW() - INTERVAL 5 MINUTE`
     );
+    // Xóa tài khoản test đã kích hoạt sau TEST_CLEANUP_MINUTES phút
+    const testEmails = (process.env.TEST_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
+    if (testEmails.length > 0) {
+      const minutes = parseInt(process.env.TEST_CLEANUP_MINUTES) || 30;
+      const placeholders = testEmails.map(() => '?').join(',');
+      await pool.query(
+        `DELETE FROM users WHERE email IN (${placeholders}) AND created_at < NOW() - INTERVAL ? MINUTE`,
+        [...testEmails, minutes]
+      );
+    }
   } catch { /* bỏ qua lỗi */ }
 };
 
