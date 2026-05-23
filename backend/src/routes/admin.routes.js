@@ -21,6 +21,9 @@ router.patch('/users/:userId/status', [
   body('isActive').isBoolean().withMessage('isActive phải là boolean'),
 ], validate, AdminController.setUserStatus);
 
+// DELETE /api/admin/users/:userId - Xóa tài khoản
+router.delete('/users/:userId', AdminController.deleteUser);
+
 // PATCH /api/admin/helpers/:helperId/verify - Xác minh helper
 router.patch('/helpers/:helperId/verify', AdminController.verifyHelper);
 
