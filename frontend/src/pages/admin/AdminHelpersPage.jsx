@@ -1,10 +1,217 @@
 import { useEffect, useState } from 'react';
-import { getAdminUsersApi, verifyHelperApi, toggleUserStatusApi, deleteUserApi } from '../../api/admin.api';
+import { getAdminUsersApi, verifyHelperApi, toggleUserStatusApi, deleteUserApi, getHelperDetailApi } from '../../api/admin.api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import Avatar from '../../components/common/Avatar';
 import { formatDate, formatPrice } from '../../utils/format';
 import { useDebounce } from '../../hooks/useDebounce';
 import toast from 'react-hot-toast';
+
+function Stars({ rating }) {
+  return (
+    <span className="flex gap-0.5">
+      {[1,2,3,4,5].map((s) => (
+        <span key={s} className={s <= rating ? 'text-yellow-400' : 'text-gray-200'} style={{ fontSize: 14 }}>★</span>
+      ))}
+    </span>
+  );
+}
+
+const STATUS_COLORS = {
+  completed: 'bg-green-50 text-green-700',
+  confirmed: 'bg-blue-50 text-blue-700',
+  pending: 'bg-yellow-50 text-yellow-700',
+  in_progress: 'bg-orange-50 text-orange-700',
+  cancelled: 'bg-red-50 text-red-600',
+};
+const STATUS_LABELS = {
+  completed: 'Hoàn thành', confirmed: 'Đã xác nhận', pending: 'Chờ xác nhận',
+  in_progress: 'Đang làm', cancelled: 'Đã hủy',
+};
+
+function HelperDetailModal({ helperId, onClose, onVerify, onToggle }) {
+  const [detail, setDetail] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getHelperDetailApi(helperId)
+      .then(({ data }) => setDetail(data.data))
+      .catch(() => toast.error('Không thể tải hồ sơ'))
+      .finally(() => setLoading(false));
+  }, [helperId]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
+          <h2 className="text-lg font-bold text-gray-900">Hồ sơ người giúp việc</h2>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-16"><LoadingSpinner /></div>
+        ) : !detail ? (
+          <div className="p-8 text-center text-gray-400">Không tìm thấy dữ liệu</div>
+        ) : (
+          <div className="p-6 space-y-6">
+            {/* Profile header */}
+            <div className="flex items-start gap-5">
+              <Avatar name={detail.full_name} avatarUrl={detail.avatar_url} size="xl" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-xl font-bold text-gray-900">{detail.full_name}</h3>
+                  {detail.is_verified ? (
+                    <span className="flex items-center gap-1 text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                      <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                      Đã xác minh
+                    </span>
+                  ) : (
+                    <span className="text-xs font-semibold text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded-full">Chờ duyệt</span>
+                  )}
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${detail.is_active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
+                    {detail.is_active ? '● Hoạt động' : '● Đã khóa'}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-500 mt-1">{detail.email} · {detail.phone || 'Chưa cập nhật'}</p>
+                <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                  <span className="flex items-center gap-1">
+                    <Stars rating={Math.round(detail.rating_average || 0)} />
+                    <span className="font-semibold text-gray-800">{Number(detail.rating_average || 0).toFixed(1)}</span>
+                    <span className="text-gray-400">({detail.total_reviews} đánh giá)</span>
+                  </span>
+                  <span className="text-orange-600 font-semibold">{detail.hourly_rate ? `${Number(detail.hourly_rate).toLocaleString()}đ/h` : '—'}</span>
+                </div>
+                {detail.bio && <p className="text-sm text-gray-500 mt-2 italic">"{detail.bio}"</p>}
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: 'Đơn hoàn thành', value: detail.completed_bookings, color: 'text-green-600' },
+                { label: 'Đơn đã hủy', value: detail.cancelled_bookings, color: 'text-red-500' },
+                { label: 'Tổng thu nhập', value: `${Number(detail.total_earned || 0).toLocaleString()}đ`, color: 'text-orange-600' },
+              ].map(({ label, value, color }) => (
+                <div key={label} className="bg-gray-50 rounded-xl p-3 text-center">
+                  <p className={`text-lg font-bold ${color}`}>{value}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Personal info */}
+            <div>
+              <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Thông tin cá nhân</h4>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                {[
+                  { label: 'CMND/CCCD', value: detail.id_card_number || '—' },
+                  { label: 'Ngày sinh', value: detail.date_of_birth ? new Date(detail.date_of_birth).toLocaleDateString('vi-VN') : '—' },
+                  { label: 'Giới tính', value: detail.gender === 'male' ? 'Nam' : detail.gender === 'female' ? 'Nữ' : '—' },
+                  { label: 'Ngày tham gia', value: formatDate(detail.joined_at) },
+                ].map(({ label, value }) => (
+                  <div key={label}>
+                    <p className="text-xs text-gray-400">{label}</p>
+                    <p className="font-medium text-gray-700">{value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Services */}
+            {detail.services?.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Dịch vụ cung cấp</h4>
+                <div className="flex flex-wrap gap-2">
+                  {detail.services.map((s) => (
+                    <span key={s.service_id} className="flex items-center gap-1.5 bg-orange-50 text-orange-700 text-sm px-3 py-1.5 rounded-full">
+                      {s.service_name}
+                      {s.custom_price && <span className="text-xs text-orange-500">· {Number(s.custom_price).toLocaleString()}đ/h</span>}
+                      {s.experience_level && <span className="text-xs text-orange-400">· {s.experience_level}</span>}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Recent bookings */}
+            {detail.recentBookings?.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Đơn hàng gần đây</h4>
+                <div className="space-y-2">
+                  {detail.recentBookings.map((b) => (
+                    <div key={b.booking_id} className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-700">{b.service_name}</span>
+                        <span className="text-gray-400 ml-2">· {b.customer_name}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-gray-400">{new Date(b.booking_date).toLocaleDateString('vi-VN')}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[b.status] || 'bg-gray-100 text-gray-600'}`}>
+                          {STATUS_LABELS[b.status] || b.status}
+                        </span>
+                        <span className="text-orange-600 font-semibold">{Number(b.total_price).toLocaleString()}đ</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Recent reviews */}
+            {detail.recentReviews?.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Đánh giá gần đây</h4>
+                <div className="space-y-3">
+                  {detail.recentReviews.map((r, i) => (
+                    <div key={i} className="bg-gray-50 rounded-xl px-4 py-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-gray-700">{r.customer_name}</span>
+                        <div className="flex items-center gap-2">
+                          <Stars rating={r.rating} />
+                          <span className="text-xs text-gray-400">{new Date(r.created_at).toLocaleDateString('vi-VN')}</span>
+                        </div>
+                      </div>
+                      {r.comment && <p className="text-sm text-gray-500 italic">"{r.comment}"</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-2 border-t border-gray-100">
+              {!detail.is_verified && (
+                <button
+                  onClick={() => { onVerify(detail.helper_id); onClose(); }}
+                  className="flex-1 py-2.5 rounded-xl bg-green-500 hover:bg-green-600 text-white text-sm font-semibold transition-colors"
+                >
+                  Xác minh tài khoản
+                </button>
+              )}
+              <button
+                onClick={() => { onToggle(detail.user_id, detail.is_active); onClose(); }}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors border ${
+                  detail.is_active
+                    ? 'border-red-200 text-red-500 hover:bg-red-50'
+                    : 'border-green-200 text-green-600 hover:bg-green-50'
+                }`}
+              >
+                {detail.is_active ? 'Khóa tài khoản' : 'Mở khóa'}
+              </button>
+              <button onClick={onClose} className="px-6 py-2.5 rounded-xl border border-gray-200 text-gray-500 text-sm hover:bg-gray-50 transition-colors">
+                Đóng
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function isNew(createdAt) {
   return createdAt && (Date.now() - new Date(createdAt).getTime()) < 7 * 24 * 60 * 60 * 1000;
@@ -16,6 +223,7 @@ export default function AdminHelpersPage() {
   const [search, setSearch] = useState('');
   const [verifiedFilter, setVerifiedFilter] = useState(''); // '' | 'true' | 'false'
   const [statusFilter, setStatusFilter] = useState('');
+  const [selectedHelperId, setSelectedHelperId] = useState(null);
 
   const debouncedSearch = useDebounce(search, 400);
 
@@ -69,6 +277,14 @@ export default function AdminHelpersPage() {
 
   return (
     <div className="animate-fadeIn">
+      {selectedHelperId && (
+        <HelperDetailModal
+          helperId={selectedHelperId}
+          onClose={() => setSelectedHelperId(null)}
+          onVerify={handleVerify}
+          onToggle={handleToggle}
+        />
+      )}
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Quản lý người giúp việc</h1>
@@ -232,6 +448,12 @@ export default function AdminHelpersPage() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setSelectedHelperId(h.helperId)}
+                          className="text-xs px-3 py-1.5 rounded-xl border border-blue-200 text-blue-600 hover:bg-blue-50 font-semibold transition-all"
+                        >
+                          Xem
+                        </button>
                         {!h.isVerified && (
                           <button
                             onClick={() => handleVerify(h.helperId)}
@@ -288,6 +510,7 @@ export default function AdminHelpersPage() {
                     </div>
                   </div>
                   <div className="flex flex-col gap-1.5 flex-shrink-0">
+                    <button onClick={() => setSelectedHelperId(h.helperId)} className="text-xs px-2 py-1 rounded-lg border border-blue-200 text-blue-600 font-semibold">Xem</button>
                     {!h.isVerified && (
                       <button onClick={() => handleVerify(h.helperId)} className="text-xs px-2 py-1 rounded-lg border border-green-200 text-green-600 font-semibold">Xác minh</button>
                     )}

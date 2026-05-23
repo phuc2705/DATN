@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
+  const [platformRevenue, setPlatformRevenue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({ status: '', startDate: '', endDate: '' });
   const [confirming, setConfirming] = useState(null);
@@ -23,6 +24,7 @@ export default function AdminPaymentsPage() {
       .then(({ data }) => {
         setPayments(data.data?.payments || []);
         setTotalRevenue(data.data?.totalRevenue || 0);
+        setPlatformRevenue(data.data?.platformRevenue || 0);
       })
       .catch(() => toast.error('Không thể tải dữ liệu thanh toán'))
       .finally(() => setLoading(false));
@@ -71,10 +73,14 @@ export default function AdminPaymentsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-[#0f1117] rounded-lg p-5 border border-[#1e2028]">
           <p className="text-[10px] font-medium text-[#62666d] uppercase tracking-widest mb-1">Tổng doanh thu</p>
           <p className="text-2xl font-extrabold text-emerald-400">{formatPrice(totalRevenue)}</p>
+        </div>
+        <div className="bg-[#0f1117] rounded-lg p-5 border border-[#1e2028]">
+          <p className="text-[10px] font-medium text-[#62666d] uppercase tracking-widest mb-1">Hoa hồng nền tảng</p>
+          <p className="text-2xl font-extrabold text-[#828fff]">{formatPrice(platformRevenue)}</p>
         </div>
         <div className="bg-[#0f1117] rounded-lg p-5 border border-[#1e2028]">
           <p className="text-[10px] font-medium text-[#62666d] uppercase tracking-widest mb-1">Đã thanh toán</p>
@@ -134,7 +140,7 @@ export default function AdminPaymentsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-[#0a0b0f] border-b border-[#1e2028]">
-                  {['#Đơn', 'Khách hàng', 'Dịch vụ', 'Số tiền', 'Phương thức', 'Trạng thái', 'Ngày TT', 'Hành động'].map((h) => (
+                  {['#Đơn', 'Khách hàng', 'Dịch vụ', 'Số tiền', 'Hoa hồng', 'Phương thức', 'Trạng thái', 'Ngày TT', 'Hành động'].map((h) => (
                     <th key={h} className="text-left px-4 py-3.5 text-[10px] font-medium text-[#62666d] uppercase tracking-widest whitespace-nowrap">
                       {h}
                     </th>
@@ -152,6 +158,18 @@ export default function AdminPaymentsPage() {
                       <td className="px-4 py-4 font-semibold text-[#f7f8f8]">{p.customerName || '—'}</td>
                       <td className="px-4 py-4 text-[#8a8f98] text-xs">{p.serviceName || '—'}</td>
                       <td className="px-4 py-4 font-semibold text-[#f7f8f8] whitespace-nowrap">{formatPrice(p.amount)}</td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        {p.platformFeeAmount != null ? (
+                          <div>
+                            <span className="text-[#828fff] font-semibold text-xs">{formatPrice(p.platformFeeAmount)}</span>
+                            <span className="text-[#62666d] text-[11px] ml-1">
+                              ({p.commissionRate != null ? `${(p.commissionRate * 100).toFixed(0)}%` : '—'})
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-[#62666d] text-xs">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-4 text-[#8a8f98] capitalize">{p.paymentMethod || 'Tiền mặt'}</td>
                       <td className="px-4 py-4">
                         <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium ${getStatusBadgeClass(p.paymentStatus)}`}>
@@ -206,6 +224,12 @@ export default function AdminPaymentsPage() {
                       <p className="font-semibold text-[#f7f8f8]">Đơn {p.bookingId}</p>
                       <p className="text-xs text-[#8a8f98]">{p.customerName} · {p.serviceName}</p>
                       <p className="text-xs text-[#62666d] mt-0.5">{p.paidAt ? formatDateTime(p.paidAt) : 'Chưa thanh toán'}</p>
+                      {p.platformFeeAmount != null && (
+                        <p className="text-xs text-[#828fff] mt-0.5">
+                          Hoa hồng: {formatPrice(p.platformFeeAmount)}
+                          {p.commissionRate != null && ` (${(p.commissionRate * 100).toFixed(0)}%)`}
+                        </p>
+                      )}
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-[#f7f8f8]">{formatPrice(p.amount)}</p>

@@ -17,9 +17,15 @@ export const createPromotionApi = (data) => api.post('/api/admin/promotions', da
 export const updatePromotionApi = (id, data) => api.patch(`/api/admin/promotions/${id}`, data);
 export const deletePromotionApi = (id) => api.delete(`/api/admin/promotions/${id}`);
 export const toggleServiceStatusApi = (id) => api.patch(`/api/admin/services/${id}/toggle`);
+export const getHelperDetailApi = (helperId) => api.get(`/api/admin/helpers/${helperId}`);
+export const getAdminReviewsApi = (params) => api.get('/api/admin/reviews', { params });
+export const toggleReviewVisibilityApi = (reviewId) => api.patch(`/api/admin/reviews/${reviewId}/visibility`);
+export const deleteReviewApi = (reviewId) => api.delete(`/api/admin/reviews/${reviewId}`);
 export const assignHelperApi = (bookingId, helperId) =>
   api.patch(`/api/admin/bookings/${bookingId}/assign`, { helperId });
 export const getAvailableHelpersApi = (bookingId) =>
   api.get('/api/admin/helpers/available', { params: bookingId ? { bookingId } : {} });
 export const cancelAdminBookingApi = (bookingId) =>
   api.patch(`/api/admin/bookings/${bookingId}/status`, { status: 'cancelled' });
+export const getAdminSettingsApi = () => api.get('/api/admin/settings');
+export const updateAdminSettingsApi = (data) => api.patch('/api/admin/settings', data);
