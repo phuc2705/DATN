@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { forgotPasswordApi, resetPasswordApi } from '../../api/auth.api';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Mail, KeyRound, Eye, EyeOff, CheckCircle, Loader2 } from 'lucide-react';
+import OtpInput from '../../components/common/OtpInput';
 
 // 3 bước: nhập email → nhập OTP → nhập mật khẩu mới
 const STEPS = [
@@ -10,22 +11,6 @@ const STEPS = [
   { id: 2, label: 'Xác minh OTP' },
   { id: 3, label: 'Mật khẩu mới' },
 ];
-
-function OtpInput({ value, onChange }) {
-  return (
-    <input
-      type="text"
-      inputMode="numeric"
-      pattern="[0-9]*"
-      maxLength={6}
-      value={value}
-      onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, 6))}
-      className="w-full text-center text-3xl font-bold tracking-[0.5em] border-2 border-gray-200 rounded-xl h-16 focus:border-orange-500 focus:outline-none transition-colors placeholder:text-gray-300"
-      placeholder="······"
-      autoFocus
-    />
-  );
-}
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
@@ -69,12 +54,9 @@ export default function ForgotPasswordPage() {
   };
 
   // Bước 2: Xác minh OTP (chỉ kiểm tra độ dài, việc verify thực sự ở bước 3)
-  const handleVerifyOtp = (e) => {
-    e.preventDefault();
-    if (otp.length < 6) {
-      toast.error('Vui lòng nhập đủ 6 chữ số');
-      return;
-    }
+  const handleVerifyOtp = (otpValue) => {
+    const code = otpValue ?? otp;
+    if (code.length < 6) return;
     setStep(3);
   };
 
@@ -256,16 +238,16 @@ export default function ForgotPasswordPage() {
                     ⚠️ Chế độ dev (email lỗi) — OTP: <span className="font-bold">{devOtp}</span>
                   </div>
                 )}
-                <form onSubmit={handleVerifyOtp} className="space-y-5">
-                  <OtpInput value={otp} onChange={setOtp} />
+                <div className="space-y-5">
+                  <OtpInput value={otp} onChange={setOtp} onComplete={handleVerifyOtp} />
                   <button
-                    type="submit"
+                    onClick={() => handleVerifyOtp()}
                     disabled={otp.length < 6}
                     className="w-full btn-primary py-3 text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     Xác nhận mã OTP
                   </button>
-                </form>
+                </div>
                 <div className="mt-5 text-center text-sm text-gray-500">
                   Không nhận được mã?{' '}
                   <button

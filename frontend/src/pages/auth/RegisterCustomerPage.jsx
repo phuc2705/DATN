@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { registerCustomerApi, verifyOtpApi, resendOtpApi } from '../../api/auth.api';
 import { useAuth } from '../../hooks/useAuth';
 import toast from 'react-hot-toast';
+import OtpInput from '../../components/common/OtpInput';
 
 export default function RegisterCustomerPage() {
   const navigate = useNavigate();
@@ -39,11 +40,12 @@ export default function RegisterCustomerPage() {
     }
   };
 
-  const handleVerifyOtp = async (e) => {
-    e.preventDefault();
+  const handleVerifyOtp = async (otpValue) => {
+    const code = otpValue ?? otp;
+    if (code.length < 6) return;
     setLoading(true);
     try {
-      await verifyOtpApi({ email: registeredEmail, otp });
+      await verifyOtpApi({ email: registeredEmail, otp: code });
       await login(registeredEmail, savedPassword);
       toast.success('Xác minh thành công! Chào mừng bạn đến với CleanConnect!');
       navigate('/');
@@ -128,24 +130,16 @@ export default function RegisterCustomerPage() {
                 </p>
               </div>
 
-              <form onSubmit={handleVerifyOtp} className="space-y-4">
-                <div>
-                  <label className="label">Mã OTP <span className="text-red-400">*</span></label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={6}
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                    placeholder="Nhập 6 chữ số"
-                    className="input-field text-center text-2xl tracking-widest font-bold"
-                    autoComplete="one-time-code"
-                    autoFocus
-                  />
-                </div>
+              <div className="space-y-6">
+                <OtpInput
+                  value={otp}
+                  onChange={setOtp}
+                  onComplete={handleVerifyOtp}
+                  disabled={loading}
+                />
 
                 <button
-                  type="submit"
+                  onClick={() => handleVerifyOtp()}
                   disabled={loading || otp.length < 6}
                   className="w-full py-3 text-sm font-semibold rounded-xl btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
                 >
@@ -159,7 +153,7 @@ export default function RegisterCustomerPage() {
                     </span>
                   ) : 'Xác minh'}
                 </button>
-              </form>
+              </div>
 
               <div className="mt-4 text-center text-sm text-gray-500">
                 Không nhận được mã?{' '}
