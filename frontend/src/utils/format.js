@@ -2,16 +2,22 @@
 export const formatPrice = (amount) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
-export const formatDate = (dateStr) =>
-  new Date(dateStr).toLocaleDateString('vi-VN', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-  });
+export const formatDate = (dateStr) => {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
 
-export const formatDateTime = (dateStr) =>
-  new Date(dateStr).toLocaleString('vi-VN', {
+export const formatDateTime = (dateStr) => {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleString('vi-VN', {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
+};
 
 export const BOOKING_STATUS_LABEL = {
   pending:     { text: 'Chờ xác nhận', color: 'bg-yellow-100 text-yellow-800' },
