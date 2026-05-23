@@ -5,6 +5,7 @@ const { pool } = require('../config/database');
 const { sendSuccess, sendError } = require('../utils/response');
 const { pushNotification } = require('../utils/notify');
 const { emitToUser } = require('../socket');
+const { sendHelperAssignedEmail, sendBookingConfirmedEmail } = require('../utils/email');
 
 const AdminController = {
   // Thống kê tổng quan cho dashboard
@@ -249,8 +250,15 @@ const AdminController = {
       );
 
       // Thông báo real-time cho helper và customer
-      const [[helperUser]] = await pool.query('SELECT user_id FROM helpers WHERE helper_id = ?', [helperId]);
-      const [[customerUser]] = await pool.query('SELECT user_id FROM customers WHERE customer_id = ?', [booking.customer_id]);
+      const [[helperUser]] = await pool.query('SELECT u.user_id, u.email, u.full_name FROM helpers h JOIN users u ON h.user_id = u.user_id WHERE h.helper_id = ?', [helperId]);
+      const [[customerUser]] = await pool.query('SELECT u.user_id, u.email, u.full_name FROM customers c JOIN users u ON c.user_id = u.user_id WHERE c.customer_id = ?', [booking.customer_id]);
+      const [[svc]] = await pool.query('SELECT service_name FROM services WHERE service_id = ?', [booking.service_id]);
+
+      const bookingInfo = {
+        bookingId, serviceName: svc?.service_name,
+        bookingDate: booking.booking_date, startTime: booking.start_time, endTime: booking.end_time,
+        address: booking.address, totalPrice: booking.total_price,
+      };
 
       if (helperUser) {
         pushNotification({
@@ -261,6 +269,7 @@ const AdminController = {
           refId: parseInt(bookingId),
         });
         emitToUser(helperUser.user_id, 'booking:update', { bookingId: parseInt(bookingId), status: booking.status });
+        sendHelperAssignedEmail(helperUser.email, helperUser.full_name, bookingInfo).catch(() => {});
       }
       if (customerUser) {
         pushNotification({
@@ -271,6 +280,7 @@ const AdminController = {
           refId: parseInt(bookingId),
         });
         emitToUser(customerUser.user_id, 'booking:update', { bookingId: parseInt(bookingId), status: booking.status });
+        sendBookingConfirmedEmail(customerUser.email, customerUser.full_name, bookingInfo, helper.full_name).catch(() => {});
       }
 
       return sendSuccess(res, null, `Đã giao việc cho ${helper.full_name} thành công!`);

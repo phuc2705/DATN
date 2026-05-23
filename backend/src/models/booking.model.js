@@ -159,8 +159,8 @@ const BookingModel = {
   findById: async (bookingId) => {
     const [bookingRows] = await pool.query(
       `SELECT b.*, s.service_name, s.base_price AS service_base_price,
-              uc.user_id AS customer_user_id, uc.full_name AS customer_name, uc.phone AS customer_phone,
-              uh.user_id AS helper_user_id, uh.full_name AS helper_name, uh.avatar_url AS helper_avatar, uh.phone AS helper_phone,
+              uc.user_id AS customer_user_id, uc.full_name AS customer_name, uc.phone AS customer_phone, uc.email AS customer_email,
+              uh.user_id AS helper_user_id, uh.full_name AS helper_name, uh.avatar_url AS helper_avatar, uh.phone AS helper_phone, uh.email AS helper_email,
               p.payment_status, p.payment_method, p.paid_at
        FROM bookings b
        JOIN services s ON b.service_id = s.service_id
