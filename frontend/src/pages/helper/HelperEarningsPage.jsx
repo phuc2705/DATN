@@ -239,7 +239,7 @@ export default function HelperEarningsPage() {
                       <Wallet className="w-5 h-5 text-green-600" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-gray-900">Đơn #{p.bookingId}</p>
+                      <p className="text-sm font-semibold text-gray-900">Đơn {p.bookingId}</p>
                       <p className="text-xs text-gray-400 mt-0.5">
                         {p.paidAt ? formatDate(p.paidAt) : '—'}
                         {p.paymentMethod && (

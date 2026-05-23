@@ -54,7 +54,7 @@ async function autoAssignExpiredBookings() {
         await pushNotification({
           userId: booking.customer_user_id,
           title:  'Đã tìm được người giúp việc!',
-          body:   `Đơn #${booking.booking_id} (${booking.service_name}) đã được giao cho ${best.full_name}.`,
+          body:   `Đơn ${booking.booking_id} (${booking.service_name}) đã được giao cho ${best.full_name}.`,
           type:   'booking',
           refId:  booking.booking_id,
         });
@@ -74,19 +74,19 @@ async function autoAssignExpiredBookings() {
           });
         }
 
-        console.log(`✅ Auto-assign: Đơn #${booking.booking_id} → ${best.full_name} (helper_id=${best.helper_id})`);
+        console.log(`✅ Auto-assign: Đơn ${booking.booking_id} → ${best.full_name} (helper_id=${best.helper_id})`);
       } else {
         // Không tìm được helper → báo admin xử lý thủ công
         if (adminUserId) {
           await pushNotification({
             userId: adminUserId,
             title:  '⚠️ Cần giao việc thủ công',
-            body:   `Đơn #${booking.booking_id} (${booking.service_name}, ${dateStr}) không tìm được helper khả dụng sau 30 phút.`,
+            body:   `Đơn ${booking.booking_id} (${booking.service_name}, ${dateStr}) không tìm được helper khả dụng sau 30 phút.`,
             type:   'booking',
             refId:  booking.booking_id,
           });
         }
-        console.log(`⚠️  Auto-assign: Đơn #${booking.booking_id} không có helper khả dụng — đã báo admin.`);
+        console.log(`⚠️  Auto-assign: Đơn ${booking.booking_id} không có helper khả dụng — đã báo admin.`);
       }
     }
 

@@ -241,7 +241,7 @@ const AdminController = {
       if (helperUser) {
         pushNotification({
           userId: helperUser.user_id,
-          title: `Bạn được giao đơn #${bookingId}`,
+          title: `Bạn được giao đơn ${bookingId}`,
           body: `Admin đã giao đơn ngày ${booking.booking_date} cho bạn`,
           type: 'booking_created',
           refId: parseInt(bookingId),
@@ -251,7 +251,7 @@ const AdminController = {
       if (customerUser) {
         pushNotification({
           userId: customerUser.user_id,
-          title: `Đơn #${bookingId} đã có người nhận`,
+          title: `Đơn ${bookingId} đã có người nhận`,
           body: `${helper.full_name} sẽ thực hiện đơn của bạn`,
           type: 'booking_confirmed',
           refId: parseInt(bookingId),

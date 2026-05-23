@@ -295,7 +295,7 @@ const BookingController = {
 
       pushNotification({
         userId: booking.customer_user_id,
-        title: `Đơn #${bookingId} đã được xác nhận`,
+        title: `Đơn ${bookingId} đã được xác nhận`,
         body: `${booking.helper_name} đã nhận đơn của bạn vào ngày ${booking.booking_date}`,
         type: 'booking_confirmed',
         refId: bookingId,
@@ -328,7 +328,7 @@ const BookingController = {
 
       pushNotification({
         userId: booking.customer_user_id,
-        title: `Người giúp việc đã check-in #${bookingId}`,
+        title: `Người giúp việc đã check-in ${bookingId}`,
         body: `${booking.helper_name} đã bắt đầu công việc tại nhà bạn`,
         type: 'checkin',
         refId: bookingId,
@@ -361,7 +361,7 @@ const BookingController = {
 
       pushNotification({
         userId: booking.customer_user_id,
-        title: `Đơn #${bookingId} đã hoàn thành`,
+        title: `Đơn ${bookingId} đã hoàn thành`,
         body: `${booking.helper_name} đã hoàn thành công việc. Vui lòng xác nhận thanh toán.`,
         type: 'checkout',
         refId: bookingId,
@@ -400,7 +400,7 @@ const BookingController = {
       if (notifyUserId) {
         pushNotification({
           userId: notifyUserId,
-          title: `Đơn #${bookingId} đã bị hủy`,
+          title: `Đơn ${bookingId} đã bị hủy`,
           body: user_type === 'customer' ? 'Khách hàng đã hủy đơn này' : 'Admin đã hủy đơn này',
           type: 'booking_cancelled',
           refId: bookingId,
@@ -468,7 +468,7 @@ const BookingController = {
 
       pushNotification({
         userId: booking.customer_user_id,
-        title: `Đơn #${bookingId} đã được nhận`,
+        title: `Đơn ${bookingId} đã được nhận`,
         body: `Người giúp việc đã nhận đơn của bạn vào ngày ${booking.booking_date}`,
         type: 'booking_confirmed',
         refId: parseInt(bookingId),
