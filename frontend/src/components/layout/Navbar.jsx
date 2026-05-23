@@ -85,8 +85,12 @@ export default function Navbar() {
       <nav className="bg-white/95 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group flex-shrink-0" onClick={closeAll}>
-            <img src="/logo.png" alt="ConnectClean" className="h-9 w-auto object-contain group-hover:opacity-90 transition-opacity" />
+          <Link to="/" className="flex items-center gap-2.5 group flex-shrink-0" onClick={closeAll}>
+            <img src="/logo.png" alt="CleanConnect" className="h-12 w-auto object-contain rounded-xl group-hover:scale-105 transition-transform duration-200" />
+            <span className="hidden sm:flex flex-col leading-none">
+              <span className="font-extrabold text-lg text-gray-900 tracking-tight">Clean<span className="text-orange-500">Connect</span></span>
+              <span className="text-[10px] text-gray-400 font-medium tracking-wide">Dịch vụ giúp việc theo giờ</span>
+            </span>
           </Link>
 
           {/* Desktop nav links */}
