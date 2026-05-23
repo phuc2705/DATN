@@ -148,7 +148,7 @@ export default function AdminPaymentsPage() {
                   const isConfirming = confirming === p.bookingId;
                   return (
                     <tr key={p.paymentId} className={`border-b border-[#1e2028] hover:bg-[#131418] transition-colors ${isUnpaid ? 'bg-yellow-400/5' : ''}`}>
-                      <td className="px-4 py-4 font-medium text-[#62666d] text-xs">#{p.bookingId}</td>
+                      <td className="px-4 py-4 font-medium text-[#62666d] text-xs">{p.bookingId}</td>
                       <td className="px-4 py-4 font-semibold text-[#f7f8f8]">{p.customerName || '—'}</td>
                       <td className="px-4 py-4 text-[#8a8f98] text-xs">{p.serviceName || '—'}</td>
                       <td className="px-4 py-4 font-semibold text-[#f7f8f8] whitespace-nowrap">{formatPrice(p.amount)}</td>
@@ -203,7 +203,7 @@ export default function AdminPaymentsPage() {
                 <div key={p.paymentId} className={`px-4 py-4 ${isUnpaid ? 'bg-yellow-400/5' : ''}`}>
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <p className="font-semibold text-[#f7f8f8]">Đơn #{p.bookingId}</p>
+                      <p className="font-semibold text-[#f7f8f8]">Đơn {p.bookingId}</p>
                       <p className="text-xs text-[#8a8f98]">{p.customerName} · {p.serviceName}</p>
                       <p className="text-xs text-[#62666d] mt-0.5">{p.paidAt ? formatDateTime(p.paidAt) : 'Chưa thanh toán'}</p>
                     </div>
@@ -247,7 +247,7 @@ export default function AdminPaymentsPage() {
               <div className="text-4xl mb-3">{confirmModal.method === 'cash' ? '💵' : '🏦'}</div>
               <h3 className="font-bold text-[#f7f8f8] text-lg">Xác nhận thanh toán</h3>
               <p className="text-sm text-[#8a8f98] mt-1">
-                Đơn #{confirmModal.bookingId} đã được thanh toán bằng{' '}
+                Đơn {confirmModal.bookingId} đã được thanh toán bằng{' '}
                 <span className="font-semibold text-[#d0d6e0]">
                   {confirmModal.method === 'cash' ? 'tiền mặt' : 'chuyển khoản ngân hàng'}
                 </span>?

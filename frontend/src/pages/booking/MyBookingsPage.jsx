@@ -65,7 +65,7 @@ function BookingCard({ booking: b, onNavigate, onCancel, cancelling }) {
               <h3 className="font-semibold text-[#222222] text-base truncate">
                 {b.serviceName || `Đơn #${b.bookingId}`}
               </h3>
-              <span className="text-xs text-[#6a6a6a] flex-shrink-0">#{b.bookingId}</span>
+              <span className="text-xs text-[#6a6a6a] flex-shrink-0">{b.bookingId}</span>
             </div>
           </div>
           <span className={`inline-flex items-center rounded-full text-xs font-medium px-2.5 py-1 flex-shrink-0 ${sl.color}`}>

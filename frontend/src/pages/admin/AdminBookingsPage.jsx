@@ -72,7 +72,7 @@ function DetailModal({ booking, onClose, onAssign }) {
           <div>
             <p className="text-[10px] font-medium text-[#62666d] uppercase tracking-widest mb-0.5">Đơn hàng</p>
             <h3 className="text-[#f7f8f8] font-semibold text-base" style={{ letterSpacing: '-0.3px' }}>
-              #{booking.bookingId}
+              {booking.bookingId}
             </h3>
           </div>
           <div className="flex items-center gap-3">
@@ -152,7 +152,7 @@ function CancelModal({ booking, onClose, onConfirm, loading }) {
                 Hủy đơn hàng
               </h3>
               <p className="text-[#8a8f98] text-xs mt-0.5">
-                Đơn #{booking.bookingId} · {booking.customerName}
+                Đơn {booking.bookingId} · {booking.customerName}
               </p>
             </div>
           </div>
@@ -226,7 +226,7 @@ function AssignModal({ booking, onClose, onSaved }) {
               Giao việc cho helper
             </h3>
             <p className="text-[#8a8f98] text-xs mt-0.5">
-              Đơn #{booking.bookingId} · {formatDate(booking.bookingDate)} · {booking.startTime}–{booking.endTime}
+              Đơn {booking.bookingId} · {formatDate(booking.bookingDate)} · {booking.startTime}–{booking.endTime}
             </p>
           </div>
           <button
@@ -541,7 +541,7 @@ export default function AdminBookingsPage() {
                   >
                     <td className="px-4 py-3.5">
                       <span className="font-mono text-xs text-[#62666d] group-hover:text-[#8a8f98] transition-colors">
-                        #{b.bookingId}
+                        {b.bookingId}
                       </span>
                     </td>
                     <td className="px-4 py-3.5">
@@ -607,7 +607,7 @@ export default function AdminBookingsPage() {
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-mono text-xs text-[#62666d]">#{b.bookingId}</span>
+                      <span className="font-mono text-xs text-[#62666d]">{b.bookingId}</span>
                       <StatusBadge status={b.status} />
                     </div>
                     <p className="text-sm font-medium text-[#f7f8f8] truncate">

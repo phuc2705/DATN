@@ -269,7 +269,7 @@ export default function BookingDetailPage() {
         {/* Page title row */}
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Đơn #{booking.bookingId}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Đơn {booking.bookingId}</h1>
             <p className="text-sm text-gray-500 mt-0.5">{booking.serviceName || 'Dịch vụ giúp việc'}</p>
           </div>
           <span className={`text-xs px-3 py-1.5 rounded-full font-semibold whitespace-nowrap ${sl.color}`}>
@@ -500,7 +500,7 @@ export default function BookingDetailPage() {
 
             {/* Booking ID note */}
             <p className="text-xs text-gray-400 text-center">
-              Mã đơn: <span className="font-mono font-semibold text-gray-600">#{booking.bookingId}</span>
+              Mã đơn: <span className="font-mono font-semibold text-gray-600">{booking.bookingId}</span>
             </p>
           </div>
         </div>
