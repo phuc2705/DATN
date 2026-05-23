@@ -46,4 +46,10 @@ const emitToUser = (userId, event, data) => {
   if (_io) _io.to(`user:${userId}`).emit(event, data);
 };
 
-module.exports = { initSocket, emitToUser };
+// Kiểm tra user có đang online (có socket kết nối) không
+const isUserOnline = (userId) => {
+  const sockets = userSockets.get(userId);
+  return !!(sockets && sockets.size > 0);
+};
+
+module.exports = { initSocket, emitToUser, isUserOnline };

@@ -1,6 +1,6 @@
 // Tạo thông báo vào DB và đẩy real-time qua Socket.io
 const NotificationModel = require('../models/notification.model');
-const { emitToUser } = require('../socket');
+const { emitToUser, isUserOnline } = require('../socket');
 
 const pushNotification = async ({ userId, title, body, type, refId = null }) => {
   try {
@@ -11,4 +11,11 @@ const pushNotification = async ({ userId, title, body, type, refId = null }) => 
   }
 };
 
-module.exports = { pushNotification };
+// Chỉ gửi email khi user đang offline — nếu đang online thì web notification đã đủ
+const mailIfOffline = (userId, emailFn) => {
+  if (!isUserOnline(userId)) {
+    emailFn().catch(() => {});
+  }
+};
+
+module.exports = { pushNotification, mailIfOffline };

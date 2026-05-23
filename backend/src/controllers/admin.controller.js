@@ -3,7 +3,7 @@ const UserModel = require('../models/user.model');
 const PaymentModel = require('../models/payment.model');
 const { pool } = require('../config/database');
 const { sendSuccess, sendError } = require('../utils/response');
-const { pushNotification } = require('../utils/notify');
+const { pushNotification, mailIfOffline } = require('../utils/notify');
 const { emitToUser } = require('../socket');
 const { sendHelperAssignedEmail, sendBookingConfirmedEmail } = require('../utils/email');
 
@@ -269,7 +269,7 @@ const AdminController = {
           refId: parseInt(bookingId),
         });
         emitToUser(helperUser.user_id, 'booking:update', { bookingId: parseInt(bookingId), status: booking.status });
-        sendHelperAssignedEmail(helperUser.email, helperUser.full_name, bookingInfo).catch(() => {});
+        mailIfOffline(helperUser.user_id, () => sendHelperAssignedEmail(helperUser.email, helperUser.full_name, bookingInfo));
       }
       if (customerUser) {
         pushNotification({
@@ -280,7 +280,7 @@ const AdminController = {
           refId: parseInt(bookingId),
         });
         emitToUser(customerUser.user_id, 'booking:update', { bookingId: parseInt(bookingId), status: booking.status });
-        sendBookingConfirmedEmail(customerUser.email, customerUser.full_name, bookingInfo, helper.full_name).catch(() => {});
+        mailIfOffline(customerUser.user_id, () => sendBookingConfirmedEmail(customerUser.email, customerUser.full_name, bookingInfo, helper.full_name));
       }
 
       return sendSuccess(res, null, `Đã giao việc cho ${helper.full_name} thành công!`);
@@ -300,8 +300,8 @@ const AdminController = {
 
       const [[booking]] = await pool.query(
         `SELECT b.*, s.service_name,
-                uc.email AS customer_email, uc.full_name AS customer_name,
-                uh.email AS helper_email, uh.full_name AS helper_name
+                uc.user_id AS customer_user_id, uc.email AS customer_email, uc.full_name AS customer_name,
+                uh.user_id AS helper_user_id, uh.email AS helper_email, uh.full_name AS helper_name
          FROM bookings b
          JOIN services s ON b.service_id = s.service_id
          JOIN customers c ON b.customer_id = c.customer_id
@@ -328,10 +328,10 @@ const AdminController = {
           address: booking.address,
         };
         if (booking.customer_email) {
-          sendCancelledEmail(booking.customer_email, booking.customer_name, bookingInfo, 'Quản trị viên').catch(() => {});
+          mailIfOffline(booking.customer_user_id, () => sendCancelledEmail(booking.customer_email, booking.customer_name, bookingInfo, 'Quản trị viên'));
         }
         if (booking.helper_email) {
-          sendCancelledEmail(booking.helper_email, booking.helper_name, bookingInfo, 'Quản trị viên').catch(() => {});
+          mailIfOffline(booking.helper_user_id, () => sendCancelledEmail(booking.helper_email, booking.helper_name, bookingInfo, 'Quản trị viên'));
         }
       }
 
