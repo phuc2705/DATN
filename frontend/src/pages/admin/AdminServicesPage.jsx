@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getAdminServicesApi, createServiceApi, updateServiceApi, deleteServiceApi } from '../../api/admin.api';
+import { getAdminServicesApi, createServiceApi, updateServiceApi, deleteServiceApi, toggleServiceStatusApi } from '../../api/admin.api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { formatPrice } from '../../utils/format';
 import toast from 'react-hot-toast';
@@ -168,10 +168,20 @@ export default function AdminServicesPage() {
   useEffect(() => { refresh(); }, []);
 
   const handleDelete = async (serviceId, name) => {
-    if (!confirm(`Ẩn dịch vụ "${name}"?`)) return;
+    if (!window.confirm(`Ẩn dịch vụ "${name}"?`)) return;
     try {
       await deleteServiceApi(serviceId);
       toast.success('Đã ẩn dịch vụ');
+      refresh();
+    } catch {
+      toast.error('Có lỗi xảy ra');
+    }
+  };
+
+  const handleToggle = async (serviceId) => {
+    try {
+      const { data } = await toggleServiceStatusApi(serviceId);
+      toast.success(data.message || 'Đã cập nhật');
       refresh();
     } catch {
       toast.error('Có lỗi xảy ra');
@@ -227,12 +237,19 @@ export default function AdminServicesPage() {
                 >
                   Chỉnh sửa
                 </button>
-                {s.isActive && (
+                {s.isActive ? (
                   <button
                     onClick={() => handleDelete(s.serviceId, s.serviceName)}
                     className="text-red-400 border border-red-400/20 hover:bg-red-400/10 text-sm font-medium rounded-md px-3 py-1.5 transition-colors"
                   >
                     Ẩn
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleToggle(s.serviceId)}
+                    className="text-emerald-400 border border-emerald-400/20 hover:bg-emerald-400/10 text-sm font-medium rounded-md px-3 py-1.5 transition-colors"
+                  >
+                    Hiện lại
                   </button>
                 )}
               </div>

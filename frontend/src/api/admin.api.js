@@ -15,6 +15,8 @@ export const deleteServiceApi = (id) => api.delete(`/api/admin/services/${id}`);
 export const getAdminPromotionsApi = () => api.get('/api/admin/promotions');
 export const createPromotionApi = (data) => api.post('/api/admin/promotions', data);
 export const updatePromotionApi = (id, data) => api.patch(`/api/admin/promotions/${id}`, data);
+export const deletePromotionApi = (id) => api.delete(`/api/admin/promotions/${id}`);
+export const toggleServiceStatusApi = (id) => api.patch(`/api/admin/services/${id}/toggle`);
 export const assignHelperApi = (bookingId, helperId) =>
   api.patch(`/api/admin/bookings/${bookingId}/assign`, { helperId });
 export const getAvailableHelpersApi = (bookingId) =>

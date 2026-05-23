@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getAdminUsersApi, verifyHelperApi, toggleUserStatusApi } from '../../api/admin.api';
+import { getAdminUsersApi, verifyHelperApi, toggleUserStatusApi, deleteUserApi } from '../../api/admin.api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import Avatar from '../../components/common/Avatar';
 import { formatDate, formatPrice } from '../../utils/format';
@@ -47,6 +47,17 @@ export default function AdminHelpersPage() {
     try {
       await toggleUserStatusApi(userId, !isActive);
       toast.success(isActive ? 'Đã khóa tài khoản' : 'Đã kích hoạt');
+      refresh();
+    } catch {
+      toast.error('Có lỗi xảy ra');
+    }
+  };
+
+  const handleDelete = async (userId, fullName) => {
+    if (!window.confirm(`Xóa tài khoản "${fullName}"? Hành động này không thể hoàn tác.`)) return;
+    try {
+      await deleteUserApi(userId);
+      toast.success('Đã xóa tài khoản');
       refresh();
     } catch {
       toast.error('Có lỗi xảy ra');
@@ -239,6 +250,12 @@ export default function AdminHelpersPage() {
                         >
                           {h.isActive ? 'Khóa' : 'Mở khóa'}
                         </button>
+                        <button
+                          onClick={() => handleDelete(h.userId, h.fullName)}
+                          className="text-xs px-3 py-1.5 rounded-xl border border-red-300 text-red-600 hover:bg-red-50 font-semibold transition-all"
+                        >
+                          Xóa
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -279,6 +296,12 @@ export default function AdminHelpersPage() {
                       className={`text-xs px-2 py-1 rounded-lg border font-semibold ${h.isActive ? 'border-red-200 text-red-500' : 'border-green-200 text-green-600'}`}
                     >
                       {h.isActive ? 'Khóa' : 'Mở'}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(h.userId, h.fullName)}
+                      className="text-xs px-2 py-1 rounded-lg border border-red-300 text-red-600 font-semibold"
+                    >
+                      Xóa
                     </button>
                   </div>
                 </div>
