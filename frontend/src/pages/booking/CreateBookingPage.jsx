@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getAllServicesApi } from '../../api/service.api';
 import { createBookingApi, validatePromoCodeApi, pricePreviewApi } from '../../api/booking.api';
+import { createVNPayUrlApi } from '../../api/payment.api';
 import { formatPrice } from '../../utils/format';
 import toast from 'react-hot-toast';
 import {
@@ -240,6 +241,9 @@ export default function CreateBookingPage() {
         paymentMethod,
         promoCode: promoApplied ? promoCode.trim() : undefined,
       });
+
+      const bookingId = data.data.bookingId;
+
       if (data.data.availableHelperCount === 0) {
         toast('Đặt lịch thành công! Hiện chưa có nhân viên rảnh trong khung giờ này — chúng tôi sẽ thông báo khi có người phù hợp.', {
           icon: '⚠️',
@@ -248,7 +252,20 @@ export default function CreateBookingPage() {
       } else {
         toast.success(data.message || 'Đặt lịch thành công!');
       }
-      navigate(`/bookings/${data.data.bookingId}`);
+
+      // Chuyển thẳng sang thanh toán theo phương thức đã chọn
+      if (paymentMethod === 'vnpay') {
+        try {
+          const { data: payData } = await createVNPayUrlApi(bookingId);
+          window.location.href = payData.data.paymentUrl;
+        } catch {
+          navigate(`/bookings/${bookingId}`);
+        }
+      } else if (paymentMethod === 'bank_transfer') {
+        navigate(`/bookings/${bookingId}?showPayment=1`);
+      } else {
+        navigate(`/bookings/${bookingId}`);
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Đặt lịch thất bại');
     } finally {
