@@ -1,5 +1,5 @@
 // Router chính — định nghĩa tất cả routes với phân quyền theo role
-import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/layout/Layout';
@@ -34,32 +34,7 @@ import HelpPage from './pages/HelpPage';
 import AboutPage from './pages/AboutPage';
 import TermsPage from './pages/TermsPage';
 import NotFoundPage from './pages/NotFoundPage';
-
-// Trang kết quả VNPay — đọc query params từ redirect của backend
-function VNPayReturnPage() {
-  const [params] = useSearchParams();
-  const success = params.get('vnp_ResponseCode') === '00';
-  return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-      <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-10 max-w-sm w-full text-center">
-        <div className={`w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl ${success ? 'bg-green-100' : 'bg-red-100'}`}>
-          {success ? '✅' : '❌'}
-        </div>
-        <h1 className="text-xl font-bold text-gray-900 mb-2">
-          {success ? 'Thanh toán thành công!' : 'Thanh toán thất bại'}
-        </h1>
-        <p className="text-gray-500 text-sm mb-6">
-          {success
-            ? 'Đơn hàng của bạn đã được thanh toán qua VNPay.'
-            : 'Giao dịch không thành công. Vui lòng thử lại.'}
-        </p>
-        <a href="/bookings" className="btn-primary py-2.5 px-6 text-sm inline-block">
-          Xem đơn hàng
-        </a>
-      </div>
-    </div>
-  );
-}
+import VNPayReturnPage from './pages/payment/VNPayReturnPage';
 
 export default function App() {
   return (

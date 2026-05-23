@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { getBookingDetailApi, cancelBookingApi } from '../../api/booking.api';
 import { confirmPaymentApi, createVNPayUrlApi, getBankTransferInfoApi } from '../../api/payment.api';
 import { createReviewApi } from '../../api/review.api';
@@ -110,7 +110,9 @@ const RATING_LABELS = { 5: 'Xuất sắc!', 4: 'Tốt!', 3: 'Bình thường', 2
 export default function BookingDetailPage() {
   const { bookingId } = useParams();
   const navigate      = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user }      = useAuth();
+  const autoPayRef    = useRef(false);
 
   const [booking,    setBooking]    = useState(null);
   const [loading,    setLoading]    = useState(true);
@@ -126,6 +128,18 @@ export default function BookingDetailPage() {
   };
 
   useEffect(() => { refresh(); }, [bookingId]);
+
+  // Tự động mở QR chuyển khoản nếu vừa đặt lịch xong với bank_transfer
+  useEffect(() => {
+    if (!booking || autoPayRef.current) return;
+    if (searchParams.get('showPayment') !== '1') return;
+    if (booking.paymentMethod === 'bank_transfer' && booking.paymentStatus === 'unpaid') {
+      autoPayRef.current = true;
+      getBankTransferInfoApi(bookingId)
+        .then(({ data }) => { setBankInfo(data.data); setShowBankQR(true); })
+        .catch(() => {});
+    }
+  }, [booking]);
 
   useEffect(() => {
     const socket = getSocket();
@@ -433,7 +447,7 @@ export default function BookingDetailPage() {
                   </button>
                 )}
 
-                {booking.status === 'completed' && booking.paymentStatus === 'unpaid' && (
+                {booking.paymentStatus === 'unpaid' && (
                   <>
                     {booking.paymentMethod === 'vnpay' && (
                       <button
@@ -453,7 +467,7 @@ export default function BookingDetailPage() {
                         Xem thông tin chuyển khoản
                       </button>
                     )}
-                    {booking.paymentMethod === 'cash' && (
+                    {booking.paymentMethod === 'cash' && booking.status === 'completed' && (
                       <button
                         onClick={handleCashPayment}
                         className="w-full bg-green-600 hover:bg-green-700 text-white h-12 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors"
