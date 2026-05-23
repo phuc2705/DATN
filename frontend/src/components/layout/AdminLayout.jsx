@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import {
   LayoutDashboard, Users, Briefcase, ClipboardList,
-  CreditCard, Layers, Tag, ExternalLink, LogOut, Menu, X,
+  CreditCard, Layers, Tag, Star, Settings, ExternalLink, LogOut, Menu, X,
 } from 'lucide-react';
 
 // Design tokens
@@ -28,6 +28,8 @@ const NAV = [
   { to: '/admin/payments',   end: false, label: 'Thanh toán',       icon: CreditCard },
   { to: '/admin/services',   end: false, label: 'Dịch vụ',          icon: Layers },
   { to: '/admin/promotions', end: false, label: 'Khuyến mãi',       icon: Tag },
+  { to: '/admin/reviews',   end: false, label: 'Đánh giá',  icon: Star },
+  { to: '/admin/settings', end: false, label: 'Cài đặt',   icon: Settings },
 ];
 
 export default function AdminLayout() {

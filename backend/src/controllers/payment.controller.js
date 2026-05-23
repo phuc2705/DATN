@@ -190,19 +190,21 @@ const PaymentController = {
 
       const rows = await PaymentModel.findByHelper(helperRow.helper_id);
 
-      // Tính thu nhập helper (90% doanh thu)
-      const PLATFORM_FEE = 0.1;
+      // Tính thu nhập helper — ưu tiên dùng giá trị đã lưu trong DB, fallback về 90%
+      const PLATFORM_FEE_FALLBACK = 0.10;
       const payments = rows.map((p) => ({
-        paymentId:     p.payment_id,
-        bookingId:     p.booking_id,
-        amount:        Number(p.amount),
-        helperEarning: Math.round(Number(p.amount) * (1 - PLATFORM_FEE)),
-        paymentMethod: p.payment_method,
-        paymentStatus: p.payment_status,
-        paidAt:        p.paid_at,
-        bookingDate:   p.booking_date,
-        serviceName:   p.service_name,
-        customerName:  p.customer_name,
+        paymentId:          p.payment_id,
+        bookingId:          p.booking_id,
+        amount:             Number(p.amount),
+        commissionRate:     p.commission_rate !== null ? Number(p.commission_rate) : PLATFORM_FEE_FALLBACK,
+        platformFeeAmount:  p.platform_fee_amount !== null ? Number(p.platform_fee_amount) : Math.round(Number(p.amount) * PLATFORM_FEE_FALLBACK),
+        helperEarning:      p.helper_earning !== null ? Number(p.helper_earning) : Math.round(Number(p.amount) * (1 - PLATFORM_FEE_FALLBACK)),
+        paymentMethod:      p.payment_method,
+        paymentStatus:      p.payment_status,
+        paidAt:             p.paid_at,
+        bookingDate:        p.booking_date,
+        serviceName:        p.service_name,
+        customerName:       p.customer_name,
       }));
 
       const totalEarnings = payments.reduce((s, p) => s + p.helperEarning, 0);

@@ -1,5 +1,6 @@
 // Model Payment - quản lý thanh toán và lịch sử giao dịch
 const { pool } = require('../config/database');
+const SettingModel = require('./setting.model');
 
 const PaymentModel = {
   // Xác nhận thanh toán thành công (cập nhật trạng thái)
@@ -8,9 +9,23 @@ const PaymentModel = {
     try {
       await connection.beginTransaction();
 
+      // Đọc tỷ lệ hoa hồng hiện tại từ cấu hình hệ thống
+      const rateStr = await SettingModel.get('platform_commission_rate');
+      const commissionRate = parseFloat(rateStr) || 0.10;
+
+      // Lấy amount để tính split hoa hồng
+      const [[payRow]] = await connection.query(
+        'SELECT amount FROM payments WHERE booking_id = ?', [bookingId]
+      );
+      const amount = payRow ? Number(payRow.amount) : 0;
+      const platformFeeAmount = Math.round(amount * commissionRate);
+      const helperEarningAmount = amount - platformFeeAmount;
+
       await connection.query(
-        `UPDATE payments SET payment_status = 'paid', paid_at = NOW() WHERE booking_id = ?`,
-        [bookingId]
+        `UPDATE payments SET payment_status = 'paid', paid_at = NOW(),
+         commission_rate = ?, platform_fee_amount = ?, helper_earning = ?
+         WHERE booking_id = ?`,
+        [commissionRate, platformFeeAmount, helperEarningAmount, bookingId]
       );
 
       // Nếu không có user (VNPay tự động), lấy customer_id của booking để ghi log
@@ -82,7 +97,8 @@ const PaymentModel = {
   // Thu nhập của helper (chỉ tính các đơn đã thanh toán)
   findByHelper: async (helperId) => {
     const [rows] = await pool.query(
-      `SELECT p.payment_id, p.amount, p.payment_method, p.payment_status, p.paid_at,
+      `SELECT p.payment_id, p.amount, p.commission_rate, p.platform_fee_amount, p.helper_earning,
+              p.payment_method, p.payment_status, p.paid_at,
               b.booking_id, b.booking_date, b.hours,
               s.service_name,
               u.full_name AS customer_name
@@ -105,6 +121,9 @@ const PaymentModel = {
              p.amount, p.payment_method AS paymentMethod,
              p.payment_status AS paymentStatus, p.paid_at AS paidAt,
              p.created_at AS createdAt,
+             p.commission_rate AS commissionRate,
+             p.platform_fee_amount AS platformFeeAmount,
+             p.helper_earning AS helperEarning,
              b.booking_date AS bookingDate,
              uc.full_name AS customerName,
              uh.full_name AS helperName,
@@ -131,14 +150,16 @@ const PaymentModel = {
     return rows;
   },
 
-  // Tổng doanh thu (dùng cho admin dashboard)
+  // Tổng doanh thu (dùng cho admin dashboard) — trả về { totalRevenue, platformRevenue }
   getTotalRevenue: async (startDate = null, endDate = null) => {
-    let query = `SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE payment_status = 'paid'`;
+    let query = `SELECT COALESCE(SUM(amount), 0) AS totalRevenue,
+                        COALESCE(SUM(platform_fee_amount), 0) AS platformRevenue
+                 FROM payments WHERE payment_status = 'paid'`;
     const params = [];
     if (startDate) { query += ' AND DATE(paid_at) >= ?'; params.push(startDate); }
     if (endDate) { query += ' AND DATE(paid_at) <= ?'; params.push(endDate); }
-    const [[{ total }]] = await pool.query(query, params);
-    return total;
+    const [[result]] = await pool.query(query, params);
+    return result;
   },
 };
 

@@ -27,6 +27,9 @@ router.delete('/users/:userId', AdminController.deleteUser);
 // PATCH /api/admin/helpers/:helperId/verify - Xác minh helper
 router.patch('/helpers/:helperId/verify', AdminController.verifyHelper);
 
+// GET /api/admin/helpers/:helperId - Hồ sơ chi tiết helper
+router.get('/helpers/:helperId', AdminController.getHelperDetail);
+
 // ─── Quản lý Booking ──────────────────────────────────────────────────────────
 router.get('/bookings', AdminController.listAllBookings);
 router.patch('/bookings/:bookingId/status', AdminController.updateBookingStatus);
@@ -161,5 +164,16 @@ router.patch('/promotions/:promoId', AdminController.updatePromotion);
 
 // DELETE /api/admin/promotions/:promoId
 router.delete('/promotions/:promoId', AdminController.deletePromotion);
+
+// ─── Quản lý Đánh giá ────────────────────────────────────────────────────────
+router.get('/reviews', AdminController.listReviews);
+router.patch('/reviews/:reviewId/visibility', AdminController.toggleReviewVisibility);
+router.delete('/reviews/:reviewId', AdminController.deleteReview);
+
+// ─── Cài đặt hệ thống ────────────────────────────────────────────────────────
+router.get('/settings', AdminController.getSettings);
+router.patch('/settings', [
+  body('platformCommissionRate').optional().isFloat({ min: 0, max: 1 }).withMessage('Tỷ lệ phải từ 0 đến 1'),
+], validate, AdminController.updateSettings);
 
 module.exports = router;

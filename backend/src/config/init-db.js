@@ -171,6 +171,34 @@ async function runMigrations(connection) {
     // ignore — bảng đã tồn tại
   }
 
+  // Tạo bảng cấu hình hệ thống
+  try {
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS system_settings (
+        setting_key   VARCHAR(100) PRIMARY KEY,
+        setting_value VARCHAR(255) NOT NULL,
+        updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    await connection.query(`
+      INSERT IGNORE INTO system_settings (setting_key, setting_value)
+      VALUES ('platform_commission_rate', '0.10')
+    `);
+  } catch (err) {
+    // ignore
+  }
+
+  // Thêm cột phân chia doanh thu vào payments
+  try {
+    await connection.query('ALTER TABLE payments ADD COLUMN commission_rate DECIMAL(5,4) NULL AFTER amount');
+  } catch (err) { /* ignore — cột đã tồn tại */ }
+  try {
+    await connection.query('ALTER TABLE payments ADD COLUMN platform_fee_amount DECIMAL(10,2) NULL AFTER commission_rate');
+  } catch (err) { /* ignore — cột đã tồn tại */ }
+  try {
+    await connection.query('ALTER TABLE payments ADD COLUMN helper_earning DECIMAL(10,2) NULL AFTER platform_fee_amount');
+  } catch (err) { /* ignore — cột đã tồn tại */ }
+
   console.log('✅ Migrations hoàn tất.');
 }
 

@@ -203,8 +203,9 @@ const AdminController = {
         limit: parseInt(limit),
         offset: parseInt(offset),
       });
-      const totalRevenue = await PaymentModel.getTotalRevenue(startDate, endDate);
-      return sendSuccess(res, { payments, totalRevenue });
+      // getTotalRevenue giờ trả về { totalRevenue, platformRevenue }
+      const { totalRevenue, platformRevenue } = await PaymentModel.getTotalRevenue(startDate, endDate);
+      return sendSuccess(res, { payments, totalRevenue, platformRevenue });
     } catch (error) {
       next(error);
     }
@@ -480,6 +481,175 @@ const AdminController = {
     } catch (error) {
       next(error);
     }
+  },
+
+  // Chi tiết hồ sơ helper (dành cho admin xét duyệt)
+  getHelperDetail: async (req, res, next) => {
+    try {
+      const { helperId } = req.params;
+      const [[helper]] = await pool.query(
+        `SELECT h.helper_id, h.bio, h.id_card_number, h.date_of_birth, h.gender,
+                h.is_verified, h.is_available, h.rating_average, h.total_reviews,
+                h.hourly_rate, h.latitude, h.longitude, h.created_at AS joined_at,
+                u.user_id, u.full_name, u.email, u.phone, u.avatar_url, u.is_active,
+                (SELECT COUNT(*) FROM bookings b WHERE b.helper_id = h.helper_id AND b.status = 'completed') AS completed_bookings,
+                (SELECT COUNT(*) FROM bookings b WHERE b.helper_id = h.helper_id AND b.status = 'cancelled') AS cancelled_bookings,
+                (SELECT COALESCE(SUM(p.amount), 0) FROM payments p JOIN bookings b ON p.booking_id = b.booking_id WHERE b.helper_id = h.helper_id AND p.payment_status = 'paid') AS total_earned
+         FROM helpers h
+         JOIN users u ON h.user_id = u.user_id
+         WHERE h.helper_id = ?`,
+        [helperId]
+      );
+      if (!helper) return sendError(res, 'Không tìm thấy người giúp việc.', 404);
+
+      const [services] = await pool.query(
+        `SELECT s.service_id, s.service_name, hs.custom_price, hs.experience_level
+         FROM helper_services hs JOIN services s ON hs.service_id = s.service_id
+         WHERE hs.helper_id = ?`,
+        [helperId]
+      );
+
+      const [recentBookings] = await pool.query(
+        `SELECT b.booking_id, b.booking_date, b.start_time, b.end_time, b.status,
+                b.total_price, s.service_name,
+                uc.full_name AS customer_name
+         FROM bookings b
+         JOIN services s ON b.service_id = s.service_id
+         JOIN customers c ON b.customer_id = c.customer_id
+         JOIN users uc ON c.user_id = uc.user_id
+         WHERE b.helper_id = ?
+         ORDER BY b.booking_date DESC LIMIT 5`,
+        [helperId]
+      );
+
+      const [recentReviews] = await pool.query(
+        `SELECT r.rating, r.comment, r.created_at, uc.full_name AS customer_name
+         FROM reviews r
+         JOIN customers c ON r.customer_id = c.customer_id
+         JOIN users uc ON c.user_id = uc.user_id
+         WHERE r.helper_id = ? AND r.is_visible = TRUE
+         ORDER BY r.created_at DESC LIMIT 5`,
+        [helperId]
+      );
+
+      return sendSuccess(res, { ...helper, services, recentBookings, recentReviews });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Danh sách tất cả đánh giá (admin quản lý)
+  listReviews: async (req, res, next) => {
+    try {
+      const { rating, isVisible, search, limit = 20, offset = 0 } = req.query;
+      let where = 'WHERE 1=1';
+      const params = [];
+
+      if (rating) { where += ' AND r.rating = ?'; params.push(Number(rating)); }
+      if (isVisible !== undefined) { where += ' AND r.is_visible = ?'; params.push(isVisible === 'true'); }
+      if (search) {
+        where += ' AND (uh.full_name LIKE ? OR uc.full_name LIKE ? OR r.comment LIKE ?)';
+        const q = `%${search}%`;
+        params.push(q, q, q);
+      }
+
+      const [rows] = await pool.query(
+        `SELECT r.review_id, r.rating, r.comment, r.is_visible, r.created_at,
+                b.booking_id, b.booking_date,
+                uh.full_name AS helper_name, uh.avatar_url AS helper_avatar,
+                uc.full_name AS customer_name, uc.avatar_url AS customer_avatar
+         FROM reviews r
+         JOIN bookings b ON r.booking_id = b.booking_id
+         JOIN helpers h ON r.helper_id = h.helper_id
+         JOIN users uh ON h.user_id = uh.user_id
+         JOIN customers c ON r.customer_id = c.customer_id
+         JOIN users uc ON c.user_id = uc.user_id
+         ${where}
+         ORDER BY r.created_at DESC
+         LIMIT ? OFFSET ?`,
+        [...params, Number(limit), Number(offset)]
+      );
+
+      const [[{ total }]] = await pool.query(
+        `SELECT COUNT(*) AS total FROM reviews r
+         JOIN helpers h ON r.helper_id = h.helper_id JOIN users uh ON h.user_id = uh.user_id
+         JOIN customers c ON r.customer_id = c.customer_id JOIN users uc ON c.user_id = uc.user_id
+         ${where}`,
+        params
+      );
+
+      return sendSuccess(res, { reviews: rows, total });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Bật/tắt hiển thị đánh giá
+  toggleReviewVisibility: async (req, res, next) => {
+    try {
+      const { reviewId } = req.params;
+      const [[review]] = await pool.query('SELECT review_id, is_visible FROM reviews WHERE review_id = ?', [reviewId]);
+      if (!review) return sendError(res, 'Không tìm thấy đánh giá.', 404);
+      const newVisible = !review.is_visible;
+      await pool.query('UPDATE reviews SET is_visible = ? WHERE review_id = ?', [newVisible, reviewId]);
+      // Cập nhật lại rating_average của helper
+      await pool.query(
+        `UPDATE helpers h SET rating_average = (
+           SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE helper_id = h.helper_id AND is_visible = TRUE
+         ) WHERE helper_id = (SELECT helper_id FROM reviews WHERE review_id = ?)`,
+        [reviewId]
+      );
+      return sendSuccess(res, null, newVisible ? 'Đã hiện đánh giá.' : 'Đã ẩn đánh giá.');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Xóa đánh giá
+  deleteReview: async (req, res, next) => {
+    try {
+      const { reviewId } = req.params;
+      const [[review]] = await pool.query('SELECT review_id, helper_id FROM reviews WHERE review_id = ?', [reviewId]);
+      if (!review) return sendError(res, 'Không tìm thấy đánh giá.', 404);
+      await pool.query('DELETE FROM reviews WHERE review_id = ?', [reviewId]);
+      await pool.query(
+        'UPDATE helpers SET rating_average = (SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE helper_id = ? AND is_visible = TRUE), total_reviews = (SELECT COUNT(*) FROM reviews WHERE helper_id = ? AND is_visible = TRUE) WHERE helper_id = ?',
+        [review.helper_id, review.helper_id, review.helper_id]
+      );
+      return sendSuccess(res, null, 'Đã xóa đánh giá.');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Lấy cài đặt hệ thống (tỷ lệ hoa hồng, v.v.)
+  getSettings: async (req, res, next) => {
+    try {
+      const SettingModel = require('../models/setting.model');
+      const settings = await SettingModel.getAll();
+      return sendSuccess(res, {
+        platformCommissionRate: parseFloat(settings.platform_commission_rate) || 0.10,
+      });
+    } catch (error) { next(error); }
+  },
+
+  // Cập nhật cài đặt hệ thống
+  updateSettings: async (req, res, next) => {
+    try {
+      const SettingModel = require('../models/setting.model');
+      const { platformCommissionRate } = req.body;
+      if (platformCommissionRate !== undefined) {
+        const rate = parseFloat(platformCommissionRate);
+        if (isNaN(rate) || rate < 0 || rate > 1) {
+          return sendError(res, 'Tỷ lệ hoa hồng phải từ 0 đến 1 (ví dụ: 0.10 = 10%)', 400);
+        }
+        await SettingModel.set('platform_commission_rate', rate.toFixed(4));
+      }
+      const settings = await SettingModel.getAll();
+      return sendSuccess(res, {
+        platformCommissionRate: parseFloat(settings.platform_commission_rate) || 0.10,
+      });
+    } catch (error) { next(error); }
   },
 };
 
