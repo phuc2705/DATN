@@ -80,8 +80,8 @@ const AuthController = {
       try {
         await sendOtpEmail(email, otpCode, fullName);
       } catch (emailErr) {
-        console.error('[Email] Gửi OTP thất bại:', emailErr.message, emailErr.code || '');
-        return sendError(res, 'Không thể gửi email xác minh. Vui lòng kiểm tra địa chỉ email và thử lại.', 500);
+        console.error('[Email] Gửi OTP thất bại:', emailErr.message, emailErr.code || '', emailErr.response || '');
+        return sendError(res, `Email thất bại: ${emailErr.message}`, 500);
       }
 
       return sendSuccess(res, { email }, 'Tài khoản đã được tạo. Mã OTP đã gửi đến email của bạn, vui lòng xác minh.', 200);
