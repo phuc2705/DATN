@@ -38,8 +38,12 @@ export default function Layout() {
           <div className="grid md:grid-cols-4 gap-8 mb-10">
             {/* Brand */}
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <img src="/logo.png" alt="ConnectClean" className="h-9 w-auto object-contain brightness-0 invert" />
+              <div className="flex items-center gap-2.5 mb-4">
+                <img src="/logo.png" alt="CleanConnect" className="h-12 w-auto object-contain rounded-xl opacity-90" />
+                <span className="flex flex-col leading-none">
+                  <span className="font-extrabold text-lg text-white tracking-tight">Clean<span className="text-orange-400">Connect</span></span>
+                  <span className="text-[10px] text-gray-400 font-medium tracking-wide">Dịch vụ giúp việc theo giờ</span>
+                </span>
               </div>
               <p className="text-sm text-gray-400 leading-relaxed mb-4">
                 Nền tảng kết nối người giúp việc gia đình chuyên nghiệp với hàng nghìn gia đình trên toàn quốc.

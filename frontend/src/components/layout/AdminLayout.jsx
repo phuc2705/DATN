@@ -65,8 +65,11 @@ export default function AdminLayout() {
         {/* Logo */}
         <div style={{ padding: '20px 24px', borderBottom: `1px solid ${C.hairline}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img src="/logo.png" alt="CleanConnect" style={{ height: 32, filter: 'brightness(0) invert(1)', opacity: 0.9 }} />
-            <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.dim }}>Admin</span>
+            <img src="/logo.png" alt="CleanConnect" style={{ height: 40, borderRadius: 10, opacity: 0.95 }} />
+            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: C.ink, letterSpacing: '-0.01em' }}>CleanConnect</span>
+              <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.dim }}>Admin</span>
+            </div>
           </div>
           <button className="lg:hidden" onClick={() => setSidebarOpen(false)} style={{ color: C.muted, background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
             <X size={16} />
@@ -153,7 +156,8 @@ export default function AdminLayout() {
           <button onClick={() => setSidebarOpen(true)} style={{ padding: 8, borderRadius: 8, color: C.muted, background: 'none', border: 'none', cursor: 'pointer' }}>
             <Menu size={20} />
           </button>
-          <img src="/logo.png" alt="Admin" style={{ height: 28, filter: 'brightness(0) invert(1)', opacity: 0.9 }} />
+          <img src="/logo.png" alt="CleanConnect" style={{ height: 36, borderRadius: 8, opacity: 0.95 }} />
+          <span style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>CleanConnect</span>
         </div>
 
         <div className="p-4 md:p-8">
