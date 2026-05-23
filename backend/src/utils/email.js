@@ -1,15 +1,15 @@
-// Tiện ích gửi email sử dụng Nodemailer + Gmail SMTP
+// Tiện ích gửi email sử dụng Nodemailer + Gmail API (OAuth2) — không bị Render chặn
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
+    type: 'OAuth2',
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    clientId: process.env.GMAIL_CLIENT_ID,
+    clientSecret: process.env.GMAIL_CLIENT_SECRET,
+    refreshToken: process.env.GMAIL_REFRESH_TOKEN,
   },
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 10000,
 });
 
 const sendOtpEmail = async (toEmail, otpCode, fullName, purpose = 'register') => {
