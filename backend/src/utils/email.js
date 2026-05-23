@@ -1,14 +1,12 @@
 // Tiện ích gửi email sử dụng Nodemailer + Gmail SMTP
 const nodemailer = require('nodemailer');
 
+// Port 465 (SSL) ổn định hơn port 587 (STARTTLS) khi deploy trên Render
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
+  port: 465,
+  secure: true,
   family: 4,
-  connectionTimeout: 4000,
-  greetingTimeout: 4000,
-  socketTimeout: 4000,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
