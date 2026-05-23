@@ -200,6 +200,21 @@ const BookingModel = {
     return rows.length > 0;
   },
 
+  // Kiểm tra xung đột lịch của customer (tránh đặt 2 đơn cùng giờ)
+  checkCustomerConflict: async (customerId, bookingDate, startTime, endTime, excludeBookingId = null) => {
+    let query = `
+      SELECT booking_id FROM bookings
+      WHERE customer_id = ?
+        AND booking_date = ?
+        AND status NOT IN ('cancelled')
+        AND NOT (end_time <= ? OR start_time >= ?)
+    `;
+    const params = [customerId, bookingDate, startTime, endTime];
+    if (excludeBookingId) { query += ' AND booking_id != ?'; params.push(excludeBookingId); }
+    const [rows] = await pool.query(query, params);
+    return rows.length > 0;
+  },
+
   // Lấy danh sách booking đang chờ mà helper có thể nhận (open market + được yêu cầu đích danh)
   findAvailableJobsForHelper: async (helperId) => {
     const [rows] = await pool.query(`

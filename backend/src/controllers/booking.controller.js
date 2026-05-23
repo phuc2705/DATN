@@ -74,6 +74,12 @@ const BookingController = {
       const customerProfile = await UserModel.getCustomerProfile(user_id);
       if (!customerProfile) return sendError(res, 'Không tìm thấy thông tin khách hàng.', 404);
 
+      // Kiểm tra xung đột lịch của khách hàng (tránh đặt 2 đơn cùng khung giờ)
+      const customerHasConflict = await BookingModel.checkCustomerConflict(
+        customerProfile.customer_id, bookingDate, startTime, endTime
+      );
+      if (customerHasConflict) return sendError(res, 'Bạn đã có lịch đặt trong khung giờ này.', 409);
+
       // Lấy thông tin dịch vụ để tính giá
       const [serviceRows] = await pool.query('SELECT * FROM services WHERE service_id = ? AND is_active = 1', [serviceId]);
       if (!serviceRows[0]) return sendError(res, 'Dịch vụ không tồn tại.', 400);
