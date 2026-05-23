@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getAllServicesApi } from '../../api/service.api';
-import { createBookingApi, pricePreviewApi } from '../../api/booking.api';
+import { createBookingApi, validatePromoCodeApi, pricePreviewApi } from '../../api/booking.api';
 import { createVNPayUrlApi } from '../../api/payment.api';
 import { formatPrice } from '../../utils/format';
 import toast from 'react-hot-toast';
 import {
   ArrowLeft, CheckCircle2, Calendar, MapPin,
-  CreditCard, Banknote, ChevronRight, Info, Loader2, Check,
+  CreditCard, Banknote, ChevronRight, Info, Loader2, Check, Tag, X,
 } from 'lucide-react';
 
 // ─── Steps ───────────────────────────────────────────────────────────
@@ -111,6 +111,9 @@ export default function CreateBookingPage() {
   });
 
   const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [promoCode, setPromoCode]         = useState('');
+  const [promoApplied, setPromoApplied]   = useState(null);
+  const [promoLoading, setPromoLoading]   = useState(false);
   const [priceData, setPriceData]         = useState(null);
   const [priceLoading, setPriceLoading]   = useState(false);
 
@@ -121,7 +124,7 @@ export default function CreateBookingPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Tính giá từ backend
+  // Tính giá từ backend (bao gồm promo nếu đã áp dụng)
   useEffect(() => {
     if (!form.serviceId || !form.startTime || !form.endTime) {
       setPriceData(null);
@@ -134,6 +137,7 @@ export default function CreateBookingPage() {
           serviceId: form.serviceId,
           startTime: form.startTime,
           endTime:   form.endTime,
+          promoCode: promoApplied ? promoCode.trim() : undefined,
         });
         setPriceData(data.data);
       } catch {
@@ -143,7 +147,24 @@ export default function CreateBookingPage() {
       }
     }, 400);
     return () => clearTimeout(t);
-  }, [form.serviceId, form.startTime, form.endTime]);
+  }, [form.serviceId, form.startTime, form.endTime, promoApplied]);
+
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) return toast.error('Vui lòng nhập mã khuyến mãi');
+    if (!priceData || priceData.basePrice <= 0)
+      return toast.error('Vui lòng chọn dịch vụ và giờ làm việc trước');
+    setPromoLoading(true);
+    try {
+      const { data } = await validatePromoCodeApi(promoCode.trim(), priceData.basePrice);
+      setPromoApplied(data.data);
+      toast.success(data.message || 'Áp dụng mã thành công!');
+    } catch (err) {
+      setPromoApplied(null);
+      toast.error(err.response?.data?.message || 'Mã không hợp lệ');
+    } finally {
+      setPromoLoading(false);
+    }
+  };
 
   const set = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
@@ -174,6 +195,7 @@ export default function CreateBookingPage() {
         address:     form.address,
         note:        form.note || undefined,
         paymentMethod,
+        promoCode: promoApplied ? promoCode.trim() : undefined,
       });
 
       const bookingId = data.data.bookingId;
@@ -338,13 +360,64 @@ export default function CreateBookingPage() {
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-orange-400" /> Đang tính giá...
                 </div>
               ) : priceData ? (
-                <div className="flex justify-between font-bold text-base border-t border-orange-200 pt-2.5 mt-1">
-                  <dt className="text-[#222222]">Tổng dự kiến</dt>
-                  <dd className="text-orange-500">{formatPrice(priceData.totalPrice)}</dd>
-                </div>
+                <>
+                  <div className="flex justify-between text-sm border-t border-orange-200 pt-2.5 mt-1">
+                    <dt className="text-[#6a6a6a]">{priceData.hours}h × {formatPrice(priceData.effectiveRate)}/giờ</dt>
+                    <dd className="text-[#222222]">{formatPrice(priceData.basePrice)}</dd>
+                  </div>
+                  {priceData.discountAmount > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <dt>Giảm giá ({promoApplied?.discountLabel})</dt>
+                      <dd>−{formatPrice(priceData.discountAmount)}</dd>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-bold text-base border-t border-orange-200 pt-2">
+                    <dt className="text-[#222222]">Tổng dự kiến</dt>
+                    <dd className="text-orange-500">{formatPrice(priceData.totalPrice)}</dd>
+                  </div>
+                </>
               ) : null}
             </dl>
           </div>
+
+          {/* Mã khuyến mãi */}
+          <SectionCard title="Mã khuyến mãi" icon={Tag}>
+            {promoApplied ? (
+              <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-600" />
+                  <span className="text-sm font-semibold text-green-700">{promoCode.toUpperCase()}</span>
+                  <span className="text-sm text-green-600">— {promoApplied.discountLabel}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setPromoApplied(null); setPromoCode(''); }}
+                  className="text-[#6a6a6a] hover:text-red-500 transition-colors p-1 rounded"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleApplyPromo())}
+                  placeholder="Nhập mã giảm giá..."
+                  className={`${INPUT_CLS} flex-1 uppercase placeholder:normal-case`}
+                />
+                <button
+                  type="button"
+                  onClick={handleApplyPromo}
+                  disabled={promoLoading || !promoCode.trim()}
+                  className="px-4 h-[42px] bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-600 disabled:opacity-50 whitespace-nowrap transition-colors flex items-center gap-1.5"
+                >
+                  {promoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Áp dụng'}
+                </button>
+              </div>
+            )}
+          </SectionCard>
 
           {/* Địa chỉ */}
           <SectionCard title="Địa chỉ làm việc" icon={MapPin}>
