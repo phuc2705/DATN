@@ -278,9 +278,23 @@ const AuthController = {
 
       const otpCode = generateOtp();
       await OtpModel.create({ email, otpCode });
-      await sendOtpEmail(email, otpCode, user.full_name);
 
-      return sendSuccess(res, { email }, 'Mã OTP mới đã được gửi đến email của bạn.', 200);
+      let emailSent = true;
+      try {
+        await sendOtpEmail(email, otpCode, user.full_name);
+      } catch (emailErr) {
+        emailSent = false;
+        console.error('[Email] Gửi lại OTP thất bại:', emailErr.message);
+      }
+
+      const responseData = emailSent
+        ? { email }
+        : { email, otp: otpCode, warning: 'Email không gửi được — dùng mã OTP này để xác minh' };
+
+      return sendSuccess(res, responseData,
+        emailSent ? 'Mã OTP mới đã được gửi đến email của bạn.' : 'Email gặp sự cố — mã OTP đã có trong phản hồi này.',
+        200
+      );
     } catch (error) {
       next(error);
     }
