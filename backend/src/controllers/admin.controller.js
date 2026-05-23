@@ -130,6 +130,20 @@ const AdminController = {
     }
   },
 
+  // Xóa tài khoản user (chỉ admin)
+  deleteUser: async (req, res, next) => {
+    try {
+      const { userId } = req.params;
+      const [[user]] = await pool.query('SELECT user_type FROM users WHERE user_id = ?', [userId]);
+      if (!user) return sendError(res, 'Không tìm thấy tài khoản.', 404);
+      if (user.user_type === 'admin') return sendError(res, 'Không thể xóa tài khoản admin.', 403);
+      await pool.query('DELETE FROM users WHERE user_id = ?', [userId]);
+      return sendSuccess(res, null, 'Đã xóa tài khoản.');
+    } catch (error) {
+      next(error);
+    }
+  },
+
   // Xác minh helper (cấp badge is_verified)
   verifyHelper: async (req, res, next) => {
     try {

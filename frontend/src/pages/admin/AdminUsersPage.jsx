@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getAdminUsersApi, toggleUserStatusApi } from '../../api/admin.api';
+import { getAdminUsersApi, toggleUserStatusApi, deleteUserApi } from '../../api/admin.api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import Avatar from '../../components/common/Avatar';
 import { formatDate } from '../../utils/format';
@@ -45,6 +45,17 @@ export default function AdminUsersPage() {
     try {
       await toggleUserStatusApi(userId, !isActive);
       toast.success(isActive ? 'Đã khóa tài khoản' : 'Đã kích hoạt tài khoản');
+      refresh();
+    } catch {
+      toast.error('Có lỗi xảy ra');
+    }
+  };
+
+  const handleDelete = async (userId, fullName) => {
+    if (!window.confirm(`Xóa tài khoản "${fullName}"? Hành động này không thể hoàn tác.`)) return;
+    try {
+      await deleteUserApi(userId);
+      toast.success('Đã xóa tài khoản');
       refresh();
     } catch {
       toast.error('Có lỗi xảy ra');
@@ -208,16 +219,24 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-5 py-4">
                       {u.userType !== 'admin' && (
-                        <button
-                          onClick={() => handleToggle(u.userId, u.isActive)}
-                          className={`text-xs px-3 py-1.5 rounded-md border font-semibold transition-colors ${
-                            u.isActive
-                              ? 'text-red-400 border-red-400/20 hover:bg-red-400/10'
-                              : 'text-emerald-400 border-emerald-400/20 hover:bg-emerald-400/10'
-                          }`}
-                        >
-                          {u.isActive ? 'Khóa' : 'Mở khóa'}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleToggle(u.userId, u.isActive)}
+                            className={`text-xs px-3 py-1.5 rounded-md border font-semibold transition-colors ${
+                              u.isActive
+                                ? 'text-red-400 border-red-400/20 hover:bg-red-400/10'
+                                : 'text-emerald-400 border-emerald-400/20 hover:bg-emerald-400/10'
+                            }`}
+                          >
+                            {u.isActive ? 'Khóa' : 'Mở khóa'}
+                          </button>
+                          <button
+                            onClick={() => handleDelete(u.userId, u.fullName)}
+                            className="text-xs px-3 py-1.5 rounded-md border font-semibold transition-colors text-red-500 border-red-500/20 hover:bg-red-500/10"
+                          >
+                            Xóa
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -247,16 +266,24 @@ export default function AdminUsersPage() {
                   </div>
                 </div>
                 {u.userType !== 'admin' && (
-                  <button
-                    onClick={() => handleToggle(u.userId, u.isActive)}
-                    className={`text-xs px-3 py-1.5 rounded-md border font-semibold flex-shrink-0 transition-colors ${
-                      u.isActive
-                        ? 'text-red-400 border-red-400/20 hover:bg-red-400/10'
-                        : 'text-emerald-400 border-emerald-400/20 hover:bg-emerald-400/10'
-                    }`}
-                  >
-                    {u.isActive ? 'Khóa' : 'Mở'}
-                  </button>
+                  <div className="flex flex-col gap-1.5 flex-shrink-0">
+                    <button
+                      onClick={() => handleToggle(u.userId, u.isActive)}
+                      className={`text-xs px-3 py-1.5 rounded-md border font-semibold transition-colors ${
+                        u.isActive
+                          ? 'text-red-400 border-red-400/20 hover:bg-red-400/10'
+                          : 'text-emerald-400 border-emerald-400/20 hover:bg-emerald-400/10'
+                      }`}
+                    >
+                      {u.isActive ? 'Khóa' : 'Mở'}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(u.userId, u.fullName)}
+                      className="text-xs px-3 py-1.5 rounded-md border font-semibold transition-colors text-red-500 border-red-500/20 hover:bg-red-500/10"
+                    >
+                      Xóa
+                    </button>
+                  </div>
                 )}
               </div>
             ))}
