@@ -41,7 +41,7 @@ services:
 
       # ─── Domain ───────────────────────────────────────────────────────────────
       - key: CLIENT_URL
-        value: https://connectclean.id.vn
+        value: https://connectclean.onrender.com
 
       # ─── Firebase Client SDK (build-time — VITE_* được nhúng vào JS bundle) ───
       - key: VITE_FIREBASE_API_KEY
@@ -83,7 +83,7 @@ services:
       - key: VNP_URL
         value: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
       - key: VNP_RETURN_URL
-        value: https://connectclean.id.vn/api/payments/vnpay-return
+        value: https://connectclean.onrender.com/api/payments/vnpay-return
 
       # ─── Ngân hàng VietQR (hiển thị QR chuyển khoản) ────────────────────────
       - key: BANK_ID

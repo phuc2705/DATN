@@ -42,9 +42,7 @@ app.use(express.urlencoded({ extended: true }));
 // ─── CORS chỉ cho /api (localhost + CLIENT_URL) ───────────────────────────────
 const allowedOrigins = [
   process.env.CLIENT_URL,
-  'https://connectclean.id.vn',
-  'https://www.connectclean.id.vn',
-  'https://datn-fafj.onrender.com',
+  'https://connectclean.onrender.com',
 ].filter(Boolean);
 
 const corsOptions = {
