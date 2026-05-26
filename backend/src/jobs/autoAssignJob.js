@@ -3,14 +3,15 @@
 const { pool } = require('../config/database');
 const BookingModel = require('../models/booking.model');
 const { findSuggestedHelpers } = require('../utils/matching');
-const { pushNotification } = require('../utils/notify');
+const { pushNotification, mailIfOffline } = require('../utils/notify');
+const { sendJobAcceptedEmail, sendNewJobEmail } = require('../utils/email');
 
 async function autoAssignExpiredBookings() {
   try {
     // Lấy các booking ở trạng thái pending, chưa có helper, đã tạo > 30 phút
     const [bookings] = await pool.query(`
-      SELECT b.booking_id, b.service_id, b.booking_date, b.start_time, b.end_time,
-             uc.user_id AS customer_user_id,
+      SELECT b.booking_id, b.service_id, b.booking_date, b.start_time, b.end_time, b.address,
+             uc.user_id AS customer_user_id, uc.full_name AS customer_name, uc.email AS customer_email,
              s.service_name
       FROM bookings b
       JOIN services s ON b.service_id = s.service_id
@@ -50,6 +51,12 @@ async function autoAssignExpiredBookings() {
           booking.booking_id, best.helper_id, adminUserId
         );
 
+        const bookingInfo = {
+          bookingId: booking.booking_id, serviceName: booking.service_name,
+          bookingDate: dateStr, startTime: String(booking.start_time).slice(0, 5),
+          endTime: String(booking.end_time).slice(0, 5), address: booking.address,
+        };
+
         // Thông báo khách hàng
         await pushNotification({
           userId: booking.customer_user_id,
@@ -58,10 +65,15 @@ async function autoAssignExpiredBookings() {
           type:   'booking_confirmed',
           refId:  booking.booking_id,
         });
+        if (booking.customer_email) {
+          mailIfOffline(booking.customer_user_id, () => sendJobAcceptedEmail(
+            booking.customer_email, booking.customer_name, bookingInfo, best.full_name
+          ));
+        }
 
         // Thông báo helper được giao
         const [[helperUser]] = await pool.query(
-          'SELECT u.user_id FROM helpers h JOIN users u ON h.user_id = u.user_id WHERE h.helper_id = ?',
+          'SELECT u.user_id, u.email, u.full_name FROM helpers h JOIN users u ON h.user_id = u.user_id WHERE h.helper_id = ?',
           [best.helper_id]
         );
         if (helperUser) {
@@ -72,6 +84,11 @@ async function autoAssignExpiredBookings() {
             type:   'booking_confirmed',
             refId:  booking.booking_id,
           });
+          if (helperUser.email) {
+            mailIfOffline(helperUser.user_id, () => sendNewJobEmail(
+              helperUser.email, helperUser.full_name, bookingInfo
+            ));
+          }
         }
 
         console.log(`✅ Auto-assign: Đơn ${booking.booking_id} → ${best.full_name} (helper_id=${best.helper_id})`);

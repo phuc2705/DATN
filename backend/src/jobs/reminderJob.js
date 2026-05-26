@@ -1,15 +1,16 @@
 // Job nhắc nhở lịch: chạy mỗi 30 phút, gửi thông báo cho booking sắp đến trong 24h
 const { pool } = require('../config/database');
-const { pushNotification } = require('../utils/notify');
+const { pushNotification, mailIfOffline } = require('../utils/notify');
+const { sendReminderEmail } = require('../utils/email');
 
 async function sendBookingReminders() {
   try {
     // Lấy các booking đã confirmed, sắp diễn ra trong 1–24h tới, chưa gửi reminder
     const [bookings] = await pool.query(
-      `SELECT b.booking_id, b.booking_date, b.start_time,
+      `SELECT b.booking_id, b.booking_date, b.start_time, b.end_time, b.address,
               s.service_name,
-              uc.user_id AS customer_user_id, uc.full_name AS customer_name,
-              uh.user_id AS helper_user_id, uh.full_name AS helper_name
+              uc.user_id AS customer_user_id, uc.full_name AS customer_name, uc.email AS customer_email,
+              uh.user_id AS helper_user_id, uh.full_name AS helper_name, uh.email AS helper_email
        FROM bookings b
        JOIN services s ON b.service_id = s.service_id
        JOIN customers c ON b.customer_id = c.customer_id
@@ -27,6 +28,12 @@ async function sendBookingReminders() {
       const dateObj = new Date(b.booking_date);
       const dateStr = dateObj.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
+      const bookingInfo = {
+        bookingId: b.booking_id, serviceName: b.service_name,
+        bookingDate: b.booking_date, startTime: String(b.start_time).slice(0, 5),
+        endTime: String(b.end_time).slice(0, 5), address: b.address,
+      };
+
       await pushNotification({
         userId: b.customer_user_id,
         title: 'Nhắc nhở: Lịch sắp tới của bạn',
@@ -34,6 +41,11 @@ async function sendBookingReminders() {
         type: 'system',
         refId: b.booking_id,
       });
+      if (b.customer_email) {
+        mailIfOffline(b.customer_user_id, () => sendReminderEmail(
+          b.customer_email, b.customer_name, bookingInfo, b.helper_name, 'customer'
+        ));
+      }
 
       await pushNotification({
         userId: b.helper_user_id,
@@ -42,6 +54,11 @@ async function sendBookingReminders() {
         type: 'system',
         refId: b.booking_id,
       });
+      if (b.helper_email) {
+        mailIfOffline(b.helper_user_id, () => sendReminderEmail(
+          b.helper_email, b.helper_name, bookingInfo, b.customer_name, 'helper'
+        ));
+      }
 
       await pool.query('UPDATE bookings SET reminder_sent = 1 WHERE booking_id = ?', [b.booking_id]);
     }

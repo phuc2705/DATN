@@ -17,6 +17,8 @@ const {
   sendHelperCompletedEmail,
   sendCancelledEmail,
   sendCancellationReceiptEmail,
+  sendNewJobEmail,
+  sendJobAcceptedEmail,
 } = require('../utils/email');
 
 // Chuyển snake_case từ DB sang camelCase cho client
@@ -216,8 +218,8 @@ const BookingController = {
         try {
           // Lấy toàn bộ helpers hợp lệ kèm tọa độ + điểm đánh giá
           const [helperRows] = await pool.query(
-            `SELECT DISTINCT h.helper_id, u.user_id, h.rating_average,
-                    h.latitude, h.longitude
+            `SELECT DISTINCT h.helper_id, u.user_id, u.email, u.full_name,
+                    h.rating_average, h.latitude, h.longitude
              FROM helpers h
              JOIN users u ON h.user_id = u.user_id
              JOIN helper_services hs ON h.helper_id = hs.helper_id
@@ -261,6 +263,11 @@ const BookingController = {
               refId: bookingId,
             });
             emitToUser(h.user_id, 'new_job', { bookingId, svcName, bookingDate, startTime, endTime, nearby: true });
+            if (h.email) {
+              mailIfOffline(h.user_id, () => sendNewJobEmail(h.email, h.full_name, {
+                bookingId, serviceName: svcName, bookingDate, startTime, endTime, address,
+              }));
+            }
           }
 
           // Gửi giai đoạn 2 cho helpers xa hơn sau 10 phút (nếu có)
@@ -280,6 +287,11 @@ const BookingController = {
                   refId: bookingId,
                 });
                 emitToUser(h.user_id, 'new_job', { bookingId, svcName, bookingDate, startTime, endTime });
+                if (h.email) {
+                  mailIfOffline(h.user_id, () => sendNewJobEmail(h.email, h.full_name, {
+                    bookingId, serviceName: svcName, bookingDate, startTime, endTime, address,
+                  }));
+                }
               }
             }, 10 * 60 * 1000);
           }
@@ -612,6 +624,18 @@ const BookingController = {
         refId: parseInt(bookingId),
       });
       emitToUser(booking.customer_user_id, 'booking:update', { bookingId: parseInt(bookingId), status: 'confirmed' });
+
+      if (booking.customer_email) {
+        mailIfOffline(booking.customer_user_id, () => sendJobAcceptedEmail(
+          booking.customer_email, booking.customer_name,
+          {
+            bookingId, serviceName: booking.service_name, bookingDate: booking.booking_date,
+            startTime: booking.start_time, endTime: booking.end_time,
+            address: booking.address, totalPrice: booking.total_price,
+          },
+          booking.helper_name || 'Người giúp việc'
+        ));
+      }
 
       return sendSuccess(res, null, 'Nhận việc thành công!');
     } catch (error) {

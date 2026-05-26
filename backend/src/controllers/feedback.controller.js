@@ -1,7 +1,8 @@
 // Controller phản hồi hệ thống — báo lỗi, khiếu nại, góp ý từ customer & helper
 const { pool } = require('../config/database');
 const { sendSuccess, sendError } = require('../utils/response');
-const { pushNotification } = require('../utils/notify');
+const { pushNotification, mailIfOffline } = require('../utils/notify');
+const { sendFeedbackRepliedEmail } = require('../utils/email');
 
 const CATEGORY_LABEL = {
   bug:                  'Lỗi ứng dụng',
@@ -148,7 +149,11 @@ const FeedbackController = {
       }
 
       const [[fb]] = await pool.query(
-        'SELECT feedback_id, user_id, subject, status AS currentStatus FROM system_feedbacks WHERE feedback_id = ?',
+        `SELECT f.feedback_id, f.user_id, f.subject, f.status AS currentStatus,
+                u.email AS user_email, u.full_name AS user_name
+         FROM system_feedbacks f
+         JOIN users u ON f.user_id = u.user_id
+         WHERE f.feedback_id = ?`,
         [feedbackId]
       );
       if (!fb) return sendError(res, 'Không tìm thấy phản hồi.', 404);
@@ -185,6 +190,11 @@ const FeedbackController = {
           type:   'feedback_replied',
           refId:  parseInt(feedbackId),
         }).catch(() => {});
+        if (fb.user_email) {
+          mailIfOffline(fb.user_id, () => sendFeedbackRepliedEmail(
+            fb.user_email, fb.user_name, fb.subject, adminNote, status
+          ));
+        }
       }
 
       return sendSuccess(res, null, 'Đã cập nhật phản hồi.');

@@ -253,6 +253,100 @@ const sendCancellationReceiptEmail = async (toEmail, recipientName, booking) => 
   await sendMail(toEmail, `[CleanConnect] Đã hủy đơn ${booking.bookingId}`, html).catch(() => {});
 };
 
+// Helper: có đơn mới trên job board
+const sendNewJobEmail = async (toEmail, helperName, booking) => {
+  const html = layout(`
+    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${helperName}</strong>,</h2>
+    <p style="color:#4b5563;line-height:1.6;">
+      Có một đơn <strong>${booking.serviceName}</strong> mới phù hợp với bạn đang chờ được nhận.
+      ${statusBadge('Đang chờ nhận', '#f97316')}
+    </p>
+    ${bookingTable(booking)}
+    <div style="background:#fff7ed;border-left:4px solid #f97316;padding:12px 16px;border-radius:4px;margin-top:8px;">
+      <p style="margin:0;color:#c2410c;font-size:14px;">
+        Đăng nhập CleanConnect ngay để nhận đơn trước khi có người khác nhận!
+      </p>
+    </div>
+  `);
+  await sendMail(toEmail, `[CleanConnect] Có đơn mới – ${booking.serviceName} (${booking.bookingDate})`, html).catch(() => {});
+};
+
+// Khách hàng: helper đã tự nhận đơn từ job board
+const sendJobAcceptedEmail = async (toEmail, customerName, booking, helperName) => {
+  const html = layout(`
+    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${customerName}</strong>,</h2>
+    <p style="color:#4b5563;line-height:1.6;">
+      Người giúp việc <strong style="color:#16a34a;">${helperName}</strong> đã nhận đơn của bạn.
+      ${statusBadge('Đã xác nhận', '#16a34a')}
+    </p>
+    ${bookingTable(booking)}
+    <p style="color:#6b7280;font-size:14px;">Vui lòng có mặt tại nhà để đón người giúp việc đúng giờ.</p>
+  `);
+  await sendMail(toEmail, `[CleanConnect] Đơn ${booking.bookingId} đã được nhận bởi ${helperName}`, html).catch(() => {});
+};
+
+// Nhắc lịch (dùng cho cả customer và helper)
+const sendReminderEmail = async (toEmail, recipientName, booking, otherPartyName, role) => {
+  const isHelper = role === 'helper';
+  const html = layout(`
+    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${recipientName}</strong>,</h2>
+    <p style="color:#4b5563;line-height:1.6;">
+      Nhắc nhở: Bạn có lịch <strong>${booking.serviceName}</strong> sắp tới.
+      ${statusBadge('Sắp diễn ra', '#2563eb')}
+    </p>
+    ${bookingTable(booking)}
+    <div style="background:#eff6ff;border-left:4px solid #2563eb;padding:12px 16px;border-radius:4px;margin-top:8px;">
+      <p style="margin:0;color:#1d4ed8;font-size:14px;">
+        ${isHelper
+          ? `Hãy đến đúng giờ và nhớ check-in khi tới nơi. Khách hàng: <strong>${otherPartyName}</strong>.`
+          : `Người giúp việc <strong>${otherPartyName}</strong> sẽ đến đúng giờ hẹn.`}
+      </p>
+    </div>
+  `);
+  await sendMail(toEmail, `[CleanConnect] Nhắc lịch – ${booking.serviceName} lúc ${booking.startTime} ngày ${booking.bookingDate}`, html).catch(() => {});
+};
+
+// Helper: xác nhận đã nhận thanh toán
+const sendPaymentReceivedEmail = async (toEmail, helperName, amount, bookingId) => {
+  const amountStr = Number(amount).toLocaleString('vi-VN');
+  const html = layout(`
+    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${helperName}</strong>,</h2>
+    <p style="color:#4b5563;line-height:1.6;">
+      Khách hàng đã xác nhận thanh toán cho đơn <strong>#${bookingId}</strong>.
+      ${statusBadge('Đã thanh toán', '#16a34a')}
+    </p>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:20px;margin:16px 0;text-align:center;">
+      <p style="margin:0 0 4px;color:#6b7280;font-size:13px;">Thu nhập nhận được</p>
+      <p style="margin:0;font-size:28px;font-weight:700;color:#16a34a;">${amountStr}đ</p>
+      <p style="margin:4px 0 0;color:#6b7280;font-size:12px;">(80% giá trị đơn sau phí nền tảng 20%)</p>
+    </div>
+    <p style="color:#6b7280;font-size:14px;">Số dư đã được cập nhật vào ví thu nhập của bạn trên CleanConnect.</p>
+  `);
+  await sendMail(toEmail, `[CleanConnect] Đã nhận thanh toán ${amountStr}đ – Đơn #${bookingId}`, html).catch(() => {});
+};
+
+// User: admin đã trả lời phản hồi
+const sendFeedbackRepliedEmail = async (toEmail, userName, subject, adminNote, status) => {
+  const statusMap = { resolved: 'Đã giải quyết', closed: 'Đã đóng', in_progress: 'Đang xử lý', open: 'Mở' };
+  const statusColor = { resolved: '#16a34a', closed: '#6b7280', in_progress: '#2563eb', open: '#f97316' };
+  const html = layout(`
+    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${userName}</strong>,</h2>
+    <p style="color:#4b5563;line-height:1.6;">
+      Phản hồi của bạn về <strong>"${subject}"</strong> đã được Admin xử lý.
+      ${statusBadge(statusMap[status] || status, statusColor[status] || '#6b7280')}
+    </p>
+    ${adminNote ? `
+    <div style="background:#eff6ff;border-left:4px solid #2563eb;padding:16px;border-radius:4px;margin-top:12px;">
+      <p style="margin:0 0 6px;color:#1d4ed8;font-size:13px;font-weight:600;">Phản hồi từ Admin:</p>
+      <p style="margin:0;color:#1e40af;font-size:14px;line-height:1.6;">${adminNote}</p>
+    </div>` : ''}
+    <p style="color:#6b7280;font-size:14px;margin-top:16px;">
+      Đăng nhập CleanConnect để xem chi tiết phản hồi trong phần <em>Hồ sơ → Phản hồi của tôi</em>.
+    </p>
+  `);
+  await sendMail(toEmail, `[CleanConnect] Admin đã trả lời phản hồi của bạn – "${subject}"`, html).catch(() => {});
+};
+
 module.exports = {
   sendOtpEmail,
   sendBookingCreatedEmail,
@@ -264,4 +358,9 @@ module.exports = {
   sendCancelledEmail,
   sendCancellationReceiptEmail,
   sendHelperAssignedEmail,
+  sendNewJobEmail,
+  sendJobAcceptedEmail,
+  sendReminderEmail,
+  sendPaymentReceivedEmail,
+  sendFeedbackRepliedEmail,
 };
