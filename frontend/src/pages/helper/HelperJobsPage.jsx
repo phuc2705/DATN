@@ -7,13 +7,14 @@ import {
   checkOutApi,
 } from '../../api/booking.api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import FeedbackModal from '../../components/common/FeedbackModal';
 import { formatPrice, formatDate, BOOKING_STATUS_LABEL } from '../../utils/format';
 import { getSocket } from '../../socket/socket';
 import toast from 'react-hot-toast';
 import {
-  ClipboardList, Calendar, MapPin, User, FileText, Star,
+  ClipboardList, Calendar, MapPin, User, FileText,
   CheckCircle, Home, Flag, Loader2, RefreshCw,
-  Clock, Banknote, ChevronRight,
+  Clock, Banknote, ChevronRight, MessageSquare,
 } from 'lucide-react';
 
 const SCHEDULE_TABS = [
@@ -108,7 +109,8 @@ function JobCard({ job, onAccept }) {
 
 /* ─── Schedule Card ──────────────────────────────────────────────── */
 function ScheduleCard({ booking, onCheckin, onCheckout }) {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading]           = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const sl = BOOKING_STATUS_LABEL[booking.status] || {};
 
   const handle = async (fn) => {
@@ -190,10 +192,26 @@ function ScheduleCard({ booking, onCheckin, onCheckout }) {
       )}
 
       {booking.status === 'completed' && (
-        <div className="mt-2 flex items-center justify-center gap-2 p-3 bg-green-50 border border-green-100 rounded-lg">
-          <CheckCircle className="w-4 h-4 text-green-600" />
-          <p className="text-sm font-medium text-green-700">Hoàn thành · Chờ khách thanh toán</p>
+        <div className="mt-2 space-y-2">
+          <div className="flex items-center justify-center gap-2 p-3 bg-green-50 border border-green-100 rounded-lg">
+            <CheckCircle className="w-4 h-4 text-green-600" />
+            <p className="text-sm font-medium text-green-700">Hoàn thành</p>
+          </div>
+          <button
+            onClick={() => setShowFeedback(true)}
+            className="w-full flex items-center justify-center gap-2 border border-gray-100 text-gray-400 hover:text-gray-600 hover:bg-gray-50 h-8 rounded-lg text-xs transition-colors"
+          >
+            <MessageSquare className="w-3 h-3" /> Báo cáo vấn đề
+          </button>
         </div>
+      )}
+
+      {showFeedback && (
+        <FeedbackModal
+          onClose={() => setShowFeedback(false)}
+          userType="helper"
+          bookingId={booking.bookingId}
+        />
       )}
     </div>
   );

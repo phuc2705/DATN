@@ -266,7 +266,7 @@ const AdminController = {
           userId: helperUser.user_id,
           title: `Bạn được giao đơn ${bookingId}`,
           body: `Admin đã giao đơn ngày ${booking.booking_date} cho bạn`,
-          type: 'booking_created',
+          type: 'booking_confirmed',
           refId: parseInt(bookingId),
         });
         emitToUser(helperUser.user_id, 'booking:update', { bookingId: parseInt(bookingId), status: booking.status });

@@ -122,7 +122,8 @@ CREATE TABLE bookings (
     checkin_at     TIMESTAMP NULL,                      -- Thời điểm helper check-in
     checkout_at    TIMESTAMP NULL,                      -- Thời điểm helper check-out
     note           TEXT NULL,
-    is_reviewed    BOOLEAN DEFAULT FALSE,                  -- Đã được customer đánh giá chưa
+    is_reviewed          BOOLEAN DEFAULT FALSE,               -- Đã được customer đánh giá chưa
+    is_helper_reviewed   TINYINT NOT NULL DEFAULT 0,          -- Helper đã đánh giá lại customer chưa
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE,
@@ -861,6 +862,49 @@ CREATE TABLE IF NOT EXISTS otp_verifications (
     INDEX idx_otp_email (email),
     INDEX idx_otp_expires (expires_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ============================================================
+-- BẢNG HELPER ĐÁNH GIÁ KHÁCH HÀNG (2 chiều)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS helper_reviews (
+    review_id   INT AUTO_INCREMENT PRIMARY KEY,
+    booking_id  INT UNIQUE NOT NULL,
+    helper_id   INT NOT NULL,
+    customer_id INT NOT NULL,
+    rating      TINYINT NOT NULL,
+    comment     TEXT NULL,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (booking_id)  REFERENCES bookings(booking_id)   ON DELETE CASCADE,
+    FOREIGN KEY (helper_id)   REFERENCES helpers(helper_id)     ON DELETE CASCADE,
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE,
+    CONSTRAINT chk_helper_review_rating CHECK (rating >= 1 AND rating <= 5)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- BẢNG PHẢN HỒI HỆ THỐNG (báo lỗi, khiếu nại, góp ý)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS system_feedbacks (
+    feedback_id  INT AUTO_INCREMENT PRIMARY KEY,
+    user_id      INT NOT NULL,
+    category     ENUM('bug','complaint_helper','complaint_customer','payment_issue','suggestion','other') NOT NULL,
+    subject      VARCHAR(200) NOT NULL,
+    description  TEXT NOT NULL,
+    booking_id   INT NULL,
+    status       ENUM('open','in_progress','resolved','closed') NOT NULL DEFAULT 'open',
+    admin_note   TEXT NULL,
+    resolved_by  INT NULL,
+    resolved_at  TIMESTAMP NULL,
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id)     REFERENCES users(user_id)     ON DELETE CASCADE,
+    FOREIGN KEY (booking_id)  REFERENCES bookings(booking_id) ON DELETE SET NULL,
+    FOREIGN KEY (resolved_by) REFERENCES users(user_id)     ON DELETE SET NULL,
+    INDEX idx_sf_status   (status),
+    INDEX idx_sf_user     (user_id),
+    INDEX idx_sf_category (category)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
 -- COMPOSITE INDEXES CHO QUERY PHỔ BIẾN

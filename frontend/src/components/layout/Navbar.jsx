@@ -3,8 +3,9 @@ import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import {
   Bell, Menu, X, ChevronDown, User, LogOut, LogIn, UserPlus,
-  Home, ClipboardList, Briefcase, Wallet, LayoutDashboard, CalendarDays,
+  Home, ClipboardList, Briefcase, Wallet, LayoutDashboard, CalendarDays, MessageSquare,
 } from 'lucide-react';
+import FeedbackModal from '../common/FeedbackModal';
 
 function BellIcon({ unread }) {
   return (
@@ -70,6 +71,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -79,6 +81,7 @@ export default function Navbar() {
   };
 
   const closeAll = () => { setMenuOpen(false); setMobileOpen(false); };
+  const openFeedback = () => { setMenuOpen(false); setMobileOpen(false); setShowFeedback(true); };
 
   return (
     <>
@@ -186,6 +189,16 @@ export default function Navbar() {
                           </Link>
                         </div>
 
+                        <div className="py-1">
+                          <button
+                            onClick={openFeedback}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                          >
+                            <MessageSquare className="w-4 h-4" />
+                            Gửi phản hồi
+                          </button>
+                        </div>
+
                         <div className="border-t border-gray-50 pt-1">
                           <button
                             onClick={handleLogout}
@@ -227,6 +240,14 @@ export default function Navbar() {
           </div>
         </div>
       </nav>
+
+      {/* ─── Feedback Modal ────────────────────────────────────── */}
+      {showFeedback && (
+        <FeedbackModal
+          onClose={() => setShowFeedback(false)}
+          userType={user?.userType}
+        />
+      )}
 
       {/* ─── Mobile drawer ─────────────────────────────────────── */}
       {mobileOpen && (
@@ -279,6 +300,13 @@ export default function Navbar() {
                   <MobileLink to="/notifications" icon={Bell} onClick={closeAll} badge={unreadCount}>
                     Thông báo
                   </MobileLink>
+                  <button
+                    onClick={openFeedback}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                  >
+                    <MessageSquare className="w-4 h-4 shrink-0" />
+                    Gửi phản hồi
+                  </button>
                   <button onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl transition-colors mt-1">
                     <LogOut className="w-4 h-4 shrink-0" />

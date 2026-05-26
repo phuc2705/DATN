@@ -6,7 +6,8 @@ export const toggleUserStatusApi = (userId, isActive) =>
   api.patch(`/api/admin/users/${userId}/status`, { isActive });
 export const deleteUserApi = (userId) => api.delete(`/api/admin/users/${userId}`);
 export const verifyHelperApi = (helperId) => api.patch(`/api/admin/helpers/${helperId}/verify`);
-export const getAdminBookingsApi = (params) => api.get('/api/admin/bookings', { params });
+export const getAdminBookingsApi    = (params) => api.get('/api/admin/bookings', { params });
+export const getExpiringBookingsApi = ()       => api.get('/api/admin/bookings/expiring');
 export const getAdminPaymentsApi = (params) => api.get('/api/admin/payments', { params });
 export const getAdminServicesApi = () => api.get('/api/admin/services');
 export const createServiceApi = (data) => api.post('/api/admin/services', data);

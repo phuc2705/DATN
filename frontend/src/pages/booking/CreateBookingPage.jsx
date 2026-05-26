@@ -7,7 +7,7 @@ import { formatPrice } from '../../utils/format';
 import toast from 'react-hot-toast';
 import {
   ArrowLeft, CheckCircle2, Calendar, MapPin,
-  CreditCard, Banknote, ChevronRight, Info, Loader2, Check, Tag, X,
+  CreditCard, Banknote, ChevronRight, Info, Loader2, Check, Tag, X, AlertTriangle,
 } from 'lucide-react';
 
 // ─── Steps ───────────────────────────────────────────────────────────
@@ -116,6 +116,7 @@ export default function CreateBookingPage() {
   const [promoLoading, setPromoLoading]   = useState(false);
   const [priceData, setPriceData]         = useState(null);
   const [priceLoading, setPriceLoading]   = useState(false);
+  const [conflictError, setConflictError] = useState(null);
 
   useEffect(() => {
     getAllServicesApi()
@@ -166,7 +167,11 @@ export default function CreateBookingPage() {
     }
   };
 
-  const set = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  // Xóa lỗi trùng lịch khi user thay đổi giờ/ngày
+  const set = (field) => (e) => {
+    setConflictError(null);
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  };
 
   const validateStep1 = () => {
     if (!form.serviceId)  { toast.error('Vui lòng chọn dịch vụ'); return false; }
@@ -217,7 +222,11 @@ export default function CreateBookingPage() {
         navigate(`/bookings/${bookingId}`);
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Đặt lịch thất bại');
+      if (err.response?.status === 409) {
+        setConflictError(err.response.data?.message || 'Lịch đã bị trùng, không thể đặt.');
+      } else {
+        toast.error(err.response?.data?.message || 'Đặt lịch thất bại');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -487,6 +496,25 @@ export default function CreateBookingPage() {
               <span className="font-semibold">Phân công tự động:</span> Đơn sẽ được gửi đến người giúp việc phù hợp gần nhất.
             </p>
           </div>
+
+          {/* Banner lỗi trùng lịch */}
+          {conflictError && (
+            <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4">
+              <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-red-700">Lịch bị trùng — không thể đặt</p>
+                <p className="text-sm text-red-600 mt-0.5">{conflictError}</p>
+                <p className="text-xs text-red-500 mt-1">Vui lòng quay lại và chọn ngày/giờ khác.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setConflictError(null)}
+                className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -516,7 +544,7 @@ export default function CreateBookingPage() {
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={submitting}
+            disabled={submitting || !!conflictError}
             className="flex-1 flex items-center justify-center gap-2 h-12 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium text-base transition-colors"
           >
             {submitting ? (

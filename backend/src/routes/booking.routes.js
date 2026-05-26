@@ -40,6 +40,9 @@ router.get('/helper/my', authorize('helper'), BookingController.getMyBookingsAsH
 // GET /api/bookings/helper/available-jobs - Job board: helper xem việc có thể nhận
 router.get('/helper/available-jobs', authorize('helper'), BookingController.getAvailableJobs);
 
+// GET /api/bookings/:bookingId/suggestions - Gợi ý khung giờ thay thế khi đơn bị hủy
+router.get('/:bookingId/suggestions', BookingController.getBookingSuggestions);
+
 // GET /api/bookings/:bookingId - Chi tiết booking
 router.get('/:bookingId', BookingController.getBookingDetail);
 

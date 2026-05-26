@@ -1,14 +1,14 @@
-// Khởi tạo Firebase App + Auth providers cho Google và Facebook OAuth
+// Khởi tạo Firebase App + Auth providers cho Google OAuth
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 
 const app = initializeApp({
-  apiKey:            'AIzaSyB5_VhDytOG3mdII5ZXe1yNjarWCFUX0oo',
-  authDomain:        'connectclean-945f3.firebaseapp.com',
-  projectId:         'connectclean-945f3',
-  storageBucket:     'connectclean-945f3.firebasestorage.app',
-  messagingSenderId: '440859697732',
-  appId:             '1:440859697732:web:d797398a1da9ad09245211',
+  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId:             import.meta.env.VITE_FIREBASE_APP_ID,
 });
 
 export const auth = getAuth(app);

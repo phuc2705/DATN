@@ -14,4 +14,5 @@ export const checkInApi = (id) => api.patch(`/api/bookings/${id}/checkin`);
 export const checkOutApi = (id) => api.patch(`/api/bookings/${id}/checkout`);
 export const cancelBookingApi  = (id) => api.patch(`/api/bookings/${id}/cancel`);
 export const pricePreviewApi   = (params) => api.get('/api/bookings/price-preview', { params });
-export const suggestHelpersApi = (params) => api.get('/api/bookings/suggest-helpers', { params });
+export const suggestHelpersApi    = (params) => api.get('/api/bookings/suggest-helpers', { params });
+export const getBookingSuggestionsApi = (id)  => api.get(`/api/bookings/${id}/suggestions`);
