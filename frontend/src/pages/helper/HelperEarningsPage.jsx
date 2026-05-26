@@ -103,6 +103,9 @@ export default function HelperEarningsPage() {
     );
   }
 
+  const walletBalance = data?.summary?.walletBalance ?? 0;
+  const walletNegative = walletBalance < 0;
+
   const stats = [
     {
       label: 'Tổng thu nhập',
@@ -159,6 +162,31 @@ export default function HelperEarningsPage() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Thu nhập của tôi</h1>
           <p className="text-sm text-gray-500 mt-0.5">Thống kê và lịch sử giao dịch</p>
+        </div>
+
+        {/* Ví thu nhập */}
+        <div className={`rounded-2xl p-5 mb-5 border ${walletNegative ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200'}`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${walletNegative ? 'bg-red-100' : 'bg-orange-50'}`}>
+                <Wallet className={`w-5 h-5 ${walletNegative ? 'text-red-500' : 'text-orange-500'}`} />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 font-medium">Số dư ví thu nhập</p>
+                <p className={`text-2xl font-bold ${walletNegative ? 'text-red-600' : 'text-gray-900'}`}>
+                  {walletNegative ? '−' : ''}{formatPrice(Math.abs(walletBalance))}
+                </p>
+              </div>
+            </div>
+            {walletNegative && (
+              <div className="flex items-start gap-1.5 text-red-500 max-w-[200px] text-right">
+                <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <p className="text-xs leading-relaxed">
+                  Số dư âm do phí nền tảng từ đơn tiền mặt chưa được bù đắp
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Stats grid */}

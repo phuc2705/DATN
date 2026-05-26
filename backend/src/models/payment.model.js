@@ -3,7 +3,7 @@ const { pool } = require('../config/database');
 const SettingModel = require('./setting.model');
 
 const PaymentModel = {
-  // Xác nhận thanh toán thành công (cập nhật trạng thái)
+  // Xác nhận thanh toán thành công (cập nhật trạng thái + cập nhật ví helper)
   confirmPayment: async (bookingId, paidByUserId) => {
     const connection = await pool.getConnection();
     try {
@@ -11,14 +11,23 @@ const PaymentModel = {
 
       // Đọc tỷ lệ hoa hồng hiện tại từ cấu hình hệ thống
       const rateStr = await SettingModel.get('platform_commission_rate');
-      const commissionRate = parseFloat(rateStr) || 0.10;
+      const commissionRate = parseFloat(rateStr) || 0.20;
 
-      // Lấy amount để tính split hoa hồng
+      // Lấy amount, payment_method và thông tin helper trong 1 query
       const [[payRow]] = await connection.query(
-        'SELECT amount FROM payments WHERE booking_id = ?', [bookingId]
+        `SELECT p.amount, p.payment_method,
+                h.user_id AS helper_user_id
+         FROM payments p
+         JOIN bookings b  ON b.booking_id = p.booking_id
+         LEFT JOIN helpers h ON h.helper_id = b.helper_id
+         WHERE p.booking_id = ?`,
+        [bookingId]
       );
-      const amount = payRow ? Number(payRow.amount) : 0;
-      const platformFeeAmount = Math.round(amount * commissionRate);
+
+      const amount             = payRow ? Number(payRow.amount) : 0;
+      const paymentMethod      = payRow?.payment_method || 'cash';
+      const helperUserId       = payRow?.helper_user_id || null;
+      const platformFeeAmount  = Math.round(amount * commissionRate);
       const helperEarningAmount = amount - platformFeeAmount;
 
       await connection.query(
@@ -27,6 +36,56 @@ const PaymentModel = {
          WHERE booking_id = ?`,
         [commissionRate, platformFeeAmount, helperEarningAmount, bookingId]
       );
+
+      // ── Cập nhật ví helper ──────────────────────────────────────────
+      if (helperUserId) {
+        // Tạo ví nếu chưa có (balance có thể âm nên không đặt minimum)
+        await connection.query(
+          `INSERT IGNORE INTO wallets (user_id, balance, total_earned, total_withdrawn)
+           VALUES (?, 0, 0, 0)`,
+          [helperUserId]
+        );
+
+        if (paymentMethod === 'cash') {
+          // Tiền mặt: helper đã thu tiền trực tiếp từ khách, nền tảng khấu trừ phí vào ví
+          await connection.query(
+            `UPDATE wallets SET balance = balance - ?, updated_at = NOW()
+             WHERE user_id = ?`,
+            [platformFeeAmount, helperUserId]
+          );
+          const [[w]] = await connection.query(
+            'SELECT wallet_id, balance FROM wallets WHERE user_id = ?', [helperUserId]
+          );
+          await connection.query(
+            `INSERT INTO wallet_transactions
+               (wallet_id, type, amount, balance_after, source, booking_id, description)
+             VALUES (?, 'debit', ?, ?, 'booking_payment', ?, ?)`,
+            [w.wallet_id, platformFeeAmount, w.balance, bookingId,
+             `Khấu trừ phí nền tảng ${Math.round(commissionRate * 100)}% — Đơn #${bookingId} (tiền mặt)`]
+          );
+        } else {
+          // Online (VNPay/bank): nền tảng nhận tiền, cộng phần của helper vào ví
+          await connection.query(
+            `UPDATE wallets
+             SET balance      = balance + ?,
+                 total_earned = total_earned + ?,
+                 updated_at   = NOW()
+             WHERE user_id = ?`,
+            [helperEarningAmount, helperEarningAmount, helperUserId]
+          );
+          const [[w]] = await connection.query(
+            'SELECT wallet_id, balance FROM wallets WHERE user_id = ?', [helperUserId]
+          );
+          const methodLabel = paymentMethod === 'vnpay' ? 'VNPay' : 'Chuyển khoản';
+          await connection.query(
+            `INSERT INTO wallet_transactions
+               (wallet_id, type, amount, balance_after, source, booking_id, description)
+             VALUES (?, 'credit', ?, ?, 'booking_payment', ?, ?)`,
+            [w.wallet_id, helperEarningAmount, w.balance, bookingId,
+             `Thu nhập từ đơn #${bookingId} (${methodLabel})`]
+          );
+        }
+      }
 
       // Nếu không có user (VNPay tự động), lấy customer_id của booking để ghi log
       let logUserId = paidByUserId;
