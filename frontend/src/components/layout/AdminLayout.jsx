@@ -1,7 +1,8 @@
 // Layout shell cho toàn bộ trang admin — Linear dark theme (inline styles)
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { getAdminStatsApi } from '../../api/admin.api';
 import {
   LayoutDashboard, Users, Briefcase, ClipboardList,
   CreditCard, Layers, Tag, Star, Settings, ExternalLink, LogOut, Menu, X, MessageSquare,
@@ -38,8 +39,15 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hoverItem, setHoverItem] = useState(null);
+  const [openFeedbacks, setOpenFeedbacks] = useState(0);
 
   const handleLogout = () => { logout(); navigate('/login'); };
+
+  useEffect(() => {
+    getAdminStatsApi()
+      .then(({ data }) => setOpenFeedbacks(data.data?.openFeedbacksCount ?? 0))
+      .catch(() => {});
+  }, []);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', backgroundColor: C.canvas }}>
@@ -98,7 +106,16 @@ export default function AdminLayout() {
               onMouseLeave={() => setHoverItem(null)}
             >
               <Icon size={16} style={{ flexShrink: 0 }} />
-              {label}
+              <span style={{ flex: 1 }}>{label}</span>
+              {to === '/admin/feedbacks' && openFeedbacks > 0 && (
+                <span style={{
+                  fontSize: 11, fontWeight: 700, lineHeight: 1,
+                  backgroundColor: '#ef4444', color: '#fff',
+                  borderRadius: 999, padding: '2px 6px', flexShrink: 0,
+                }}>
+                  {openFeedbacks}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>

@@ -5,7 +5,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import Avatar from '../../components/common/Avatar';
 import { formatPrice } from '../../utils/format';
 import toast from 'react-hot-toast';
-import { User, Sparkles, ClipboardList, Banknote, RefreshCw, CheckCircle } from 'lucide-react';
+import { User, Sparkles, ClipboardList, Banknote, RefreshCw, CheckCircle, MessageSquare } from 'lucide-react';
 
 const MONTH_LABEL = { '01':'T1','02':'T2','03':'T3','04':'T4','05':'T5','06':'T6','07':'T7','08':'T8','09':'T9','10':'T10','11':'T11','12':'T12' };
 
@@ -118,6 +118,29 @@ export default function AdminDashboardPage() {
           </div>
         ))}
       </div>
+
+      {/* Phản hồi chờ xử lý */}
+      {stats?.openFeedbacksCount > 0 && (
+        <Link
+          to="/admin/feedbacks"
+          className="flex items-center justify-between bg-[#0f1117] rounded-lg p-4 border border-red-500/30 mb-6 hover:border-red-500/60 transition-colors group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-md bg-red-500/10 flex items-center justify-center">
+              <MessageSquare className="w-5 h-5 text-red-400" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-[#f7f8f8]">
+                {stats.openFeedbacksCount} phản hồi chưa được xử lý
+              </p>
+              <p className="text-xs text-[#8a8f98]">Nhấn để xem và trả lời</p>
+            </div>
+          </div>
+          <span className="text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/20 px-2.5 py-1 rounded-full group-hover:bg-red-500/20 transition-colors">
+            Xem ngay
+          </span>
+        </Link>
+      )}
 
       {/* So sánh doanh thu tháng + giá trị TB */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">

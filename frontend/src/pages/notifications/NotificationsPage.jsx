@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getNotificationsApi, markAllReadApi, markOneReadApi } from '../../api/notification.api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { formatDateTime } from '../../utils/format';
@@ -7,7 +8,7 @@ import toast from 'react-hot-toast';
 import {
   Bell, CheckCheck, Check,
   ShoppingBag, ClipboardCheck, XCircle,
-  MapPin, Flag, Wallet, Star, Megaphone,
+  MapPin, Flag, Wallet, Star, Megaphone, MessageSquare,
 } from 'lucide-react';
 
 /* ─── Notification type config (lucide icons replacing emojis) ───── */
@@ -82,6 +83,14 @@ const TYPE_CONFIG = {
     iconColor: 'text-yellow-500',
     badgeBg:   'bg-yellow-50 text-yellow-700 border-yellow-100',
   },
+  feedback_replied: {
+    Icon:  MessageSquare,
+    label: 'Phản hồi',
+    iconBg:    'bg-blue-50',
+    iconColor: 'text-blue-500',
+    badgeBg:   'bg-blue-50 text-blue-700 border-blue-100',
+    linkTo:    '/profile?tab=feedbacks',
+  },
   default: {
     Icon:  Megaphone,
     label: 'Thông báo',
@@ -93,15 +102,25 @@ const TYPE_CONFIG = {
 
 /* ─── Single notification row ────────────────────────────────────── */
 function NotificationItem({ n, onMarkRead, isUnread }) {
+  const navigate = useNavigate();
   const cfg  = TYPE_CONFIG[n.type] || TYPE_CONFIG.default;
   const Icon = cfg.Icon;
 
+  const handleClick = () => {
+    if (isUnread && n.notification_id) onMarkRead(n.notification_id);
+    if (cfg.linkTo) navigate(cfg.linkTo);
+  };
+
   return (
     <div
-      onClick={() => isUnread && n.notification_id && onMarkRead(n.notification_id)}
+      onClick={handleClick}
       className={`flex items-start gap-4 p-4 rounded-2xl border transition-all group ${
+        isUnread || cfg.linkTo
+          ? 'cursor-pointer'
+          : ''
+      } ${
         isUnread
-          ? 'bg-orange-50 border-orange-100 cursor-pointer hover:bg-orange-100'
+          ? 'bg-orange-50 border-orange-100 hover:bg-orange-100'
           : 'bg-white border-gray-100 hover:bg-gray-50'
       }`}
     >

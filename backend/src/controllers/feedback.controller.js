@@ -1,6 +1,7 @@
 // Controller phản hồi hệ thống — báo lỗi, khiếu nại, góp ý từ customer & helper
 const { pool } = require('../config/database');
 const { sendSuccess, sendError } = require('../utils/response');
+const { pushNotification } = require('../utils/notify');
 
 const CATEGORY_LABEL = {
   bug:                  'Lỗi ứng dụng',
@@ -147,7 +148,8 @@ const FeedbackController = {
       }
 
       const [[fb]] = await pool.query(
-        'SELECT feedback_id FROM system_feedbacks WHERE feedback_id = ?', [feedbackId]
+        'SELECT feedback_id, user_id, subject, status AS currentStatus FROM system_feedbacks WHERE feedback_id = ?',
+        [feedbackId]
       );
       if (!fb) return sendError(res, 'Không tìm thấy phản hồi.', 404);
 
@@ -167,6 +169,23 @@ const FeedbackController = {
 
       vals.push(feedbackId);
       await pool.query(`UPDATE system_feedbacks SET ${updates.join(', ')} WHERE feedback_id = ?`, vals);
+
+      // Gửi thông báo cho người dùng khi admin phản hồi hoặc giải quyết
+      const hasReply   = adminNote !== undefined && adminNote?.trim?.();
+      const isResolved = status === 'resolved' || status === 'closed';
+      if (fb.user_id && (hasReply || isResolved)) {
+        const notifTitle = isResolved
+          ? `Phản hồi của bạn đã được giải quyết`
+          : `Admin đã trả lời phản hồi của bạn`;
+        const notifBody = `"${fb.subject}" — Nhấn để xem chi tiết phản hồi.`;
+        pushNotification({
+          userId: fb.user_id,
+          title:  notifTitle,
+          body:   notifBody,
+          type:   'feedback_replied',
+          refId:  parseInt(feedbackId),
+        }).catch(() => {});
+      }
 
       return sendSuccess(res, null, 'Đã cập nhật phản hồi.');
     } catch (error) {
