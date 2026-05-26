@@ -15,7 +15,7 @@ services:
       - key: PORT
         value: 10000
 
-      # ─── Database (Aiven) ────────────────────────────────────────────────────
+      # ─── Database (Aiven MySQL) ───────────────────────────────────────────────
       - key: DB_HOST
         value: mysql-275480d4-phuc9cham.a.aivencloud.com
       - key: DB_PORT
@@ -23,13 +23,13 @@ services:
       - key: DB_USER
         value: avnadmin
       - key: DB_PASSWORD
-        sync: false
+        sync: false          # ← Điền tay trong Render Dashboard
       - key: DB_NAME
         value: defaultdb
       - key: DB_SSL
         value: "true"
 
-      # ─── JWT (Render tự sinh) ─────────────────────────────────────────────────
+      # ─── JWT ──────────────────────────────────────────────────────────────────
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRES_IN
@@ -39,11 +39,13 @@ services:
       - key: JWT_REFRESH_EXPIRES_IN
         value: 30d
 
-      # ─── Domain ───────────────────────────────────────────────────────────────
+      # ─── Domain (URL của Render service) ──────────────────────────────────────
+      # Sau khi deploy xong, cập nhật giá trị này thành URL thật của service
+      # VD: https://cleanconnect.onrender.com
       - key: CLIENT_URL
-        value: https://connectclean.id.vn
+        value: https://cleanconnect.onrender.com
 
-      # ─── Firebase Client SDK (Google OAuth - build-time VITE_* vars) ─────────
+      # ─── Firebase Client SDK (build-time — VITE_* được nhúng vào JS bundle) ───
       - key: VITE_FIREBASE_API_KEY
         value: AIzaSyB5_VhDytOG3mdII5ZXe1yNjarWCFUX0oo
       - key: VITE_FIREBASE_AUTH_DOMAIN
@@ -57,35 +59,36 @@ services:
       - key: VITE_FIREBASE_APP_ID
         value: 1:440859697732:web:d797398a1da9ad09245211
 
-      # ─── Gmail OAuth2 ─────────────────────────────────────────────────────────
+      # ─── Gmail OAuth2 (gửi email thông báo) ──────────────────────────────────
       - key: EMAIL_USER
         value: phuc9cham@gmail.com
       - key: GMAIL_CLIENT_ID
         value: 440859697732-d9vrekqdc64hq15qkfqnno66nadqp4oq.apps.googleusercontent.com
       - key: GMAIL_CLIENT_SECRET
-        sync: false
+        sync: false          # ← Điền tay trong Render Dashboard
       - key: GMAIL_REFRESH_TOKEN
-        sync: false
+        sync: false          # ← Điền tay trong Render Dashboard
 
-      # ─── Firebase Admin SDK ───────────────────────────────────────────────────
+      # ─── Firebase Admin SDK (xác thực Google Login phía server) ──────────────
       - key: FIREBASE_PROJECT_ID
         value: connectclean-945f3
       - key: FIREBASE_CLIENT_EMAIL
         value: firebase-adminsdk-fbsvc@connectclean-945f3.iam.gserviceaccount.com
       - key: FIREBASE_PRIVATE_KEY
-        sync: false
+        sync: false          # ← Điền tay trong Render Dashboard (paste nguyên chuỗi -----BEGIN PRIVATE KEY-----)
 
       # ─── VNPay (sandbox) ──────────────────────────────────────────────────────
       - key: VNP_TMN_CODE
         value: IA84YMKV
       - key: VNP_HASH_SECRET
-        sync: false
+        sync: false          # ← Điền tay trong Render Dashboard
       - key: VNP_URL
         value: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+      # Cập nhật VNP_RETURN_URL thành URL thật sau khi deploy
       - key: VNP_RETURN_URL
-        value: https://connectclean.id.vn/api/payments/vnpay-return
+        value: https://cleanconnect.onrender.com/api/payments/vnpay-return
 
-      # ─── Ngân hàng VietQR (NCB test) ─────────────────────────────────────────
+      # ─── Ngân hàng VietQR (hiển thị QR chuyển khoản) ────────────────────────
       - key: BANK_ID
         value: NCB
       - key: BANK_ACCOUNT
@@ -95,7 +98,7 @@ services:
       - key: BANK_NAME
         value: Ngan hang Quoc Dan (NCB)
 
-      # ─── Test email ───────────────────────────────────────────────────────────
+      # ─── Test ─────────────────────────────────────────────────────────────────
       - key: TEST_EMAILS
         value: phamthiquynhgiang753@gmail.com
       - key: TEST_CLEANUP_MINUTES
