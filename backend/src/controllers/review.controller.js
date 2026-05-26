@@ -138,6 +138,41 @@ const ReviewController = {
     }
   },
 
+  // Lấy đánh giá nổi bật để hiển thị trên trang chủ (public)
+  getRecentReviews: async (req, res, next) => {
+    try {
+      const limit = Math.min(parseInt(req.query.limit) || 6, 12);
+      const [reviews] = await pool.query(
+        `SELECT r.review_id, r.rating, r.comment, r.created_at,
+                u.full_name AS customer_name, u.avatar_url AS customer_avatar,
+                c.city, c.district,
+                s.service_name
+         FROM reviews r
+         JOIN customers c  ON r.customer_id = c.customer_id
+         JOIN users u      ON c.user_id = u.user_id
+         JOIN bookings b   ON r.booking_id = b.booking_id
+         JOIN services s   ON b.service_id = s.service_id
+         WHERE r.is_visible = 1
+           AND r.comment IS NOT NULL AND r.comment != ''
+         ORDER BY r.rating DESC, r.created_at DESC
+         LIMIT ?`,
+        [limit]
+      );
+      return sendSuccess(res, reviews.map(r => ({
+        reviewId:       r.review_id,
+        rating:         r.rating,
+        comment:        r.comment,
+        createdAt:      r.created_at,
+        customerName:   r.customer_name,
+        customerAvatar: r.customer_avatar,
+        location:       [r.district, r.city].filter(Boolean).join(', ') || 'Hà Nội',
+        serviceName:    r.service_name,
+      })));
+    } catch (error) {
+      next(error);
+    }
+  },
+
   // Helper xem các đánh giá mình đã nhận từ khách hàng
   getMyHelperReviews: async (req, res, next) => {
     try {
