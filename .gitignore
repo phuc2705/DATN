@@ -36,3 +36,4 @@ backend/public/uploads/avatars/*
 
 # Temp files
 /tmp/
+RENDER_ENV_SECRETS.md
