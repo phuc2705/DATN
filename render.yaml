@@ -39,11 +39,9 @@ services:
       - key: JWT_REFRESH_EXPIRES_IN
         value: 30d
 
-      # ─── Domain (URL của Render service) ──────────────────────────────────────
-      # Sau khi deploy xong, cập nhật giá trị này thành URL thật của service
-      # VD: https://cleanconnect.onrender.com
+      # ─── Domain ───────────────────────────────────────────────────────────────
       - key: CLIENT_URL
-        value: https://cleanconnect.onrender.com
+        value: https://connectclean.id.vn
 
       # ─── Firebase Client SDK (build-time — VITE_* được nhúng vào JS bundle) ───
       - key: VITE_FIREBASE_API_KEY
@@ -84,9 +82,8 @@ services:
         sync: false          # ← Điền tay trong Render Dashboard
       - key: VNP_URL
         value: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-      # Cập nhật VNP_RETURN_URL thành URL thật sau khi deploy
       - key: VNP_RETURN_URL
-        value: https://cleanconnect.onrender.com/api/payments/vnpay-return
+        value: https://connectclean.id.vn/api/payments/vnpay-return
 
       # ─── Ngân hàng VietQR (hiển thị QR chuyển khoản) ────────────────────────
       - key: BANK_ID
