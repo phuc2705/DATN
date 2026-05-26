@@ -191,7 +191,7 @@ const PaymentController = {
       const rows = await PaymentModel.findByHelper(helperRow.helper_id);
 
       // Tính thu nhập helper — ưu tiên dùng giá trị đã lưu trong DB, fallback về 90%
-      const PLATFORM_FEE_FALLBACK = 0.10;
+      const PLATFORM_FEE_FALLBACK = 0.20;
       const payments = rows.map((p) => ({
         paymentId:          p.payment_id,
         bookingId:          p.booking_id,
@@ -237,6 +237,12 @@ const PaymentController = {
       // Thu nhập trung bình mỗi đơn
       const avgPerOrder = payments.length > 0 ? Math.round(totalEarnings / payments.length) : 0;
 
+      // Số dư ví (có thể âm nếu tiền mặt chưa thanh toán phí nền tảng)
+      const [[walletRow]] = await pool.query(
+        'SELECT balance FROM wallets WHERE user_id = ?', [user_id]
+      );
+      const walletBalance = walletRow ? Number(walletRow.balance) : 0;
+
       return sendSuccess(res, {
         summary: {
           totalEarnings,
@@ -245,6 +251,7 @@ const PaymentController = {
           avgPerOrder,
           completedBookings: payments.length,
           ratingAverage: Number(helperRow.rating_average) || 0,
+          walletBalance,
         },
         byService,
         payments,

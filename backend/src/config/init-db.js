@@ -182,7 +182,7 @@ async function runMigrations(connection) {
     `);
     await connection.query(`
       INSERT IGNORE INTO system_settings (setting_key, setting_value)
-      VALUES ('platform_commission_rate', '0.10')
+      VALUES ('platform_commission_rate', '0.20')
     `);
   } catch (err) {
     // ignore
