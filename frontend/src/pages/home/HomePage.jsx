@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { getAllServicesApi } from '../../api/service.api';
+import { getRecentReviewsApi } from '../../api/review.api';
 import { formatPrice } from '../../utils/format';
 import { useAuth } from '../../hooks/useAuth';
 import {
@@ -57,21 +58,21 @@ const FEATURES = [
   },
 ];
 
-const TESTIMONIALS = [
+const TESTIMONIALS_FALLBACK = [
   {
-    name: 'Nguyễn Thị Lan', location: 'Q. Cầu Giấy, Hà Nội', avatar: 'L', rating: 5,
-    text: 'Chị Hương đến đúng giờ, làm rất kỹ. Nhà hơn 80m² mà sạch bong trong 3 tiếng. Đặt lịch tuần nào cũng ổn, tiện lắm!',
-    service: 'Dọn dẹp nhà',
+    customerName: 'Nguyễn Thị Lan', location: 'Q. Cầu Giấy, Hà Nội', rating: 5,
+    comment: 'Chị Hương đến đúng giờ, làm rất kỹ. Nhà hơn 80m² mà sạch bong trong 3 tiếng. Đặt lịch tuần nào cũng ổn, tiện lắm!',
+    serviceName: 'Dọn dẹp nhà',
   },
   {
-    name: 'Trần Văn Minh', location: 'Q. Đống Đa, Hà Nội', avatar: 'M', rating: 5,
-    text: 'Đặt lịch qua app chỉ mất 2–3 phút. Mấy ngày bận không nấu được, gọi dịch vụ nấu cơm về nhà — cả nhà ai cũng khen ngon.',
-    service: 'Nấu ăn theo giờ',
+    customerName: 'Trần Văn Minh', location: 'Q. Đống Đa, Hà Nội', rating: 5,
+    comment: 'Đặt lịch qua app chỉ mất 2–3 phút. Mấy ngày bận không nấu được, gọi dịch vụ nấu cơm về nhà — cả nhà ai cũng khen ngon.',
+    serviceName: 'Nấu ăn theo giờ',
   },
   {
-    name: 'Lê Thị Mai', location: 'Q. Long Biên, Hà Nội', avatar: 'M', rating: 4,
-    text: 'Giá hợp lý, chị làm việc chăm chỉ và thân thiện. Chỉ có lần đầu chờ xác nhận hơi lâu, nhưng nói chung rất hài lòng, sẽ dùng lại.',
-    service: 'Giặt ủi',
+    customerName: 'Lê Thị Mai', location: 'Q. Long Biên, Hà Nội', rating: 4,
+    comment: 'Giá hợp lý, chị làm việc chăm chỉ và thân thiện. Chỉ có lần đầu chờ xác nhận hơi lâu, nhưng nói chung rất hài lòng, sẽ dùng lại.',
+    serviceName: 'Giặt ủi',
   },
 ];
 
@@ -118,12 +119,22 @@ export default function HomePage() {
   const [city, setCity] = useState(CITIES[0]);
   const [statsVisible, setStatsVisible] = useState(false);
   const statsRef = useRef(null);
+  const [testimonials, setTestimonials] = useState(TESTIMONIALS_FALLBACK);
 
   useEffect(() => {
     getAllServicesApi()
       .then(({ data }) => setServices(data.data || []))
       .catch(() => {})
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    getRecentReviewsApi(6)
+      .then(({ data }) => {
+        const list = data.data || [];
+        setTestimonials(list.length >= 3 ? list.slice(0, 6) : TESTIMONIALS_FALLBACK);
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -324,21 +335,23 @@ export default function HomePage() {
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Hàng nghìn khách tin dùng mỗi ngày</h2>
         </div>
         <div className="grid md:grid-cols-3 gap-5">
-          {TESTIMONIALS.map((t) => (
-            <div key={t.name} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          {testimonials.map((t, idx) => (
+            <div key={t.reviewId ?? idx} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
               <div className="flex gap-0.5 mb-3">
                 {[...Array(t.rating)].map((_, i) => (
                   <Star key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                 ))}
               </div>
-              <p className="text-gray-600 text-sm leading-relaxed mb-4 italic">"{t.text}"</p>
+              <p className="text-gray-600 text-sm leading-relaxed mb-4 italic">"{t.comment}"</p>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                  {t.avatar}
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden">
+                  {t.customerAvatar
+                    ? <img src={t.customerAvatar} alt="" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                    : t.customerName?.[0]?.toUpperCase()}
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-800 text-sm">{t.name}</p>
-                  <p className="text-xs text-gray-400">{t.location} · {t.service}</p>
+                  <p className="font-semibold text-gray-800 text-sm">{t.customerName}</p>
+                  <p className="text-xs text-gray-400">{t.location} · {t.serviceName}</p>
                 </div>
               </div>
             </div>

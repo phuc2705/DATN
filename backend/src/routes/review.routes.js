@@ -6,6 +6,9 @@ const ReviewController = require('../controllers/review.controller');
 const { authenticate, authorize } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 
+// GET /api/reviews/recent - Đánh giá nổi bật để hiển thị trang chủ (public)
+router.get('/recent', ReviewController.getRecentReviews);
+
 // GET /api/reviews/helper/:helperId - Xem đánh giá của helper (public)
 router.get('/helper/:helperId', ReviewController.getHelperReviews);
 
