@@ -4,23 +4,33 @@ const UserModel = require('../models/user.model');
 const { createVNPayUrl, verifyVNPayReturn } = require('../utils/vnpay');
 const { pool } = require('../config/database');
 const { sendSuccess, sendError } = require('../utils/response');
-const { pushNotification } = require('../utils/notify');
+const { pushNotification, mailIfOffline } = require('../utils/notify');
+const { sendPaymentReceivedEmail } = require('../utils/email');
 
 const sendPaymentNotification = (bookingId) => {
   pool.query(
-    `SELECT h.user_id AS helper_user_id, b.total_price
-     FROM bookings b JOIN helpers h ON b.helper_id = h.helper_id
+    `SELECT h.user_id AS helper_user_id, u.email AS helper_email, u.full_name AS helper_name,
+            b.total_price
+     FROM bookings b
+     JOIN helpers h ON b.helper_id = h.helper_id
+     JOIN users u ON h.user_id = u.user_id
      WHERE b.booking_id = ?`,
     [bookingId]
   ).then(([rows]) => {
     if (rows[0]) {
+      const { helper_user_id, helper_email, helper_name, total_price } = rows[0];
       pushNotification({
-        userId: rows[0].helper_user_id,
+        userId: helper_user_id,
         title: 'Thanh toán đã được xác nhận',
-        body: `Khách hàng đã thanh toán ${Number(rows[0].total_price).toLocaleString('vi-VN')}đ cho buổi làm việc.`,
+        body: `Khách hàng đã thanh toán ${Number(total_price).toLocaleString('vi-VN')}đ cho buổi làm việc.`,
         type: 'payment_success',
         refId: parseInt(bookingId),
       });
+      if (helper_email) {
+        mailIfOffline(helper_user_id, () => sendPaymentReceivedEmail(
+          helper_email, helper_name, Number(total_price), bookingId
+        ));
+      }
     }
   }).catch(() => {});
 };
