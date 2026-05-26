@@ -11,24 +11,92 @@ const MONTH_LABEL = { '01':'T1','02':'T2','03':'T3','04':'T4','05':'T5','06':'T6
 
 function RevenueChart({ data }) {
   if (!data || data.length === 0) return <p className="text-[#62666d] text-sm py-8 text-center">Chưa có dữ liệu doanh thu</p>;
-  const max = Math.max(...data.map((d) => Number(d.revenue)), 1);
+
+  const revenues = data.map((d) => Number(d.revenue));
+  const max = Math.max(...revenues, 1);
+
+  // Tính % tăng giảm so với tháng trước
+  const growthList = revenues.map((rev, i) => {
+    if (i === 0) return null;
+    const prev = revenues[i - 1];
+    if (prev === 0) return null;
+    return Math.round(((rev - prev) / prev) * 100);
+  });
+
+  const totalRevenue = revenues.reduce((a, b) => a + b, 0);
+
   return (
-    <div className="flex items-end gap-2 h-32 mt-4">
-      {data.map((d) => {
-        const pct = (Number(d.revenue) / max) * 100;
-        const [, mon] = d.month.split('-');
-        return (
-          <div key={d.month} className="flex-1 flex flex-col items-center gap-1">
-            <span className="text-xs text-[#62666d] whitespace-nowrap">{pct > 5 ? formatPrice(d.revenue).replace('₫','').trim() : ''}</span>
-            <div
-              className="w-full rounded-t bg-gradient-to-t from-[#5e6ad2] to-[#828fff] transition-all"
-              style={{ height: `${Math.max(pct, 4)}%` }}
-              title={`${formatPrice(d.revenue)}`}
-            />
-            <span className="text-xs text-[#62666d]">{MONTH_LABEL[mon]}</span>
-          </div>
-        );
-      })}
+    <div>
+      {/* Tổng doanh thu 6 tháng */}
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-xs text-[#62666d]">Tổng 6 tháng</p>
+        <p className="text-sm font-bold text-[#828fff]">{formatPrice(totalRevenue)}</p>
+      </div>
+
+      {/* Biểu đồ cột */}
+      <div className="flex items-end gap-2" style={{ height: 140 }}>
+        {data.map((d, i) => {
+          const rev = Number(d.revenue);
+          const pct = Math.max((rev / max) * 100, rev > 0 ? 6 : 2);
+          const [, mon] = d.month.split('-');
+          const growth = growthList[i];
+          const isLatest = i === data.length - 1;
+
+          return (
+            <div key={d.month} className="flex-1 flex flex-col items-center gap-1 group relative">
+              {/* Badge tăng giảm */}
+              <div className="h-5 flex items-center justify-center">
+                {growth !== null && (
+                  <span className={`text-[10px] font-bold leading-none ${growth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {growth >= 0 ? '▲' : '▼'}{Math.abs(growth)}%
+                  </span>
+                )}
+              </div>
+
+              {/* Tooltip khi hover */}
+              <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 bg-[#1e2028] border border-[#2e3038] text-[#f7f8f8] text-xs px-2 py-1.5 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
+                <p className="font-semibold">{formatPrice(rev)}</p>
+                {growth !== null && (
+                  <p className={growth >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+                    {growth >= 0 ? '+' : ''}{growth}% so với {MONTH_LABEL[data[i-1].month.split('-')[1]]}
+                  </p>
+                )}
+              </div>
+
+              {/* Cột */}
+              <div
+                className={`w-full rounded-t transition-all ${
+                  isLatest
+                    ? 'bg-gradient-to-t from-[#5e6ad2] to-[#828fff]'
+                    : 'bg-[#1e2028] group-hover:bg-[#5e6ad2]/60'
+                }`}
+                style={{ height: `${pct}%` }}
+              />
+
+              {/* Nhãn tháng */}
+              <span className={`text-[11px] font-medium ${isLatest ? 'text-[#828fff]' : 'text-[#62666d]'}`}>
+                {MONTH_LABEL[mon]}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Chú thích */}
+      <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[#1e2028]">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm bg-gradient-to-t from-[#5e6ad2] to-[#828fff]" />
+          <span className="text-[11px] text-[#62666d]">Tháng hiện tại</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] text-emerald-400 font-bold">▲</span>
+          <span className="text-[11px] text-[#62666d]">Tăng so với tháng trước</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] text-red-400 font-bold">▼</span>
+          <span className="text-[11px] text-[#62666d]">Giảm so với tháng trước</span>
+        </div>
+      </div>
     </div>
   );
 }
