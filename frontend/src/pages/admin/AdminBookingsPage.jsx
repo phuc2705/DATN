@@ -4,6 +4,7 @@ import {
   assignHelperApi,
   getAvailableHelpersApi,
   cancelAdminBookingApi,
+  getExpiringBookingsApi,
 } from '../../api/admin.api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import Avatar from '../../components/common/Avatar';
@@ -323,6 +324,7 @@ export default function AdminBookingsPage() {
   const [cancelTarget, setCancelTarget] = useState(null);
   const [assignTarget, setAssignTarget] = useState(null);
   const [cancelling, setCancelling] = useState(false);
+  const [expiring, setExpiring] = useState([]);
 
   const fetchBookings = (s) => {
     setLoading(true);
@@ -335,6 +337,18 @@ export default function AdminBookingsPage() {
   };
 
   useEffect(() => { fetchBookings(statusFilter); }, [statusFilter]);
+
+  useEffect(() => {
+    getExpiringBookingsApi()
+      .then(({ data }) => setExpiring(data.data || []))
+      .catch(() => {});
+    const interval = setInterval(() => {
+      getExpiringBookingsApi()
+        .then(({ data }) => setExpiring(data.data || []))
+        .catch(() => {});
+    }, 60_000); // cập nhật mỗi phút
+    return () => clearInterval(interval);
+  }, []);
 
   const refresh = () => fetchBookings(statusFilter);
 
@@ -419,6 +433,52 @@ export default function AdminBookingsPage() {
           Làm mới
         </button>
       </div>
+
+      {/* ── Đơn sắp hết hạn — cần điều phối thủ công ───────────────────────── */}
+      {expiring.length > 0 && (
+        <div className="mb-6 border border-yellow-500/20 rounded-lg overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-yellow-500/10">
+            <AlertTriangle className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0" />
+            <p className="text-xs font-semibold text-yellow-300">
+              {expiring.length} đơn đang chờ — sắp hết hạn, cần điều phối thủ công
+            </p>
+          </div>
+          <div className="divide-y divide-[#1e2028]">
+            {expiring.map((b) => (
+              <div key={b.booking_id} className="flex items-center gap-3 px-4 py-3 bg-[#0f1117] hover:bg-[#16181f] transition-colors">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[#d0d6e0] truncate">
+                    #{b.booking_id} · {b.service_name}
+                  </p>
+                  <p className="text-xs text-[#8a8f98] mt-0.5">
+                    {b.customer_name} · {b.booking_date} {b.start_time}–{b.end_time}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className={`text-xs font-mono px-2 py-0.5 rounded font-semibold ${
+                    b.minutes_left <= 15 ? 'bg-red-500/10 text-red-400' : 'bg-yellow-500/10 text-yellow-400'
+                  }`}>
+                    {b.minutes_left > 0 ? `${b.minutes_left} phút` : 'Hết hạn'}
+                  </span>
+                  <button
+                    onClick={() => setAssignTarget({
+                      bookingId:    b.booking_id,
+                      customerName: b.customer_name,
+                      serviceName:  b.service_name,
+                      bookingDate:  b.booking_date,
+                      startTime:    b.start_time,
+                      endTime:      b.end_time,
+                    })}
+                    className="text-xs px-2.5 py-1 bg-[#5e6ad2] hover:bg-[#828fff] text-white rounded font-medium transition-colors"
+                  >
+                    Điều phối
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Summary stats ──────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">

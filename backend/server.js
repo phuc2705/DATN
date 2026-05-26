@@ -6,12 +6,11 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
-const { testConnection, pool } = require('./src/config/database');
+const { testConnection } = require('./src/config/database');
 const { initDatabase } = require('./src/config/init-db');
 const { errorHandler, notFound } = require('./src/middleware/errorHandler');
 const { initSocket } = require('./src/socket');
-const { sendBookingReminders } = require('./src/jobs/reminderJob');
-const { autoAssignExpiredBookings } = require('./src/jobs/autoAssignJob');
+const { startBookingTimeoutJob } = require('./src/jobs/bookingTimeout');
 
 // Import các router
 const authRoutes = require('./src/routes/auth.routes');
@@ -22,6 +21,7 @@ const reviewRoutes = require('./src/routes/review.routes');
 const paymentRoutes = require('./src/routes/payment.routes');
 const adminRoutes = require('./src/routes/admin.routes');
 const notificationRoutes = require('./src/routes/notification.routes');
+const feedbackRoutes = require('./src/routes/feedback.routes');
 
 const app = express();
 const httpServer = createServer(app);
@@ -75,6 +75,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/feedback', feedbackRoutes);
 
 // ─── Catch-all: trả về index.html cho React Router ───────────────────────────
 app.get('*', (req, res) => {
@@ -85,26 +86,6 @@ app.get('*', (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
-// ─── Dọn dẹp tài khoản chưa xác minh (OTP hết hạn) và tài khoản test hết giờ ──
-const cleanupExpiredAccounts = async () => {
-  try {
-    // Xóa tài khoản chưa kích hoạt sau 5 phút (OTP hết hạn)
-    await pool.query(
-      `DELETE FROM users WHERE is_active = 0 AND created_at < NOW() - INTERVAL 5 MINUTE`
-    );
-    // Xóa tài khoản test đã kích hoạt sau TEST_CLEANUP_MINUTES phút
-    const testEmails = (process.env.TEST_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
-    if (testEmails.length > 0) {
-      const minutes = parseInt(process.env.TEST_CLEANUP_MINUTES) || 30;
-      const placeholders = testEmails.map(() => '?').join(',');
-      await pool.query(
-        `DELETE FROM users WHERE email IN (${placeholders}) AND created_at < NOW() - INTERVAL ? MINUTE`,
-        [...testEmails, minutes]
-      );
-    }
-  } catch { /* bỏ qua lỗi */ }
-};
-
 // ─── Khởi động Server ─────────────────────────────────────────────────────────
 const startServer = async () => {
   await testConnection(); // Kiểm tra DB trước khi mở cổng
@@ -113,17 +94,8 @@ const startServer = async () => {
     console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
     console.log(`📋 Môi trường: ${process.env.NODE_ENV}`);
     console.log(`🔌 Socket.io đang lắng nghe`);
+    startBookingTimeoutJob();
   });
-  cleanupExpiredAccounts();
-  setInterval(cleanupExpiredAccounts, 60 * 1000);
-
-  // Job nhắc nhở lịch đặt (mỗi 30 phút)
-  sendBookingReminders();
-  setInterval(sendBookingReminders, 30 * 60 * 1000);
-
-  // Job tự động giao việc: booking pending > 30 phút không có helper → gán tự động hoặc báo admin
-  autoAssignExpiredBookings();
-  setInterval(autoAssignExpiredBookings, 30 * 60 * 1000);
 };
 
 startServer();

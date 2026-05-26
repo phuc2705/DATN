@@ -31,7 +31,7 @@ async function sendBookingReminders() {
         userId: b.customer_user_id,
         title: 'Nhắc nhở: Lịch sắp tới của bạn',
         body: `${b.service_name} lúc ${timeStr} ngày ${dateStr}. Người giúp việc: ${b.helper_name}.`,
-        type: 'reminder',
+        type: 'system',
         refId: b.booking_id,
       });
 
@@ -39,7 +39,7 @@ async function sendBookingReminders() {
         userId: b.helper_user_id,
         title: 'Nhắc nhở: Lịch làm việc sắp tới',
         body: `Bạn có lịch ${b.service_name} lúc ${timeStr} ngày ${dateStr} với khách ${b.customer_name}.`,
-        type: 'reminder',
+        type: 'system',
         refId: b.booking_id,
       });
 

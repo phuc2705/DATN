@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { getBookingDetailApi, cancelBookingApi } from '../../api/booking.api';
+import { getBookingDetailApi, cancelBookingApi, getBookingSuggestionsApi } from '../../api/booking.api';
+import FeedbackModal from '../../components/common/FeedbackModal';
 import { confirmPaymentApi, createVNPayUrlApi, getBankTransferInfoApi } from '../../api/payment.api';
 import { createReviewApi } from '../../api/review.api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -12,8 +13,44 @@ import {
   ClipboardList, CheckCircle, Home, Trophy, XCircle,
   Calendar, Clock, MapPin, FileText, Phone,
   Building2, CreditCard, Wallet, Star,
-  Frown, Loader2, ArrowLeft, X, ChevronRight,
+  Frown, Loader2, ArrowLeft, X, ChevronRight, AlertTriangle, RefreshCw,
 } from 'lucide-react';
+
+// Tính thời điểm timeout của booking pending
+function getTimeoutAt(booking) {
+  if (!booking?.createdAt || !booking?.bookingDate || !booking?.startTime) return null;
+  const created = new Date(booking.createdAt);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const bookingDay = new Date(booking.bookingDate + 'T00:00:00');
+  const isSameDay = bookingDay.getTime() === today.getTime();
+  const timeoutMs = isSameDay ? 2 * 60 * 60 * 1000 : 4 * 60 * 60 * 1000;
+  return new Date(created.getTime() + timeoutMs);
+}
+
+function useCountdown(targetDate) {
+  const [remaining, setRemaining] = useState(null);
+  useEffect(() => {
+    if (!targetDate) return;
+    const tick = () => {
+      const diff = targetDate - Date.now();
+      setRemaining(diff > 0 ? diff : 0);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [targetDate]);
+  return remaining;
+}
+
+function formatCountdown(ms) {
+  if (ms == null || ms <= 0) return '00:00';
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
 
 const STATUS_STEPS = [
   { key: 'pending',     label: 'Đã đặt lịch',   Icon: ClipboardList, desc: 'Đơn đang chờ người giúp việc nhận' },
@@ -24,17 +61,47 @@ const STATUS_STEPS = [
 
 const STATUS_ORDER = { pending: 0, confirmed: 1, in_progress: 2, completed: 3 };
 
-function StatusTimeline({ status }) {
+function StatusTimeline({ status, booking }) {
   if (status === 'cancelled') {
+    const cancelLog = booking?.logs?.find(l =>
+      l.newStatus === 'cancelled' || l.new_status === 'cancelled'
+    );
+    const isAutoCancel = cancelLog?.note?.includes('Tự động hủy');
+    const isRefundPending = booking?.paymentStatus === 'refund_pending';
+    const isRefunded = booking?.paymentStatus === 'refunded';
+
     return (
-      <div className="flex items-center gap-4 p-4 bg-red-50 border border-red-100 rounded-2xl">
-        <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center shrink-0">
-          <XCircle className="w-5 h-5 text-red-500" />
+      <div className="space-y-3">
+        <div className="flex items-center gap-4 p-4 bg-red-50 border border-red-100 rounded-2xl">
+          <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center shrink-0">
+            <XCircle className="w-5 h-5 text-red-500" />
+          </div>
+          <div>
+            <p className="font-semibold text-red-700 text-sm">
+              {isAutoCancel ? 'Đơn đã tự động hủy' : 'Đơn đã bị hủy'}
+            </p>
+            <p className="text-xs text-red-400 mt-0.5">
+              {isAutoCancel
+                ? 'Không tìm được người giúp việc trong thời gian quy định'
+                : 'Đơn hàng này đã được hủy'}
+            </p>
+          </div>
         </div>
-        <div>
-          <p className="font-semibold text-red-700 text-sm">Đơn đã bị hủy</p>
-          <p className="text-xs text-red-400 mt-0.5">Đơn hàng này đã được hủy</p>
-        </div>
+        {(isRefundPending || isRefunded) && (
+          <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-100 rounded-xl">
+            <RefreshCw className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-blue-700">
+                {isRefunded ? 'Đã hoàn tiền' : 'Đang xử lý hoàn tiền'}
+              </p>
+              <p className="text-xs text-blue-500 mt-0.5">
+                {isRefunded
+                  ? 'Tiền đã được hoàn lại vào tài khoản của bạn'
+                  : 'Tiền sẽ được hoàn lại trong 1–3 ngày làm việc'}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -114,12 +181,18 @@ export default function BookingDetailPage() {
   const { user }      = useAuth();
   const autoPayRef    = useRef(false);
 
-  const [booking,    setBooking]    = useState(null);
-  const [loading,    setLoading]    = useState(true);
-  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
-  const [showReview, setShowReview] = useState(false);
-  const [bankInfo,   setBankInfo]   = useState(null);
-  const [showBankQR, setShowBankQR] = useState(false);
+  const [booking,      setBooking]      = useState(null);
+  const [loading,      setLoading]      = useState(true);
+  const [reviewForm,   setReviewForm]   = useState({ rating: 5, comment: '' });
+  const [showReview,   setShowReview]   = useState(false);
+  const [bankInfo,     setBankInfo]     = useState(null);
+  const [showBankQR,   setShowBankQR]   = useState(false);
+  const [suggestions,  setSuggestions]  = useState(null);
+  const [showFeedback, setShowFeedback] = useState(false);
+
+  // Countdown đến khi tự động hủy (chỉ áp dụng khi pending)
+  const timeoutAt   = booking?.status === 'pending' ? getTimeoutAt(booking) : null;
+  const countdownMs = useCountdown(timeoutAt);
 
   const refresh = () => {
     getBookingDetailApi(bookingId)
@@ -150,6 +223,20 @@ export default function BookingDetailPage() {
     socket.on('booking:update', handler);
     return () => socket.off('booking:update', handler);
   }, [bookingId]);
+
+  // Tải gợi ý khung giờ thay thế khi đơn bị tự động hủy
+  useEffect(() => {
+    if (!booking) return;
+    if (booking.status !== 'cancelled') return;
+    const cancelLog = booking.logs?.find(l =>
+      l.newStatus === 'cancelled' || l.new_status === 'cancelled'
+    );
+    if (!cancelLog?.note?.includes('Tự động hủy')) return;
+    if (suggestions !== null) return; // đã load
+    getBookingSuggestionsApi(bookingId)
+      .then(({ data }) => setSuggestions(data.data?.suggestions || []))
+      .catch(() => setSuggestions([]));
+  }, [booking]);
 
   const handleCancel = async () => {
     if (!confirm('Bạn có chắc muốn hủy đơn này?')) return;
@@ -311,14 +398,35 @@ export default function BookingDetailPage() {
                   </span>
                 </div>
               ) : booking.status === 'pending' ? (
-                <div className="flex items-center gap-4 p-4 bg-amber-50 border border-amber-100 rounded-xl">
-                  <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                    <Loader2 className="w-5 h-5 text-amber-600 animate-spin" />
+                <div className="space-y-2">
+                  <div className="flex items-center gap-4 p-4 bg-amber-50 border border-amber-100 rounded-xl">
+                    <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                      <Loader2 className="w-5 h-5 text-amber-600 animate-spin" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-amber-800">Đang tìm người giúp việc</p>
+                      <p className="text-xs text-amber-600 mt-0.5">Hệ thống đang phân công phù hợp nhất...</p>
+                      {countdownMs != null && (
+                        <p className="flex items-center gap-1 text-xs text-amber-700 mt-1.5">
+                          <Clock className="w-3 h-3 flex-shrink-0" />
+                          <span className="font-mono font-semibold">
+                            {countdownMs > 0 ? formatCountdown(countdownMs) : '00:00'}
+                          </span>
+                          <span className="text-amber-500">còn lại trước khi tự động hủy</span>
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-amber-800">Đang tìm người giúp việc</p>
-                    <p className="text-xs text-amber-600 mt-0.5">Hệ thống đang phân công phù hợp nhất...</p>
-                  </div>
+                  {countdownMs != null && timeoutAt && (
+                    <div className="h-1 bg-amber-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-amber-400 rounded-full transition-all duration-1000"
+                        style={{
+                          width: `${Math.max(0, (countdownMs / (timeoutAt.getTime() - new Date(booking.createdAt).getTime())) * 100)}%`,
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p className="text-sm text-gray-400">Chưa có người nhận đơn</p>
@@ -386,8 +494,43 @@ export default function BookingDetailPage() {
             {/* Status timeline card */}
             <div className="bg-white rounded-2xl border border-gray-200 p-6">
               <h2 className="text-base font-semibold text-gray-900 mb-5">Tiến trình đơn hàng</h2>
-              <StatusTimeline status={booking.status} />
+              <StatusTimeline status={booking.status} booking={booking} />
             </div>
+
+            {/* Gợi ý khung giờ thay thế (chỉ hiện khi bị tự động hủy) */}
+            {suggestions && suggestions.length > 0 && (
+              <div className="bg-white rounded-2xl border border-orange-100 p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <RefreshCw className="w-4 h-4 text-orange-500" />
+                  <h2 className="text-base font-semibold text-gray-900">Khung giờ thay thế</h2>
+                </div>
+                <p className="text-xs text-gray-500 mb-4">
+                  Các khung giờ sau đang có người giúp việc sẵn sàng:
+                </p>
+                <div className="space-y-2">
+                  {suggestions.map((s, i) => (
+                    <button
+                      key={i}
+                      onClick={() => navigate(`/book?date=${s.bookingDate}&start=${s.startTime}&serviceId=${booking.serviceId}`)}
+                      className="w-full flex items-center justify-between p-3.5 rounded-xl border border-gray-100 hover:border-orange-200 hover:bg-orange-50 transition-colors group"
+                    >
+                      <div className="text-left">
+                        <p className="text-sm font-semibold text-gray-900 group-hover:text-orange-700">
+                          {new Date(s.bookingDate + 'T00:00:00').toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'numeric' })}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">{s.startTime} – {s.endTime}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-medium border border-green-100">
+                          {s.availableHelpers} người rảnh
+                        </span>
+                        <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-orange-400" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right column — summary & actions */}
@@ -502,6 +645,15 @@ export default function BookingDetailPage() {
             <p className="text-xs text-gray-400 text-center">
               Mã đơn: <span className="font-mono font-semibold text-gray-600">{booking.bookingId}</span>
             </p>
+
+            {/* Báo cáo vấn đề */}
+            <button
+              onClick={() => setShowFeedback(true)}
+              className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 py-2 transition-colors"
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+              Báo cáo vấn đề với đơn này
+            </button>
           </div>
         </div>
       </div>
@@ -636,6 +788,14 @@ export default function BookingDetailPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {showFeedback && (
+        <FeedbackModal
+          onClose={() => setShowFeedback(false)}
+          userType="customer"
+          bookingId={booking.bookingId}
+        />
       )}
     </div>
   );

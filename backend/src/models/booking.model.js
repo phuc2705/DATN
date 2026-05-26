@@ -4,7 +4,7 @@ const { pool } = require('../config/database');
 
 const BookingModel = {
   // Tạo booking mới + bản ghi thanh toán + log trạng thái (1 transaction)
-  create: async ({ customerId, helperId, serviceId, promoId, bookingDate, startTime, endTime,
+  create: async ({ customerId, changedByUserId, helperId, serviceId, promoId, bookingDate, startTime, endTime,
                    hours, address, basePrice, discountAmount, totalPrice, note, paymentMethod }) => {
     const connection = await pool.getConnection();
     try {
@@ -30,11 +30,11 @@ const BookingModel = {
         );
       }
 
-      // Ghi log trạng thái khởi tạo
+      // Ghi log trạng thái khởi tạo (dùng user_id của customer, không phải customer_id)
       await connection.query(
         `INSERT INTO booking_logs (booking_id, changed_by, old_status, new_status, note)
          VALUES (?, ?, NULL, 'pending', 'Booking được tạo')`,
-        [bookingId, customerId] // changed_by là user_id của customer
+        [bookingId, changedByUserId || null]
       );
 
       // Cập nhật số lần sử dụng mã khuyến mãi nếu có
@@ -176,7 +176,7 @@ const BookingModel = {
     const [logRows] = await pool.query(
       `SELECT bl.*, u.full_name AS changed_by_name
        FROM booking_logs bl
-       JOIN users u ON bl.changed_by = u.user_id
+       LEFT JOIN users u ON bl.changed_by = u.user_id
        WHERE bl.booking_id = ?
        ORDER BY bl.created_at ASC`,
       [bookingId]

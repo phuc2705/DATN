@@ -2,6 +2,101 @@ services:
   - type: web
     name: cleanconnect
     env: node
-    buildCommand: npm install --prefix frontend --include=dev && npm run build --prefix frontend && npm install --prefix backend
+    plan: free
+    region: singapore
+    buildCommand: npm run build
     startCommand: node backend/server.js
     autoDeploy: true
+
+    envVars:
+      # ─── Server ───────────────────────────────────────────────────────────────
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+
+      # ─── Database (Aiven) ────────────────────────────────────────────────────
+      - key: DB_HOST
+        value: mysql-275480d4-phuc9cham.a.aivencloud.com
+      - key: DB_PORT
+        value: "17184"
+      - key: DB_USER
+        value: avnadmin
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        value: defaultdb
+      - key: DB_SSL
+        value: "true"
+
+      # ─── JWT (Render tự sinh) ─────────────────────────────────────────────────
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 30d
+
+      # ─── Domain ───────────────────────────────────────────────────────────────
+      - key: CLIENT_URL
+        value: https://connectclean.id.vn
+
+      # ─── Firebase Client SDK (Google OAuth - build-time VITE_* vars) ─────────
+      - key: VITE_FIREBASE_API_KEY
+        value: AIzaSyB5_VhDytOG3mdII5ZXe1yNjarWCFUX0oo
+      - key: VITE_FIREBASE_AUTH_DOMAIN
+        value: connectclean-945f3.firebaseapp.com
+      - key: VITE_FIREBASE_PROJECT_ID
+        value: connectclean-945f3
+      - key: VITE_FIREBASE_STORAGE_BUCKET
+        value: connectclean-945f3.firebasestorage.app
+      - key: VITE_FIREBASE_MESSAGING_SENDER_ID
+        value: "440859697732"
+      - key: VITE_FIREBASE_APP_ID
+        value: 1:440859697732:web:d797398a1da9ad09245211
+
+      # ─── Gmail OAuth2 ─────────────────────────────────────────────────────────
+      - key: EMAIL_USER
+        value: phuc9cham@gmail.com
+      - key: GMAIL_CLIENT_ID
+        value: 440859697732-d9vrekqdc64hq15qkfqnno66nadqp4oq.apps.googleusercontent.com
+      - key: GMAIL_CLIENT_SECRET
+        sync: false
+      - key: GMAIL_REFRESH_TOKEN
+        sync: false
+
+      # ─── Firebase Admin SDK ───────────────────────────────────────────────────
+      - key: FIREBASE_PROJECT_ID
+        value: connectclean-945f3
+      - key: FIREBASE_CLIENT_EMAIL
+        value: firebase-adminsdk-fbsvc@connectclean-945f3.iam.gserviceaccount.com
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+
+      # ─── VNPay (sandbox) ──────────────────────────────────────────────────────
+      - key: VNP_TMN_CODE
+        value: IA84YMKV
+      - key: VNP_HASH_SECRET
+        sync: false
+      - key: VNP_URL
+        value: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+      - key: VNP_RETURN_URL
+        value: https://connectclean.id.vn/api/payments/vnpay-return
+
+      # ─── Ngân hàng VietQR (NCB test) ─────────────────────────────────────────
+      - key: BANK_ID
+        value: NCB
+      - key: BANK_ACCOUNT
+        value: "9704198526191432198"
+      - key: BANK_HOLDER
+        value: NGUYEN VAN A
+      - key: BANK_NAME
+        value: Ngan hang Quoc Dan (NCB)
+
+      # ─── Test email ───────────────────────────────────────────────────────────
+      - key: TEST_EMAILS
+        value: phamthiquynhgiang753@gmail.com
+      - key: TEST_CLEANUP_MINUTES
+        value: "30"

@@ -47,7 +47,7 @@ const ReviewController = {
         userId: booking.helper_user_id,
         title: 'Bạn nhận được đánh giá mới',
         body: `Khách hàng đã đánh giá ${rating} sao cho buổi làm việc vừa rồi.`,
-        type: 'review',
+        type: 'new_review',
         refId: reviewId,
       });
 
@@ -100,6 +100,71 @@ const ReviewController = {
 
       const reviews = await ReviewModel.findByCustomer(customerProfile.customer_id);
       return sendSuccess(res, reviews);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Helper đánh giá lại khách hàng sau khi hoàn thành dịch vụ
+  helperReviewCustomer: async (req, res, next) => {
+    try {
+      const { user_id } = req.user;
+      const { bookingId, rating, comment } = req.body;
+
+      const [helperRows] = await pool.query('SELECT helper_id FROM helpers WHERE user_id = ?', [user_id]);
+      if (!helperRows[0]) return sendError(res, 'Không tìm thấy thông tin helper.', 404);
+      const helperId = helperRows[0].helper_id;
+
+      const [[booking]] = await pool.query(
+        `SELECT b.booking_id, b.customer_id, b.status, b.is_helper_reviewed
+         FROM bookings b
+         WHERE b.booking_id = ? AND b.helper_id = ?`,
+        [bookingId, helperId]
+      );
+      if (!booking)                     return sendError(res, 'Không tìm thấy booking.', 404);
+      if (booking.status !== 'completed') return sendError(res, 'Chỉ có thể đánh giá booking đã hoàn thành.', 400);
+      if (booking.is_helper_reviewed)   return sendError(res, 'Bạn đã đánh giá khách hàng này rồi.', 409);
+
+      const [result] = await pool.query(
+        `INSERT INTO helper_reviews (booking_id, helper_id, customer_id, rating, comment)
+         VALUES (?, ?, ?, ?, ?)`,
+        [bookingId, helperId, booking.customer_id, rating, comment || null]
+      );
+      await pool.query('UPDATE bookings SET is_helper_reviewed = 1 WHERE booking_id = ?', [bookingId]);
+
+      return sendSuccess(res, { reviewId: result.insertId }, 'Đánh giá thành công! Cảm ơn bạn.', 201);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Helper xem các đánh giá mình đã nhận từ khách hàng
+  getMyHelperReviews: async (req, res, next) => {
+    try {
+      const { user_id } = req.user;
+      const [helperRows] = await pool.query('SELECT helper_id FROM helpers WHERE user_id = ?', [user_id]);
+      if (!helperRows[0]) return sendError(res, 'Không tìm thấy thông tin helper.', 404);
+
+      const [reviews] = await pool.query(
+        `SELECT r.review_id, r.rating, r.comment, r.created_at,
+                u.full_name AS customer_name, u.avatar_url AS customer_avatar,
+                r.booking_id
+         FROM reviews r
+         JOIN customers c ON r.customer_id = c.customer_id
+         JOIN users u ON c.user_id = u.user_id
+         WHERE r.helper_id = ? AND r.is_visible = 1
+         ORDER BY r.created_at DESC`,
+        [helperRows[0].helper_id]
+      );
+      return sendSuccess(res, reviews.map(r => ({
+        reviewId:       r.review_id,
+        rating:         r.rating,
+        comment:        r.comment,
+        customerName:   r.customer_name,
+        customerAvatar: r.customer_avatar,
+        bookingId:      r.booking_id,
+        createdAt:      r.created_at,
+      })));
     } catch (error) {
       next(error);
     }

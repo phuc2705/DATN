@@ -177,6 +177,20 @@ const UserController = {
       const [[helperRow]] = await pool.query('SELECT helper_id FROM helpers WHERE user_id = ?', [user_id]);
       if (!helperRow) return sendError(res, 'Không tìm thấy thông tin helper.', 404);
 
+      // Kiểm tra trùng giờ với các ca active cùng ngày
+      const [overlaps] = await pool.query(
+        `SELECT id, start_time, end_time FROM helper_shift_registrations
+         WHERE helper_id = ? AND shift_date = ? AND status = 'active'
+           AND NOT (end_time <= ? OR start_time >= ?)`,
+        [helperRow.helper_id, shiftDate, startTime, endTime]
+      );
+      if (overlaps.length > 0) {
+        const ov = overlaps[0];
+        const st = String(ov.start_time).slice(0, 5);
+        const et = String(ov.end_time).slice(0, 5);
+        return sendError(res, `Khung giờ trùng với ca ${st}–${et} đã đăng ký. Vui lòng chọn giờ khác.`, 409);
+      }
+
       try {
         const [result] = await pool.query(
           `INSERT INTO helper_shift_registrations (helper_id, shift_date, start_time, end_time)

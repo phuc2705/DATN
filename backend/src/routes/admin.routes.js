@@ -32,6 +32,43 @@ router.get('/helpers/:helperId', AdminController.getHelperDetail);
 
 // ─── Quản lý Booking ──────────────────────────────────────────────────────────
 router.get('/bookings', AdminController.listAllBookings);
+
+// GET /api/admin/bookings/expiring - Đơn pending sắp hết hạn trong 60 phút (để điều phối thủ công)
+router.get('/bookings/expiring', async (req, res) => {
+  const { pool } = require('../config/database');
+  const { sendSuccess } = require('../utils/response');
+  const [rows] = await pool.query(`
+    SELECT b.booking_id, b.booking_date, b.start_time, b.end_time, b.created_at,
+           b.address, b.total_price, b.timeout_notified,
+           s.service_name,
+           uc.full_name AS customer_name, uc.phone AS customer_phone,
+           CASE
+             WHEN b.booking_date = CURDATE()
+               THEN TIMESTAMPDIFF(MINUTE, NOW(), DATE_ADD(b.created_at, INTERVAL 2 HOUR))
+             ELSE TIMESTAMPDIFF(MINUTE, NOW(), DATE_ADD(b.created_at, INTERVAL 4 HOUR))
+           END AS minutes_left,
+           CASE
+             WHEN b.booking_date = CURDATE() THEN DATE_ADD(b.created_at, INTERVAL 2 HOUR)
+             ELSE DATE_ADD(b.created_at, INTERVAL 4 HOUR)
+           END AS expires_at
+    FROM bookings b
+    JOIN services s ON b.service_id = s.service_id
+    JOIN customers c ON b.customer_id = c.customer_id
+    JOIN users uc ON c.user_id = uc.user_id
+    WHERE b.status = 'pending'
+      AND b.helper_id IS NULL
+      AND CONCAT(b.booking_date, ' ', b.start_time) > NOW()
+      AND CASE
+            WHEN b.booking_date = CURDATE()
+              THEN DATE_ADD(b.created_at, INTERVAL 2 HOUR)
+            ELSE DATE_ADD(b.created_at, INTERVAL 4 HOUR)
+          END BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 60 MINUTE)
+    ORDER BY minutes_left ASC
+    LIMIT 30
+  `);
+  return sendSuccess(res, rows);
+});
+
 router.patch('/bookings/:bookingId/status', AdminController.updateBookingStatus);
 // PATCH /api/admin/bookings/:bookingId/assign - Giao việc cho helper
 router.patch('/bookings/:bookingId/assign', [
@@ -169,6 +206,16 @@ router.delete('/promotions/:promoId', AdminController.deletePromotion);
 router.get('/reviews', AdminController.listReviews);
 router.patch('/reviews/:reviewId/visibility', AdminController.toggleReviewVisibility);
 router.delete('/reviews/:reviewId', AdminController.deleteReview);
+
+// ─── Quản lý Phản hồi hệ thống ───────────────────────────────────────────────
+const FeedbackController = require('../controllers/feedback.controller');
+// GET /api/admin/feedbacks?status=open&category=bug
+router.get('/feedbacks', FeedbackController.adminList);
+// PATCH /api/admin/feedbacks/:feedbackId — Cập nhật trạng thái + ghi chú
+router.patch('/feedbacks/:feedbackId', [
+  body('status').optional().isIn(['open','in_progress','resolved','closed']),
+  body('adminNote').optional().trim(),
+], validate, FeedbackController.adminUpdate);
 
 // ─── Cài đặt hệ thống ────────────────────────────────────────────────────────
 router.get('/settings', AdminController.getSettings);

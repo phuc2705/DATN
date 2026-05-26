@@ -1,11 +1,22 @@
 // Tiện ích tích hợp cổng thanh toán VNPay
-// Sử dụng thuật toán HMAC-SHA512 để ký và xác thực giao dịch
+// Ký trên chuỗi đã URL-encode theo đúng chuẩn demo chính thức VNPay
 const crypto = require('crypto');
 const qs = require('qs');
 
+// Sắp xếp key và encode value theo đúng chuẩn VNPay (space → +)
+const sortObject = (obj) => {
+  const sorted = {};
+  const keys = Object.keys(obj).map(k => encodeURIComponent(k)).sort();
+  for (const encodedKey of keys) {
+    const key = decodeURIComponent(encodedKey);
+    sorted[key] = encodeURIComponent(String(obj[key])).replace(/%20/g, '+');
+  }
+  return sorted;
+};
+
 const createVNPayUrl = (bookingId, amount, orderInfo, ipAddr) => {
   const now = new Date();
-  // Format: YYYYMMDDHHmmss theo múi giờ VN (UTC+7)
+  // Format YYYYMMDDHHmmss theo múi giờ VN (UTC+7)
   const vnTime = new Date(now.getTime() + 7 * 60 * 60 * 1000);
   const createDate = vnTime.toISOString().replace(/[-:T.Z]/g, '').slice(0, 14);
   const txnRef = `${bookingId}_${Date.now()}`;
@@ -25,8 +36,8 @@ const createVNPayUrl = (bookingId, amount, orderInfo, ipAddr) => {
     vnp_CreateDate: createDate,
   };
 
-  // Sắp xếp tham số theo thứ tự alphabet trước khi ký
-  params = Object.fromEntries(Object.entries(params).sort());
+  // Sort + encode value trước khi ký (chuẩn VNPay: space → +)
+  params = sortObject(params);
   const signData = qs.stringify(params, { encode: false });
   const hmac = crypto.createHmac('sha512', process.env.VNP_HASH_SECRET);
   params.vnp_SecureHash = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
@@ -42,7 +53,8 @@ const verifyVNPayReturn = (query) => {
   delete params.vnp_SecureHash;
   delete params.vnp_SecureHashType;
 
-  const sorted = Object.fromEntries(Object.entries(params).sort());
+  // Phải re-encode giống cách VNPay đã ký trước khi verify
+  const sorted = sortObject(params);
   const signData = qs.stringify(sorted, { encode: false });
   const hmac = crypto.createHmac('sha512', process.env.VNP_HASH_SECRET);
   const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');

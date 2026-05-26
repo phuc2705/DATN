@@ -84,6 +84,11 @@ const BookingController = {
       const customerProfile = await UserModel.getCustomerProfile(user_id);
       if (!customerProfile) return sendError(res, 'Không tìm thấy thông tin khách hàng.', 404);
 
+      // Không cho đặt lịch ngày trong quá khứ
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      if (new Date(bookingDate) < today)
+        return sendError(res, 'Không thể đặt lịch cho ngày đã qua. Vui lòng chọn ngày hôm nay hoặc tương lai.', 400);
+
       // Kiểm tra xung đột lịch của khách hàng (tránh đặt 2 đơn cùng khung giờ)
       const customerHasConflict = await BookingModel.checkCustomerConflict(
         customerProfile.customer_id, bookingDate, startTime, endTime
@@ -177,6 +182,7 @@ const BookingController = {
 
       const bookingId = await BookingModel.create({
         customerId: customerProfile.customer_id,
+        changedByUserId: user_id,
         helperId: helperId || null,
         serviceId,
         promoId,
@@ -202,37 +208,85 @@ const BookingController = {
         }));
       }
 
-      // Geocode địa chỉ booking bất đồng bộ để hỗ trợ tính năng lọc helper gần đây
-      geocodeAddress(address).then(async (coords) => {
-        if (coords) {
-          await pool.query(
-            'UPDATE bookings SET latitude = ?, longitude = ? WHERE booking_id = ?',
-            [coords.lat, coords.lng, bookingId]
-          );
-        }
-      }).catch(() => {});
-
-      // Broadcast thông báo đến tất cả helpers available + verified + có đăng ký dịch vụ này
+      // Pha 1: geocode đồng bộ để phân loại helper theo khoảng cách
       const svcName = serviceRows[0].service_name;
-      pool.query(
-        `SELECT DISTINCT h.helper_id, u.user_id
-         FROM helpers h
-         JOIN users u ON h.user_id = u.user_id
-         JOIN helper_services hs ON h.helper_id = hs.helper_id
-         WHERE h.is_available = TRUE AND h.is_verified = TRUE AND hs.service_id = ?`,
-        [serviceId]
-      ).then(async ([helperRows]) => {
-        for (const h of helperRows) {
-          await pushNotification({
-            userId: h.user_id,
-            title: 'Có đơn đặt lịch mới!',
-            body: `${svcName} · ${bookingDate} ${startTime}–${endTime}`,
-            type: 'booking_new',
-            refId: bookingId,
-          });
-          emitToUser(h.user_id, 'new_job', { bookingId, svcName, bookingDate, startTime, endTime });
+      const { haversineDistance } = require('../utils/geocode');
+
+      (async () => {
+        try {
+          // Lấy toàn bộ helpers hợp lệ kèm tọa độ + điểm đánh giá
+          const [helperRows] = await pool.query(
+            `SELECT DISTINCT h.helper_id, u.user_id, h.rating_average,
+                    h.latitude, h.longitude
+             FROM helpers h
+             JOIN users u ON h.user_id = u.user_id
+             JOIN helper_services hs ON h.helper_id = hs.helper_id
+             WHERE h.is_available = TRUE AND h.is_verified = TRUE AND hs.service_id = ?`,
+            [serviceId]
+          );
+
+          // Geocode địa chỉ booking (timeout 5s, không chặn response đã trả)
+          const coords = await geocodeAddress(address);
+          let bookingLat = null, bookingLng = null;
+          if (coords) {
+            bookingLat = coords.lat; bookingLng = coords.lng;
+            await pool.query(
+              'UPDATE bookings SET latitude = ?, longitude = ? WHERE booking_id = ?',
+              [bookingLat, bookingLng, bookingId]
+            );
+          }
+
+          // Phân loại: gần (≤5km) → giai đoạn 1, xa hơn → giai đoạn 2
+          const nearby = [], faraway = [];
+          for (const h of helperRows) {
+            const hLat = h.latitude ? parseFloat(h.latitude) : null;
+            const hLng = h.longitude ? parseFloat(h.longitude) : null;
+            const dist = (bookingLat && bookingLng && hLat && hLng)
+              ? haversineDistance(bookingLat, bookingLng, hLat, hLng)
+              : null;
+            (dist !== null && dist <= 5 ? nearby : faraway).push({ ...h, distKm: dist });
+          }
+
+          // Sắp xếp theo rating DESC (ưu tiên người có điểm cao)
+          nearby.sort((a, b) => b.rating_average - a.rating_average);
+
+          // Gửi giai đoạn 1: helpers gần trước (hoặc tất cả nếu không có toạ độ)
+          const phase1 = nearby.length > 0 ? nearby : helperRows;
+          for (const h of phase1) {
+            await pushNotification({
+              userId: h.user_id,
+              title: nearby.length > 0 ? '📍 Có đơn mới gần bạn!' : 'Có đơn đặt lịch mới!',
+              body: `${svcName} · ${bookingDate} ${startTime}–${endTime}`,
+              type: 'booking_new',
+              refId: bookingId,
+            });
+            emitToUser(h.user_id, 'new_job', { bookingId, svcName, bookingDate, startTime, endTime, nearby: true });
+          }
+
+          // Gửi giai đoạn 2 cho helpers xa hơn sau 10 phút (nếu có)
+          if (nearby.length > 0 && faraway.length > 0) {
+            setTimeout(async () => {
+              // Kiểm tra xem đơn đã có người nhận chưa trước khi gửi giai đoạn 2
+              const [[bk]] = await pool.query(
+                'SELECT status FROM bookings WHERE booking_id = ?', [bookingId]
+              );
+              if (!bk || bk.status !== 'pending') return;
+              for (const h of faraway) {
+                await pushNotification({
+                  userId: h.user_id,
+                  title: 'Có đơn đặt lịch mới!',
+                  body: `${svcName} · ${bookingDate} ${startTime}–${endTime}`,
+                  type: 'booking_new',
+                  refId: bookingId,
+                });
+                emitToUser(h.user_id, 'new_job', { bookingId, svcName, bookingDate, startTime, endTime });
+              }
+            }, 10 * 60 * 1000);
+          }
+        } catch (err) {
+          console.error('Phase-1 notification error:', err.message);
         }
-      }).catch(() => {});
+      })();
 
       const message = availableHelperCount > 0
         ? 'Đặt lịch thành công! Đơn đã được đăng lên hệ thống, người giúp việc sẽ nhận đơn sớm.'
@@ -705,4 +759,72 @@ const suggestHelpers = async (req, res, next) => {
   }
 };
 
-module.exports = { ...BookingController, assertValidTransition, VALID_TRANSITIONS, validatePromoCode, pricePreview, suggestHelpers };
+// Gợi ý khung giờ thay thế khi đơn bị hủy (auto hoặc thủ công)
+// Tìm 3 khung giờ trong 3 ngày tới có ≥1 helper sẵn sàng
+const getBookingSuggestions = async (req, res, next) => {
+  try {
+    const { bookingId } = req.params;
+
+    const [[booking]] = await pool.query(
+      `SELECT b.service_id, b.hours, b.start_time, b.end_time, b.booking_date,
+              s.service_name
+       FROM bookings b JOIN services s ON b.service_id = s.service_id
+       WHERE b.booking_id = ?`,
+      [bookingId]
+    );
+    if (!booking) return sendError(res, 'Không tìm thấy đơn hàng.', 404);
+
+    // Kiểm tra các khung giờ phổ biến trong 3 ngày tới
+    const SLOTS = ['07:00', '08:00', '09:00', '13:00', '14:00', '15:00'];
+    const suggestions = [];
+    const today = new Date();
+
+    for (let dayOffset = 0; dayOffset <= 3 && suggestions.length < 3; dayOffset++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + dayOffset);
+      const dateStr = d.toISOString().slice(0, 10);
+
+      for (const slot of SLOTS) {
+        if (suggestions.length >= 3) break;
+
+        const [h, m] = slot.split(':').map(Number);
+        const endH = h + booking.hours;
+        const endSlot = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        if (endH > 21) continue; // không làm sau 21:00
+
+        // Đếm helpers có thể nhận slot này
+        const [[{ cnt }]] = await pool.query(
+          `SELECT COUNT(DISTINCT h.helper_id) AS cnt
+           FROM helpers h
+           JOIN helper_services hs ON h.helper_id = hs.helper_id
+           WHERE h.is_available = TRUE AND h.is_verified = TRUE AND hs.service_id = ?
+             AND h.helper_id NOT IN (
+               SELECT DISTINCT helper_id FROM bookings
+               WHERE booking_date = ? AND status NOT IN ('cancelled') AND helper_id IS NOT NULL
+                 AND start_time < ? AND end_time > ?
+             )`,
+          [booking.service_id, dateStr, endSlot, slot]
+        );
+
+        if (Number(cnt) > 0) {
+          suggestions.push({
+            bookingDate: dateStr,
+            startTime: slot,
+            endTime: endSlot,
+            availableHelpers: Number(cnt),
+          });
+        }
+      }
+    }
+
+    return sendSuccess(res, {
+      serviceName: booking.service_name,
+      hours: booking.hours,
+      suggestions,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { ...BookingController, assertValidTransition, VALID_TRANSITIONS, validatePromoCode, pricePreview, suggestHelpers, getBookingSuggestions };

@@ -18,7 +18,7 @@ const sendPaymentNotification = (bookingId) => {
         userId: rows[0].helper_user_id,
         title: 'Thanh toán đã được xác nhận',
         body: `Khách hàng đã thanh toán ${Number(rows[0].total_price).toLocaleString('vi-VN')}đ cho buổi làm việc.`,
-        type: 'payment_received',
+        type: 'payment_success',
         refId: parseInt(bookingId),
       });
     }

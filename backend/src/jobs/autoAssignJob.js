@@ -55,7 +55,7 @@ async function autoAssignExpiredBookings() {
           userId: booking.customer_user_id,
           title:  'Đã tìm được người giúp việc!',
           body:   `Đơn ${booking.booking_id} (${booking.service_name}) đã được giao cho ${best.full_name}.`,
-          type:   'booking',
+          type:   'booking_confirmed',
           refId:  booking.booking_id,
         });
 
@@ -69,7 +69,7 @@ async function autoAssignExpiredBookings() {
             userId: helperUser.user_id,
             title:  'Hệ thống giao việc cho bạn!',
             body:   `Bạn được chỉ định làm ${booking.service_name} vào ngày ${dateStr} lúc ${String(booking.start_time).slice(0, 5)}.`,
-            type:   'booking',
+            type:   'booking_confirmed',
             refId:  booking.booking_id,
           });
         }
@@ -82,7 +82,7 @@ async function autoAssignExpiredBookings() {
             userId: adminUserId,
             title:  '⚠️ Cần giao việc thủ công',
             body:   `Đơn ${booking.booking_id} (${booking.service_name}, ${dateStr}) không tìm được helper khả dụng sau 30 phút.`,
-            type:   'booking',
+            type:   'booking_confirmed',
             refId:  booking.booking_id,
           });
         }

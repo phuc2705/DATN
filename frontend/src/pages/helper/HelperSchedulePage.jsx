@@ -64,8 +64,17 @@ function canCancel(shiftDate, startTime) {
   return (shiftStart - Date.now()) / 36e5 >= 12;
 }
 
+// Kiểm tra slot có bị trùng giờ với ca đã đăng ký không (nhưng không phải chính ca đó)
+function isConflict(slot, registeredOnDate) {
+  return registeredOnDate.some(s => {
+    if (s.startTime === slot.start) return false; // chính ca này rồi
+    const sStart = s.startTime, sEnd = s.endTime;
+    return !(sEnd <= slot.start || sStart >= slot.end);
+  });
+}
+
 /* ─── Slot button ─────────────────────────────────────────────────── */
-function SlotButton({ slot, selected, registered, onClick }) {
+function SlotButton({ slot, selected, registered, conflict, onClick }) {
   const baseClass = 'relative w-full border rounded-xl px-4 py-3 text-left transition-all';
 
   if (registered) {
@@ -80,6 +89,23 @@ function SlotButton({ slot, selected, registered, onClick }) {
         </div>
         <span className="absolute -top-2 right-3 text-[10px] bg-green-500 text-white px-1.5 py-0.5 rounded-full font-medium">
           Đã đăng ký
+        </span>
+      </div>
+    );
+  }
+
+  if (conflict) {
+    return (
+      <div className={`${baseClass} bg-red-50 border-red-200 cursor-not-allowed opacity-70`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold text-red-500">{slot.label}</p>
+            <p className="text-xs text-red-400 mt-0.5">{slot.start} – {slot.end}</p>
+          </div>
+          <XCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+        </div>
+        <span className="absolute -top-2 right-3 text-[10px] bg-red-400 text-white px-1.5 py-0.5 rounded-full font-medium">
+          Trùng giờ
         </span>
       </div>
     );
@@ -285,13 +311,15 @@ export default function HelperSchedulePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {SLOTS.map((slot) => {
               const regShift = registeredOnDate.find(s => s.startTime === slot.start);
+              const conflict = !regShift && isConflict(slot, registeredOnDate);
               return (
                 <SlotButton
                   key={slot.start}
                   slot={slot}
                   selected={selectedSlot?.start === slot.start}
                   registered={regShift}
-                  onClick={() => setSelectedSlot(selectedSlot?.start === slot.start ? null : slot)}
+                  conflict={conflict}
+                  onClick={conflict ? undefined : () => setSelectedSlot(selectedSlot?.start === slot.start ? null : slot)}
                 />
               );
             })}

@@ -31,6 +31,7 @@ import AdminPaymentsPage from './pages/admin/AdminPaymentsPage';
 import AdminServicesPage from './pages/admin/AdminServicesPage';
 import AdminPromotionsPage from './pages/admin/AdminPromotionsPage';
 import AdminReviewsPage from './pages/admin/AdminReviewsPage';
+import AdminFeedbacksPage from './pages/admin/AdminFeedbacksPage';
 import AdminSettingsPage from './pages/admin/AdminSettingsPage';
 import HelpPage from './pages/HelpPage';
 import AboutPage from './pages/AboutPage';
@@ -65,6 +66,7 @@ export default function App() {
               <Route path="/admin/services" element={<AdminServicesPage />} />
               <Route path="/admin/promotions" element={<AdminPromotionsPage />} />
               <Route path="/admin/reviews" element={<AdminReviewsPage />} />
+              <Route path="/admin/feedbacks" element={<AdminFeedbacksPage />} />
               <Route path="/admin/settings" element={<AdminSettingsPage />} />
             </Route>
           </Route>

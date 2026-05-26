@@ -2,18 +2,38 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { updateProfileApi, changePasswordApi, toggleAvailabilityApi } from '../../api/user.api';
 import { getMeApi } from '../../api/auth.api';
+import { getMyReviewsApi, getMyReceivedReviewsApi } from '../../api/review.api';
 import toast from 'react-hot-toast';
 import {
   User, Lock, ShoppingBag, Sparkles, Settings,
   ClipboardList, MapPin, CreditCard, Pencil,
   Wallet, Building2, Save, KeyRound,
-  Eye, EyeOff, Lightbulb, Loader2, CheckCircle,
+  Eye, EyeOff, Lightbulb, Loader2, CheckCircle, Star,
 } from 'lucide-react';
 
 const TABS = [
   { key: 'info',     label: 'Thông tin cá nhân', Icon: User },
   { key: 'password', label: 'Đổi mật khẩu',      Icon: Lock },
+  { key: 'reviews',  label: 'Đánh giá',           Icon: Star },
 ];
+
+function StarRow({ rating }) {
+  return (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star
+          key={i}
+          className={`w-4 h-4 ${i <= rating ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-100 text-gray-200'}`}
+        />
+      ))}
+    </div>
+  );
+}
+
+function formatDateVN(d) {
+  if (!d) return '';
+  return new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
 
 function FormField({ label, required, children }) {
   return (
@@ -59,6 +79,18 @@ export default function UserProfilePage() {
 
   const [pwForm,  setPwForm]  = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [showPw,  setShowPw]  = useState({ current: false, new: false, confirm: false });
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+
+  useEffect(() => {
+    if (tab !== 'reviews' || !user) return;
+    setReviewsLoading(true);
+    const fn = user.userType === 'helper' ? getMyReceivedReviewsApi : getMyReviewsApi;
+    fn()
+      .then(({ data }) => setReviews(data.data || []))
+      .catch(() => setReviews([]))
+      .finally(() => setReviewsLoading(false));
+  }, [tab, user?.userType]);
 
   useEffect(() => {
     if (!user) return;
@@ -345,6 +377,70 @@ export default function UserProfilePage() {
               )}
             </button>
           </form>
+        )}
+
+        {/* Tab: Đánh giá */}
+        {tab === 'reviews' && (
+          <div className="space-y-4">
+            {reviewsLoading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+              </div>
+            ) : reviews.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-200 p-10 flex flex-col items-center gap-3 text-center">
+                <div className="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center">
+                  <Star className="w-7 h-7 text-gray-300" />
+                </div>
+                <p className="font-medium text-gray-600">Chưa có đánh giá nào</p>
+                <p className="text-sm text-gray-400">
+                  {user.userType === 'helper'
+                    ? 'Hoàn thành các đơn hàng để nhận đánh giá từ khách hàng.'
+                    : 'Sau khi hoàn thành đặt lịch, hãy để lại đánh giá cho người giúp việc.'}
+                </p>
+              </div>
+            ) : (
+              reviews.map((r) => (
+                <div key={r.reviewId} className="bg-white rounded-2xl border border-gray-200 p-5">
+                  <div className="flex items-start gap-4">
+                    {/* Avatar */}
+                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-sm font-bold text-orange-600 flex-shrink-0 overflow-hidden">
+                      {(user.userType === 'helper' ? r.customerAvatar : r.helperAvatar) ? (
+                        <img
+                          src={user.userType === 'helper' ? r.customerAvatar : r.helperAvatar}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                      ) : (
+                        (user.userType === 'helper' ? r.customerName : r.helperName)?.[0]?.toUpperCase() || '?'
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <p className="font-semibold text-gray-900 text-sm">
+                          {user.userType === 'helper' ? r.customerName : r.helperName}
+                        </p>
+                        <span className="text-xs text-gray-400">{formatDateVN(r.createdAt)}</span>
+                      </div>
+
+                      {user.userType === 'customer' && r.serviceName && (
+                        <p className="text-xs text-orange-600 font-medium mt-0.5">{r.serviceName}</p>
+                      )}
+
+                      <div className="mt-1.5">
+                        <StarRow rating={r.rating} />
+                      </div>
+
+                      {r.comment && (
+                        <p className="mt-2 text-sm text-gray-600 leading-relaxed">{r.comment}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         )}
 
         {/* Tab: Đổi mật khẩu */}

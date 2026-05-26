@@ -199,6 +199,76 @@ async function runMigrations(connection) {
     await connection.query('ALTER TABLE payments ADD COLUMN helper_earning DECIMAL(10,2) NULL AFTER platform_fee_amount');
   } catch (err) { /* ignore — cột đã tồn tại */ }
 
+  // Fix changed_by: cho phép NULL để hệ thống tự động có thể ghi log mà không cần user_id
+  try {
+    await connection.query('ALTER TABLE booking_logs MODIFY COLUMN changed_by INT NULL');
+  } catch (err) { /* ignore */ }
+
+  // Xóa trigger trùng lặp và dùng helper_id (không phải user_id) làm changed_by
+  try {
+    await connection.query('DROP TRIGGER IF EXISTS trg_log_booking_status');
+  } catch (err) { /* ignore */ }
+
+  // Thêm trạng thái refund_pending cho payment (khi tự động hủy và cần hoàn tiền)
+  try {
+    await connection.query(`ALTER TABLE payments MODIFY COLUMN payment_status ENUM('unpaid','paid','refunded','refund_pending') DEFAULT 'unpaid'`);
+  } catch (err) { /* ignore */ }
+
+  // Thêm cột timeout_notified để tránh gửi thông báo phase-2 nhiều lần
+  try {
+    await connection.query('ALTER TABLE bookings ADD COLUMN timeout_notified TINYINT NOT NULL DEFAULT 0');
+  } catch (err) { /* ignore — cột đã tồn tại */ }
+
+  // Bảng helper đánh giá lại khách hàng sau khi hoàn thành dịch vụ
+  try {
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS helper_reviews (
+        review_id     INT AUTO_INCREMENT PRIMARY KEY,
+        booking_id    INT UNIQUE NOT NULL,
+        helper_id     INT NOT NULL,
+        customer_id   INT NOT NULL,
+        rating        TINYINT NOT NULL,
+        comment       TEXT NULL,
+        created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (booking_id)  REFERENCES bookings(booking_id)  ON DELETE CASCADE,
+        FOREIGN KEY (helper_id)   REFERENCES helpers(helper_id)    ON DELETE CASCADE,
+        FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE,
+        CONSTRAINT chk_helper_review_rating CHECK (rating >= 1 AND rating <= 5)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+  } catch (err) { /* ignore — bảng đã tồn tại */ }
+
+  // Bảng phản hồi hệ thống (báo lỗi, khiếu nại, góp ý) từ cả customer lẫn helper
+  try {
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS system_feedbacks (
+        feedback_id   INT AUTO_INCREMENT PRIMARY KEY,
+        user_id       INT NOT NULL,
+        category      ENUM('bug','complaint_helper','complaint_customer','payment_issue','suggestion','other') NOT NULL,
+        subject       VARCHAR(200) NOT NULL,
+        description   TEXT NOT NULL,
+        booking_id    INT NULL,
+        status        ENUM('open','in_progress','resolved','closed') NOT NULL DEFAULT 'open',
+        admin_note    TEXT NULL,
+        resolved_by   INT NULL,
+        resolved_at   TIMESTAMP NULL,
+        created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id)     REFERENCES users(user_id) ON DELETE CASCADE,
+        FOREIGN KEY (booking_id)  REFERENCES bookings(booking_id) ON DELETE SET NULL,
+        FOREIGN KEY (resolved_by) REFERENCES users(user_id) ON DELETE SET NULL,
+        INDEX idx_status    (status),
+        INDEX idx_user      (user_id),
+        INDEX idx_category  (category)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+  } catch (err) { /* ignore — bảng đã tồn tại */ }
+
+  // Cột is_helper_reviewed trên bookings để track helper đã review customer chưa
+  try {
+    await connection.query('ALTER TABLE bookings ADD COLUMN is_helper_reviewed TINYINT NOT NULL DEFAULT 0');
+  } catch (err) { /* ignore — cột đã tồn tại */ }
+
   console.log('✅ Migrations hoàn tất.');
 }
 
