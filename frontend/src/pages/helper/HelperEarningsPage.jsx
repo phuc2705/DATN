@@ -298,7 +298,7 @@ export default function HelperEarningsPage() {
         <div className="mt-4 flex items-start gap-3 p-4 bg-blue-50 border border-blue-100 rounded-xl">
           <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
           <p className="text-sm text-blue-600">
-            Thu nhập được tính sau khi khách hàng xác nhận thanh toán. Nền tảng giữ phí dịch vụ 10% (bạn nhận 90% giá trị đơn).
+            Thu nhập được tính sau khi khách hàng xác nhận thanh toán. Nền tảng giữ phí dịch vụ 20% (bạn nhận 80% giá trị đơn). Đơn tiền mặt: phí sẽ khấu trừ vào ví.
           </p>
         </div>
       </div>
