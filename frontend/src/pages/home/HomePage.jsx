@@ -132,7 +132,12 @@ export default function HomePage() {
     getRecentReviewsApi(6)
       .then(({ data }) => {
         const list = data.data || [];
-        setTestimonials(list.length >= 3 ? list.slice(0, 6) : TESTIMONIALS_FALLBACK);
+        if (list.length === 0) return; // giữ fallback
+        // Nếu chưa đủ 3, lấy thêm từ fallback để lưới không bị trống
+        const padded = list.length >= 3
+          ? list.slice(0, 6)
+          : [...list, ...TESTIMONIALS_FALLBACK.slice(list.length)];
+        setTestimonials(padded);
       })
       .catch(() => {});
   }, []);
