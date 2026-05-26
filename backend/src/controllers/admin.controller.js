@@ -634,7 +634,7 @@ const AdminController = {
       const SettingModel = require('../models/setting.model');
       const settings = await SettingModel.getAll();
       return sendSuccess(res, {
-        platformCommissionRate: parseFloat(settings.platform_commission_rate) || 0.10,
+        platformCommissionRate: parseFloat(settings.platform_commission_rate) || 0.20,
       });
     } catch (error) { next(error); }
   },
@@ -647,13 +647,13 @@ const AdminController = {
       if (platformCommissionRate !== undefined) {
         const rate = parseFloat(platformCommissionRate);
         if (isNaN(rate) || rate < 0 || rate > 1) {
-          return sendError(res, 'Tỷ lệ hoa hồng phải từ 0 đến 1 (ví dụ: 0.10 = 10%)', 400);
+          return sendError(res, 'Tỷ lệ hoa hồng phải từ 0 đến 1 (ví dụ: 0.20 = 20%)', 400);
         }
         await SettingModel.set('platform_commission_rate', rate.toFixed(4));
       }
       const settings = await SettingModel.getAll();
       return sendSuccess(res, {
-        platformCommissionRate: parseFloat(settings.platform_commission_rate) || 0.10,
+        platformCommissionRate: parseFloat(settings.platform_commission_rate) || 0.20,
       });
     } catch (error) { next(error); }
   },

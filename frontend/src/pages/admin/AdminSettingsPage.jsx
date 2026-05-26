@@ -29,7 +29,7 @@ export default function AdminSettingsPage() {
     setLoading(true);
     getAdminSettingsApi()
       .then(({ data }) => {
-        const rate = data.data?.platformCommissionRate ?? 0.10;
+        const rate = data.data?.platformCommissionRate ?? 0.20;
         const pct = (rate * 100).toFixed(2).replace(/\.00$/, '');
         setCommissionPct(pct);
         setInputPct(pct);
@@ -63,7 +63,7 @@ export default function AdminSettingsPage() {
 
   // Tính ví dụ phân chia với đơn 100,000đ
   const exampleAmount = 100000;
-  const currentRate = parseFloat(commissionPct) / 100 || 0.10;
+  const currentRate = parseFloat(commissionPct) / 100 || 0.20;
   const examplePlatform = Math.round(exampleAmount * currentRate).toLocaleString('vi-VN');
   const exampleHelper = Math.round(exampleAmount * (1 - currentRate)).toLocaleString('vi-VN');
 
