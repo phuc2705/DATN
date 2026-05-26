@@ -384,13 +384,22 @@ export default function HelperSchedulePage() {
           )}
         </div>
 
-        {/* Info note */}
-        <div className="mt-4 flex items-start gap-3 p-4 bg-blue-50 border border-blue-100 rounded-xl">
-          <AlertCircle className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-blue-600">
-            Ca làm chỉ có thể hủy trước giờ bắt đầu ít nhất <strong>12 tiếng</strong>.
-            Thu nhập ước tính ~<strong>75.000đ/giờ</strong> (bạn nhận 90% sau phí nền tảng).
-          </p>
+        {/* Info notes */}
+        <div className="mt-4 space-y-3">
+          <div className="flex items-start gap-3 p-4 bg-orange-50 border border-orange-100 rounded-xl">
+            <AlertCircle className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-orange-700 space-y-1">
+              <p><strong>Ưu tiên matching:</strong> Đơn hàng trong khung giờ ca đã đăng ký sẽ ưu tiên giao cho bạn trước.</p>
+              <p><strong>Quy tắc 30 phút:</strong> Giữa hai ca liên tiếp cần nghỉ ít nhất 30 phút. Đơn vi phạm khoảng cách này sẽ không được hiển thị.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-100 rounded-xl">
+            <AlertCircle className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-blue-600">
+              Ca làm chỉ có thể hủy trước giờ bắt đầu ít nhất <strong>12 tiếng</strong>.
+              Thu nhập ước tính ~<strong>75.000đ/giờ</strong> (bạn nhận 80% sau phí nền tảng 20%).
+            </p>
+          </div>
         </div>
       </div>
     </div>

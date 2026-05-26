@@ -200,6 +200,33 @@ const BookingModel = {
     return rows.length > 0;
   },
 
+  // Kiểm tra quy tắc 30 phút nghỉ giữa các ca — trả về true nếu vi phạm
+  checkHelperGapRule: async (helperId, bookingDate, startTime, endTime, excludeBookingId = null) => {
+    let query = `SELECT start_time, end_time FROM bookings
+      WHERE helper_id = ? AND booking_date = ? AND status NOT IN ('cancelled')`;
+    const params = [helperId, bookingDate];
+    if (excludeBookingId) { query += ' AND booking_id != ?'; params.push(excludeBookingId); }
+    const [rows] = await pool.query(query, params);
+
+    const toMin = (t) => {
+      const [h, m] = String(t).slice(0, 5).split(':').map(Number);
+      return h * 60 + m;
+    };
+    const newStart = toMin(startTime);
+    const newEnd   = toMin(endTime);
+    const GAP = 30;
+
+    for (const b of rows) {
+      const bStart = toMin(b.start_time);
+      const bEnd   = toMin(b.end_time);
+      // Booking trước kết thúc và khoảng cách đến ca mới < 30 phút
+      if (bEnd <= newStart && newStart - bEnd < GAP) return true;
+      // Booking sau bắt đầu và khoảng cách từ ca mới < 30 phút
+      if (bStart >= newEnd && bStart - newEnd < GAP) return true;
+    }
+    return false;
+  },
+
   // Kiểm tra xung đột lịch của customer (tránh đặt 2 đơn cùng giờ)
   checkCustomerConflict: async (customerId, bookingDate, startTime, endTime, excludeBookingId = null) => {
     let query = `
@@ -216,6 +243,7 @@ const BookingModel = {
   },
 
   // Lấy danh sách booking đang chờ mà helper có thể nhận (open market + được yêu cầu đích danh)
+  // Áp dụng: lọc trùng giờ + quy tắc nghỉ 30 phút giữa các ca
   findAvailableJobsForHelper: async (helperId) => {
     const [rows] = await pool.query(`
       SELECT b.booking_id, b.booking_date, b.start_time, b.end_time, b.hours,
@@ -236,8 +264,19 @@ const BookingModel = {
             AND b2.status NOT IN ('cancelled')
             AND NOT (b2.end_time <= b.start_time OR b2.start_time >= b.end_time)
         )
+        AND NOT EXISTS (
+          SELECT 1 FROM bookings b3
+          WHERE b3.helper_id = ?
+            AND b3.booking_date = b.booking_date
+            AND b3.status NOT IN ('cancelled')
+            AND (
+              (TIME_TO_SEC(b3.end_time) <= TIME_TO_SEC(b.start_time) AND TIME_TO_SEC(b.start_time) - TIME_TO_SEC(b3.end_time) < 1800)
+              OR
+              (TIME_TO_SEC(b3.start_time) >= TIME_TO_SEC(b.end_time) AND TIME_TO_SEC(b3.start_time) - TIME_TO_SEC(b.end_time) < 1800)
+            )
+        )
       ORDER BY b.booking_date ASC, b.start_time ASC
-    `, [helperId, helperId]);
+    `, [helperId, helperId, helperId]);
     return rows;
   },
 

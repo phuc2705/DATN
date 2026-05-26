@@ -593,6 +593,14 @@ const BookingController = {
       );
       if (hasConflict) return sendError(res, 'Bạn đã có lịch trong khung giờ này.', 409);
 
+      // Kiểm tra quy tắc nghỉ 30 phút giữa các ca
+      const hasGapViolation = await BookingModel.checkHelperGapRule(
+        helper_id, booking.booking_date, booking.start_time, booking.end_time, parseInt(bookingId)
+      );
+      if (hasGapViolation) {
+        return sendError(res, 'Cần nghỉ ít nhất 30 phút giữa các ca làm. Vui lòng kiểm tra lịch của bạn.', 409);
+      }
+
       // Gán helper và chuyển sang confirmed (FOR UPDATE tránh race condition)
       await BookingModel.assignHelperAndConfirm(parseInt(bookingId), helper_id, user_id);
 
