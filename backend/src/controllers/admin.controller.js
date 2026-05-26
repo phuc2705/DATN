@@ -85,6 +85,11 @@ const AdminController = {
         LIMIT 5
       `);
 
+      // Số phản hồi chưa xử lý
+      const [[{ openFeedbacksCount }]] = await pool.query(
+        "SELECT COUNT(*) AS openFeedbacksCount FROM system_feedbacks WHERE status = 'open'"
+      );
+
       return sendSuccess(res, {
         totalUsers, totalHelpers, totalCustomers,
         totalBookings, pendingBookings, completedBookings,
@@ -95,6 +100,7 @@ const AdminController = {
         revenueThisMonth, revenueLastMonth, revenueGrowth,
         newCustomersThisMonth,
         topHelpers,
+        openFeedbacksCount: Number(openFeedbacksCount),
       });
     } catch (error) {
       next(error);

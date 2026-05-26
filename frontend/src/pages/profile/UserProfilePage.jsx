@@ -1,20 +1,23 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { updateProfileApi, changePasswordApi, toggleAvailabilityApi } from '../../api/user.api';
 import { getMeApi } from '../../api/auth.api';
 import { getMyReviewsApi, getMyReceivedReviewsApi } from '../../api/review.api';
+import { getMyFeedbacksApi } from '../../api/feedback.api';
 import toast from 'react-hot-toast';
 import {
   User, Lock, ShoppingBag, Sparkles, Settings,
   ClipboardList, MapPin, CreditCard, Pencil,
   Wallet, Building2, Save, KeyRound,
-  Eye, EyeOff, Lightbulb, Loader2, CheckCircle, Star,
+  Eye, EyeOff, Lightbulb, Loader2, CheckCircle, Star, MessageSquare,
 } from 'lucide-react';
 
 const TABS = [
-  { key: 'info',     label: 'Thông tin cá nhân', Icon: User },
-  { key: 'password', label: 'Đổi mật khẩu',      Icon: Lock },
-  { key: 'reviews',  label: 'Đánh giá',           Icon: Star },
+  { key: 'info',      label: 'Thông tin cá nhân', Icon: User },
+  { key: 'password',  label: 'Đổi mật khẩu',      Icon: Lock },
+  { key: 'reviews',   label: 'Đánh giá',           Icon: Star },
+  { key: 'feedbacks', label: 'Phản hồi của tôi',   Icon: MessageSquare },
 ];
 
 function StarRow({ rating }) {
@@ -69,7 +72,11 @@ const PAYMENT_OPTIONS = [
 
 export default function UserProfilePage() {
   const { user, setUser } = useAuth();
-  const [tab,    setTab]    = useState('info');
+  const [searchParams]    = useSearchParams();
+  const [tab,    setTab]    = useState(() => {
+    const t = searchParams.get('tab');
+    return ['info', 'password', 'reviews', 'feedbacks'].includes(t) ? t : 'info';
+  });
   const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
@@ -81,6 +88,8 @@ export default function UserProfilePage() {
   const [showPw,  setShowPw]  = useState({ current: false, new: false, confirm: false });
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [feedbacksLoading, setFeedbacksLoading] = useState(false);
 
   useEffect(() => {
     if (tab !== 'reviews' || !user) return;
@@ -91,6 +100,15 @@ export default function UserProfilePage() {
       .catch(() => setReviews([]))
       .finally(() => setReviewsLoading(false));
   }, [tab, user?.userType]);
+
+  useEffect(() => {
+    if (tab !== 'feedbacks' || !user) return;
+    setFeedbacksLoading(true);
+    getMyFeedbacksApi()
+      .then(({ data }) => setFeedbacks(data.data || []))
+      .catch(() => setFeedbacks([]))
+      .finally(() => setFeedbacksLoading(false));
+  }, [tab, user]);
 
   useEffect(() => {
     if (!user) return;
@@ -439,6 +457,59 @@ export default function UserProfilePage() {
                   </div>
                 </div>
               ))
+            )}
+          </div>
+        )}
+
+        {/* Tab: Phản hồi của tôi */}
+        {tab === 'feedbacks' && (
+          <div className="space-y-4">
+            {feedbacksLoading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+              </div>
+            ) : feedbacks.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-200 p-10 flex flex-col items-center gap-3 text-center">
+                <div className="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center">
+                  <MessageSquare className="w-7 h-7 text-gray-300" />
+                </div>
+                <p className="font-medium text-gray-600">Chưa có phản hồi nào</p>
+                <p className="text-sm text-gray-400">Sử dụng nút "Gửi phản hồi" để báo cáo lỗi hoặc góp ý cho chúng tôi.</p>
+              </div>
+            ) : (
+              feedbacks.map((fb) => {
+                const statusMeta = {
+                  open:        { label: 'Chờ xử lý',   bg: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
+                  in_progress: { label: 'Đang xử lý',  bg: 'bg-blue-50 text-blue-700 border-blue-200'   },
+                  resolved:    { label: 'Đã giải quyết', bg: 'bg-green-50 text-green-700 border-green-200' },
+                  closed:      { label: 'Đã đóng',     bg: 'bg-gray-100 text-gray-600 border-gray-200'  },
+                }[fb.status] || { label: fb.status, bg: 'bg-gray-50 text-gray-600 border-gray-200' };
+
+                return (
+                  <div key={fb.feedbackId} className="bg-white rounded-2xl border border-gray-200 p-5">
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 text-sm truncate">{fb.subject}</p>
+                        <p className="text-xs text-orange-600 font-medium mt-0.5">{fb.categoryLabel}</p>
+                      </div>
+                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full border flex-shrink-0 ${statusMeta.bg}`}>
+                        {statusMeta.label}
+                      </span>
+                    </div>
+
+                    <p className="text-sm text-gray-600 leading-relaxed mb-3">{fb.description}</p>
+
+                    {fb.adminNote && (
+                      <div className="bg-blue-50 border border-blue-100 rounded-xl p-3.5">
+                        <p className="text-xs font-semibold text-blue-700 mb-1">Phản hồi từ Admin</p>
+                        <p className="text-sm text-blue-800 leading-relaxed">{fb.adminNote}</p>
+                      </div>
+                    )}
+
+                    <p className="text-xs text-gray-400 mt-3">{formatDateVN(fb.createdAt)}</p>
+                  </div>
+                );
+              })
             )}
           </div>
         )}
