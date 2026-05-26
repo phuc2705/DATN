@@ -14,8 +14,9 @@ function RevenueChart({ data }) {
 
   const revenues = data.map((d) => Number(d.revenue));
   const max = Math.max(...revenues, 1);
+  const CHART_H = 140; // px chiều cao vùng cột
+  const BAR_AREA_H = 100; // px chiều cao thực tế cột (phần còn lại cho badge)
 
-  // Tính % tăng giảm so với tháng trước
   const growthList = revenues.map((rev, i) => {
     if (i === 0) return null;
     const prev = revenues[i - 1];
@@ -25,76 +26,158 @@ function RevenueChart({ data }) {
 
   const totalRevenue = revenues.reduce((a, b) => a + b, 0);
 
+  // Tính tọa độ Y (px từ đáy) của đỉnh mỗi cột để vẽ đường xu hướng
+  const dotYs = revenues.map((rev) => Math.max((rev / max) * BAR_AREA_H, rev > 0 ? 8 : 3));
+
+  // Tạo polyline points — cần biết width mỗi cột, dùng % để tính
+  // Tỷ lệ x của tâm mỗi cột (gap=8px ≈ dùng flex, xấp xỉ equal width)
+  const n = data.length;
+
   return (
     <div>
-      {/* Tổng doanh thu 6 tháng */}
-      <div className="flex items-center justify-between mb-4">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
         <p className="text-xs text-[#62666d]">Tổng 6 tháng</p>
         <p className="text-sm font-bold text-[#828fff]">{formatPrice(totalRevenue)}</p>
       </div>
 
-      {/* Biểu đồ cột */}
-      <div className="flex items-end gap-2" style={{ height: 140 }}>
-        {data.map((d, i) => {
-          const rev = Number(d.revenue);
-          const pct = Math.max((rev / max) * 100, rev > 0 ? 6 : 2);
-          const [, mon] = d.month.split('-');
-          const growth = growthList[i];
-          const isLatest = i === data.length - 1;
+      {/* Biểu đồ — dùng position relative để overlay SVG đường xu hướng */}
+      <div className="relative" style={{ height: CHART_H + 32 }}>
 
-          return (
-            <div key={d.month} className="flex-1 flex flex-col items-center gap-1 group relative">
-              {/* Badge tăng giảm */}
-              <div className="h-5 flex items-center justify-center">
-                {growth !== null && (
-                  <span className={`text-[10px] font-bold leading-none ${growth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {growth >= 0 ? '▲' : '▼'}{Math.abs(growth)}%
-                  </span>
-                )}
-              </div>
+        {/* Đường lưới ngang (3 mức) */}
+        {[25, 50, 75].map((pct) => (
+          <div
+            key={pct}
+            className="absolute left-0 right-0 border-t border-dashed border-[#1e2028]"
+            style={{ bottom: 28 + (pct / 100) * BAR_AREA_H }}
+          />
+        ))}
 
-              {/* Tooltip khi hover */}
-              <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 bg-[#1e2028] border border-[#2e3038] text-[#f7f8f8] text-xs px-2 py-1.5 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
-                <p className="font-semibold">{formatPrice(rev)}</p>
-                {growth !== null && (
-                  <p className={growth >= 0 ? 'text-emerald-400' : 'text-red-400'}>
-                    {growth >= 0 ? '+' : ''}{growth}% so với {MONTH_LABEL[data[i-1].month.split('-')[1]]}
-                  </p>
-                )}
-              </div>
-
-              {/* Cột */}
-              <div
-                className={`w-full rounded-t transition-all ${
-                  isLatest
-                    ? 'bg-gradient-to-t from-[#5e6ad2] to-[#828fff]'
-                    : 'bg-[#1e2028] group-hover:bg-[#5e6ad2]/60'
-                }`}
-                style={{ height: `${pct}%` }}
+        {/* SVG đường xu hướng overlay */}
+        <svg
+          className="absolute left-0 right-0 pointer-events-none"
+          style={{ bottom: 28, height: BAR_AREA_H, width: '100%' }}
+          preserveAspectRatio="none"
+          viewBox={`0 0 ${n * 100} ${BAR_AREA_H}`}
+        >
+          {/* Vùng tô dưới đường */}
+          <defs>
+            <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#828fff" stopOpacity="0.15" />
+              <stop offset="100%" stopColor="#828fff" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <polyline
+            points={dotYs.map((y, i) => `${i * 100 + 50},${BAR_AREA_H - y}`).join(' ')}
+            fill="none"
+            stroke="#828fff"
+            strokeWidth="2.5"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            strokeDasharray="0"
+          />
+          {/* Vùng fill dưới đường */}
+          <polygon
+            points={[
+              ...dotYs.map((y, i) => `${i * 100 + 50},${BAR_AREA_H - y}`),
+              `${(n - 1) * 100 + 50},${BAR_AREA_H}`,
+              `50,${BAR_AREA_H}`,
+            ].join(' ')}
+            fill="url(#trendFill)"
+          />
+          {/* Chấm tròn tại đỉnh mỗi cột */}
+          {dotYs.map((y, i) => {
+            const growth = growthList[i];
+            const color = growth === null ? '#828fff' : growth >= 0 ? '#34d399' : '#f87171';
+            return (
+              <circle
+                key={i}
+                cx={i * 100 + 50}
+                cy={BAR_AREA_H - y}
+                r="4"
+                fill={color}
+                stroke="#0f1117"
+                strokeWidth="2"
               />
+            );
+          })}
+        </svg>
 
-              {/* Nhãn tháng */}
-              <span className={`text-[11px] font-medium ${isLatest ? 'text-[#828fff]' : 'text-[#62666d]'}`}>
-                {MONTH_LABEL[mon]}
-              </span>
-            </div>
-          );
-        })}
+        {/* Các cột + nhãn */}
+        <div className="absolute inset-x-0 bottom-0 flex items-end gap-1.5" style={{ height: CHART_H + 32 }}>
+          {data.map((d, i) => {
+            const rev = Number(d.revenue);
+            const pct = Math.max((rev / max) * 100, rev > 0 ? 6 : 2);
+            const [, mon] = d.month.split('-');
+            const growth = growthList[i];
+            const isLatest = i === data.length - 1;
+
+            // Màu cột theo tăng/giảm
+            let barColor = 'bg-[#1e2028]';
+            if (isLatest) barColor = 'bg-gradient-to-t from-[#5e6ad2] to-[#828fff]';
+            else if (growth === null) barColor = 'bg-[#2a2d35]';
+            else if (growth >= 0) barColor = 'bg-emerald-500/30';
+            else barColor = 'bg-red-500/30';
+
+            return (
+              <div key={d.month} className="flex-1 flex flex-col items-center gap-0 group relative">
+                {/* Badge tăng giảm */}
+                <div className="h-6 flex items-center justify-center mb-0.5">
+                  {growth !== null && (
+                    <span className={`text-[9px] font-bold leading-none px-1 py-0.5 rounded ${
+                      growth >= 0
+                        ? 'text-emerald-400 bg-emerald-400/10'
+                        : 'text-red-400 bg-red-400/10'
+                    }`}>
+                      {growth >= 0 ? '▲' : '▼'}{Math.abs(growth)}%
+                    </span>
+                  )}
+                </div>
+
+                {/* Tooltip */}
+                <div className="absolute z-20 bg-[#1e2028] border border-[#2e3038] text-[#f7f8f8] text-xs px-2.5 py-2 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl"
+                  style={{ bottom: 36, left: '50%', transform: 'translateX(-50%)' }}>
+                  <p className="font-bold text-[#f7f8f8]">{MONTH_LABEL[mon]}: {formatPrice(rev)}</p>
+                  {growth !== null && (
+                    <p className={`text-[11px] mt-0.5 ${growth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {growth >= 0 ? '+' : ''}{growth}% so với tháng trước
+                    </p>
+                  )}
+                </div>
+
+                {/* Cột — chiều cao tính trong BAR_AREA_H */}
+                <div
+                  className={`w-full rounded-t transition-all duration-300 group-hover:brightness-125 ${barColor}`}
+                  style={{ height: (pct / 100) * BAR_AREA_H }}
+                />
+
+                {/* Nhãn tháng */}
+                <span className={`text-[11px] font-medium mt-1 ${isLatest ? 'text-[#828fff]' : 'text-[#62666d]'}`}>
+                  {MONTH_LABEL[mon]}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Chú thích */}
-      <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[#1e2028]">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 pt-3 border-t border-[#1e2028]">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm bg-gradient-to-t from-[#5e6ad2] to-[#828fff]" />
           <span className="text-[11px] text-[#62666d]">Tháng hiện tại</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] text-emerald-400 font-bold">▲</span>
-          <span className="text-[11px] text-[#62666d]">Tăng so với tháng trước</span>
+          <div className="w-3 h-3 rounded-sm bg-emerald-500/30" />
+          <span className="text-[11px] text-[#62666d]">Tăng trưởng</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] text-red-400 font-bold">▼</span>
-          <span className="text-[11px] text-[#62666d]">Giảm so với tháng trước</span>
+          <div className="w-3 h-3 rounded-sm bg-red-500/30" />
+          <span className="text-[11px] text-[#62666d]">Sụt giảm</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <svg width="16" height="8"><polyline points="0,6 8,2 16,4" fill="none" stroke="#828fff" strokeWidth="2" strokeLinecap="round"/></svg>
+          <span className="text-[11px] text-[#62666d]">Xu hướng</span>
         </div>
       </div>
     </div>
