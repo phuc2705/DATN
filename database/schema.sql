@@ -50,12 +50,15 @@ CREATE TABLE helpers (
     address          TEXT NOT NULL,
     experience_years INT DEFAULT 0,
     rating_average   DECIMAL(3,2) DEFAULT 0.00,
+    total_reviews    INT DEFAULT 0,
     total_bookings   INT DEFAULT 0,
     hourly_rate      DECIMAL(10,2) NOT NULL DEFAULT 0,
     is_verified      BOOLEAN DEFAULT FALSE,
     is_available     BOOLEAN DEFAULT TRUE,
     bio              TEXT NULL,
     pending_service_ids TEXT NULL,        -- JSON array serviceId khi đăng ký, xóa sau khi admin duyệt
+    latitude         DECIMAL(10,8) NULL,  -- Tọa độ GPS để phân loại helper gần/xa với booking
+    longitude        DECIMAL(11,8) NULL,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     INDEX idx_rating (rating_average),
     INDEX idx_hourly_rate (hourly_rate),
@@ -124,6 +127,8 @@ CREATE TABLE bookings (
     note           TEXT NULL,
     is_reviewed          BOOLEAN DEFAULT FALSE,               -- Đã được customer đánh giá chưa
     is_helper_reviewed   TINYINT NOT NULL DEFAULT 0,          -- Helper đã đánh giá lại customer chưa
+    latitude         DECIMAL(10,8) NULL,                      -- Tọa độ GPS địa chỉ booking (dùng cho matching)
+    longitude        DECIMAL(11,8) NULL,
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE,
@@ -152,14 +157,17 @@ CREATE TABLE booking_logs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE payments (
-    payment_id     INT AUTO_INCREMENT PRIMARY KEY,
-    booking_id     INT UNIQUE NOT NULL,
-    amount         DECIMAL(10,2) NOT NULL,
-    payment_method ENUM('cash','bank_transfer','e_wallet','vnpay') NOT NULL DEFAULT 'cash',
-    payment_status ENUM('unpaid','paid','refunded') DEFAULT 'unpaid',
-    transaction_id VARCHAR(100) NULL,
-    paid_at        TIMESTAMP NULL,
-    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    payment_id            INT AUTO_INCREMENT PRIMARY KEY,
+    booking_id            INT UNIQUE NOT NULL,
+    amount                DECIMAL(10,2) NOT NULL,
+    commission_rate       DECIMAL(5,4) NULL,              -- Tỷ lệ hoa hồng nền tảng tại thời điểm thanh toán
+    platform_fee_amount   DECIMAL(10,2) NULL,             -- Số tiền nền tảng giữ lại
+    helper_earning        DECIMAL(10,2) NULL,             -- Số tiền helper thực nhận
+    payment_method        ENUM('cash','bank_transfer','e_wallet','vnpay') NOT NULL DEFAULT 'cash',
+    payment_status        ENUM('unpaid','paid','refunded','refund_pending') DEFAULT 'unpaid',
+    transaction_id        VARCHAR(100) NULL,
+    paid_at               TIMESTAMP NULL,
+    created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (booking_id) REFERENCES bookings(booking_id) ON DELETE CASCADE,
     INDEX idx_payment_status (payment_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -401,8 +409,8 @@ CREATE TABLE wallets (
     total_withdrawn DECIMAL(12,2) DEFAULT 0.00,
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    CONSTRAINT chk_balance CHECK (balance >= 0)
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    -- Không đặt CHECK (balance >= 0) vì tiền mặt có thể khấu trừ phí tạm thời âm ví
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE wallet_transactions (
@@ -438,16 +446,20 @@ CREATE TABLE wallet_transactions (
 
 DELIMITER $$
 
--- Tự động cập nhật rating trung bình của helper sau khi có review mới
+-- Tự động cập nhật rating trung bình và tổng số đánh giá của helper sau khi có review mới
 CREATE TRIGGER trg_update_helper_rating
 AFTER INSERT ON reviews
 FOR EACH ROW
 BEGIN
     UPDATE helpers
     SET rating_average = (
-        SELECT AVG(rating) FROM reviews
-        WHERE helper_id = NEW.helper_id AND is_visible = TRUE
-    )
+            SELECT COALESCE(AVG(rating), 0) FROM reviews
+            WHERE helper_id = NEW.helper_id AND is_visible = TRUE
+        ),
+        total_reviews = (
+            SELECT COUNT(*) FROM reviews
+            WHERE helper_id = NEW.helper_id AND is_visible = TRUE
+        )
     WHERE helper_id = NEW.helper_id;
 END$$
 
@@ -460,26 +472,6 @@ BEGIN
         UPDATE helpers
         SET total_bookings = total_bookings + 1
         WHERE helper_id = NEW.helper_id;
-    END IF;
-END$$
-
--- Tự động tạo bản ghi payment khi booking được tạo
-CREATE TRIGGER trg_create_payment_after_booking
-AFTER INSERT ON bookings
-FOR EACH ROW
-BEGIN
-    INSERT INTO payments (booking_id, amount, payment_method, payment_status)
-    VALUES (NEW.booking_id, NEW.total_price, 'cash', 'unpaid');
-END$$
-
--- Tự động ghi log khi trạng thái booking thay đổi
-CREATE TRIGGER trg_log_booking_status
-AFTER UPDATE ON bookings
-FOR EACH ROW
-BEGIN
-    IF NEW.status != OLD.status THEN
-        INSERT INTO booking_logs (booking_id, changed_by, old_status, new_status)
-        VALUES (NEW.booking_id, NEW.helper_id, OLD.status, NEW.status);
     END IF;
 END$$
 

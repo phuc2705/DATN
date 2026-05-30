@@ -21,14 +21,11 @@ const BookingModel = {
       );
       const bookingId = bookingResult.insertId;
 
-      // Trigger trg_create_payment_after_booking tự tạo payment với payment_method='cash'
-      // Cập nhật đúng payment_method theo yêu cầu của khách hàng
-      if (paymentMethod && paymentMethod !== 'cash') {
-        await connection.query(
-          'UPDATE payments SET payment_method = ? WHERE booking_id = ?',
-          [paymentMethod, bookingId]
-        );
-      }
+      // Tạo bản ghi thanh toán (trigger không tồn tại, insert trực tiếp)
+      await connection.query(
+        'INSERT INTO payments (booking_id, amount, payment_method, payment_status) VALUES (?, ?, ?, ?)',
+        [bookingId, totalPrice, paymentMethod || 'cash', 'unpaid']
+      );
 
       // Ghi log trạng thái khởi tạo (dùng user_id của customer, không phải customer_id)
       await connection.query(
@@ -37,12 +34,8 @@ const BookingModel = {
         [bookingId, changedByUserId || null]
       );
 
-      // Cập nhật số lần sử dụng mã khuyến mãi nếu có
+      // Ghi nhận sử dụng khuyến mãi (trigger trg_increment_promo_usage tự tăng used_count)
       if (promoId) {
-        await connection.query(
-          'UPDATE promotions SET used_count = used_count + 1 WHERE promo_id = ?',
-          [promoId]
-        );
         await connection.query(
           'INSERT INTO promotion_usage (promo_id, user_id, booking_id) SELECT ?, user_id, ? FROM customers WHERE customer_id = ?',
           [promoId, bookingId, customerId]
@@ -91,15 +84,8 @@ const BookingModel = {
         [bookingId, changedByUserId, oldStatus, newStatus, note]
       );
 
-      // Khi hoàn thành: cập nhật total_bookings của helper và loyalty_points của customer
+      // Khi hoàn thành: cộng loyalty_points cho customer (trigger tự tăng total_bookings của helper)
       if (newStatus === 'completed') {
-        await connection.query(
-          `UPDATE helpers h
-           JOIN bookings b ON h.helper_id = b.helper_id
-           SET h.total_bookings = h.total_bookings + 1
-           WHERE b.booking_id = ?`,
-          [bookingId]
-        );
         // +10 điểm tích lũy cho mỗi đơn hoàn thành
         await connection.query(
           `UPDATE customers c

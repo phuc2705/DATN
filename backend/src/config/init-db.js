@@ -204,10 +204,39 @@ async function runMigrations(connection) {
     await connection.query('ALTER TABLE booking_logs MODIFY COLUMN changed_by INT NULL');
   } catch (err) { /* ignore */ }
 
-  // Xóa trigger trùng lặp và dùng helper_id (không phải user_id) làm changed_by
+  // Xóa trigger trùng lặp dùng helper_id (không phải user_id) làm changed_by
   try {
     await connection.query('DROP TRIGGER IF EXISTS trg_log_booking_status');
   } catch (err) { /* ignore */ }
+
+  // Xóa trigger tự tạo payment với method='cash' (code INSERT trực tiếp để giữ đúng payment_method)
+  try {
+    await connection.query('DROP TRIGGER IF EXISTS trg_create_payment_after_booking');
+  } catch (err) { /* ignore */ }
+
+  // Xóa ràng buộc balance >= 0 (tiền mặt cần khấu trừ phí dù ví helper chưa có số dư)
+  try {
+    await connection.query('ALTER TABLE wallets DROP CONSTRAINT chk_balance');
+  } catch (err) { /* ignore — MySQL 5.7 không enforce hoặc đã xóa */ }
+
+  // Thêm tổng số đánh giá của helper (dùng cho admin dashboard)
+  try {
+    await connection.query('ALTER TABLE helpers ADD COLUMN total_reviews INT NOT NULL DEFAULT 0');
+  } catch (err) { /* ignore — cột đã tồn tại */ }
+
+  // Thêm tọa độ GPS vào helpers và bookings (dùng cho phân loại helper gần/xa)
+  try {
+    await connection.query('ALTER TABLE helpers ADD COLUMN latitude DECIMAL(10,8) NULL');
+  } catch (err) { /* ignore — cột đã tồn tại */ }
+  try {
+    await connection.query('ALTER TABLE helpers ADD COLUMN longitude DECIMAL(11,8) NULL');
+  } catch (err) { /* ignore — cột đã tồn tại */ }
+  try {
+    await connection.query('ALTER TABLE bookings ADD COLUMN latitude DECIMAL(10,8) NULL');
+  } catch (err) { /* ignore — cột đã tồn tại */ }
+  try {
+    await connection.query('ALTER TABLE bookings ADD COLUMN longitude DECIMAL(11,8) NULL');
+  } catch (err) { /* ignore — cột đã tồn tại */ }
 
   // Thêm trạng thái refund_pending cho payment (khi tự động hủy và cần hoàn tiền)
   try {
