@@ -114,7 +114,9 @@ export default function RegisterHelperPage() {
         <div className="absolute -bottom-16 -left-16 w-64 h-64 bg-white/5 rounded-full" />
 
         <div className="relative">
-          <img src="/logo.png" alt="CleanConnect" className="h-10 w-auto brightness-0 invert" />
+          <span className="text-2xl font-extrabold text-white tracking-tight">
+            Clean<span className="text-green-200">Connect</span>
+          </span>
         </div>
 
         <div className="relative">
