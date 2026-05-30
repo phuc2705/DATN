@@ -222,20 +222,12 @@ export default function Navbar() {
                 </button>
               </>
             ) : (
-              <div className="flex items-center gap-2">
-                <Link to="/login" className="hidden md:block text-sm font-medium text-gray-600 px-3 py-2 hover:text-orange-600 transition-colors">
-                  Đăng nhập
-                </Link>
-                <Link to="/register/customer" className="btn-primary text-sm px-4 py-2">
-                  Đăng ký
-                </Link>
-                <button
-                  onClick={() => setMobileOpen(!mobileOpen)}
-                  className="md:hidden p-2 rounded-xl text-gray-500 hover:text-orange-500 hover:bg-orange-50"
-                >
-                  {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                </button>
-              </div>
+              <button
+                onClick={() => setMobileOpen(!mobileOpen)}
+                className="md:hidden p-2 rounded-xl text-gray-500 hover:text-orange-500 hover:bg-orange-50"
+              >
+                {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
             )}
           </div>
         </div>

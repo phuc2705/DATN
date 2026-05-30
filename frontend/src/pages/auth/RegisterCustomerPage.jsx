@@ -156,7 +156,9 @@ export default function RegisterCustomerPage() {
 
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-6">
-            <img src="/logo.png" alt="CleanConnect" className="h-9 w-auto mx-auto object-contain" />
+            <span className="text-2xl font-extrabold text-gray-900 tracking-tight">
+              Clean<span className="text-orange-500">Connect</span>
+            </span>
           </div>
 
           {otpStep ? (

@@ -133,7 +133,10 @@ export default function LoginPage() {
 
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <img src="/logo.png" alt="CleanConnect" className="h-10 w-auto mx-auto object-contain" />
+            <span className="text-2xl font-extrabold text-gray-900 tracking-tight">
+              Clean<span className="text-orange-500">Connect</span>
+            </span>
+            <p className="text-xs text-gray-400 mt-1">Dịch vụ giúp việc theo giờ</p>
           </div>
 
           <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-8">
