@@ -8,7 +8,7 @@ const cors = require('cors');
 const path = require('path');
 const { testConnection } = require('./src/config/database');
 const { initDatabase } = require('./src/config/init-db');
-const { errorHandler, notFound } = require('./src/middleware/errorHandler');
+const { errorHandler } = require('./src/middleware/errorHandler');
 const { initSocket } = require('./src/socket');
 const { startBookingTimeoutJob } = require('./src/jobs/bookingTimeout');
 
@@ -23,45 +23,70 @@ const adminRoutes = require('./src/routes/admin.routes');
 const notificationRoutes = require('./src/routes/notification.routes');
 const feedbackRoutes = require('./src/routes/feedback.routes');
 
+const PORT = process.env.PORT || 5000;
+const IS_PROD = process.env.NODE_ENV === 'production';
+
+// ─── Danh sách origin được phép CORS ─────────────────────────────────────────
+// Phải định nghĩa TRƯỚC khi tạo Socket.io
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5000',
+  'http://localhost:3000',
+  process.env.CLIENT_URL,
+  'https://connectclean.onrender.com',
+].filter(Boolean);
+
+const isOriginAllowed = (origin) =>
+  !origin ||
+  /^http:\/\/localhost:\d+$/.test(origin) ||
+  allowedOrigins.includes(origin);
+
+// ─── Khởi tạo app + Socket.io ────────────────────────────────────────────────
 const app = express();
 const httpServer = createServer(app);
+
+// Fix: không dùng origin:'*' khi credentials:true — trình duyệt sẽ block
 const io = new Server(httpServer, {
-  cors: { origin: '*', credentials: true },
+  cors: {
+    origin: (origin, cb) => cb(null, isOriginAllowed(origin)),
+    credentials: true,
+  },
+  // Tăng ping timeout để tránh ngắt kết nối khi Render cold-start chậm
+  pingTimeout: 60000,
+  pingInterval: 25000,
 });
 initSocket(io);
-const PORT = process.env.PORT || 5000;
 
-// ─── Static files (trước CORS — không cần CORS check) ────────────────────────
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
-app.use(express.static(path.join(__dirname, '../frontend/dist')));
+// ─── Static files (phải TRƯỚC CORS middleware) ───────────────────────────────
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'), {
+  maxAge: IS_PROD ? '7d' : 0,
+}));
+
+// Serve React app (chỉ khi đã build — production hoặc local demo)
+const distPath = path.join(__dirname, '../frontend/dist');
+app.use(express.static(distPath, { maxAge: IS_PROD ? '1d' : 0 }));
 
 // ─── Body parser ──────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// ─── CORS chỉ cho /api (localhost + CLIENT_URL) ───────────────────────────────
-const allowedOrigins = [
-  process.env.CLIENT_URL,
-  'https://connectclean.onrender.com',
-].filter(Boolean);
-
+// ─── CORS cho /api ────────────────────────────────────────────────────────────
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin || /^http:\/\/localhost:\d+$/.test(origin)) {
-      callback(null, true);
-    } else if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
+    if (isOriginAllowed(origin)) callback(null, true);
+    else callback(new Error(`CORS blocked: ${origin}`));
   },
   credentials: true,
 };
 app.use('/api', cors(corsOptions));
 
-// ─── Health Check ─────────────────────────────────────────────────────────────
+// ─── Health Check (Render dùng để wake-up + monitor) ─────────────────────────
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'OK',
+    env: process.env.NODE_ENV,
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
@@ -75,25 +100,59 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/feedback', feedbackRoutes);
 
-// ─── Catch-all: trả về index.html cho React Router ───────────────────────────
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+// ─── API 404 — route /api/* không tìm thấy ────────────────────────────────────
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ success: false, message: `Không tìm thấy: ${req.method} ${req.path}` });
 });
 
-// ─── Xử lý lỗi (phải đặt SAU tất cả routes) ─────────────────────────────────
-app.use(notFound);
+// ─── Catch-all: trả về index.html cho React Router (SPA) ─────────────────────
+app.get('*', (req, res) => {
+  const indexPath = path.join(distPath, 'index.html');
+  const fs = require('fs');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(503).json({
+      success: false,
+      message: 'Frontend chưa được build. Chạy: cd frontend && npm run build',
+    });
+  }
+});
+
+// ─── Global error handler ─────────────────────────────────────────────────────
 app.use(errorHandler);
 
 // ─── Khởi động Server ─────────────────────────────────────────────────────────
 const startServer = async () => {
-  await testConnection(); // Kiểm tra DB trước khi mở cổng
-  await initDatabase();   // Tự động tạo schema + dữ liệu mẫu nếu DB còn trống
-  httpServer.listen(PORT, () => {
-    console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
-    console.log(`📋 Môi trường: ${process.env.NODE_ENV}`);
-    console.log(`🔌 Socket.io đang lắng nghe`);
-    startBookingTimeoutJob();
-  });
+  try {
+    await testConnection();
+    await initDatabase();
+
+    httpServer.listen(PORT, '0.0.0.0', () => {
+      console.log(`\n🚀 Server: http://localhost:${PORT}`);
+      console.log(`📋 Môi trường: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🔌 Socket.io: bật`);
+      if (IS_PROD) {
+        console.log(`🌐 Production URL: ${process.env.CLIENT_URL || `http://localhost:${PORT}`}`);
+      }
+      startBookingTimeoutJob();
+    });
+  } catch (err) {
+    console.error('❌ Khởi động thất bại:', err.message);
+    process.exit(1);
+  }
 };
+
+// ─── Graceful shutdown ────────────────────────────────────────────────────────
+const shutdown = (signal) => {
+  console.log(`\n${signal} nhận được — đang tắt server...`);
+  httpServer.close(() => {
+    console.log('✅ Server đã tắt.');
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(1), 10000); // Force exit sau 10s
+};
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 
 startServer();

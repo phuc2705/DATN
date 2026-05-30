@@ -6,6 +6,7 @@ services:
     region: singapore
     buildCommand: npm run build
     startCommand: node backend/server.js
+    healthCheckPath: /api/health
     autoDeploy: true
 
     envVars:
@@ -43,7 +44,9 @@ services:
       - key: CLIENT_URL
         value: https://connectclean.onrender.com
 
-      # ─── Firebase Client SDK (build-time — VITE_* được nhúng vào JS bundle) ───
+      # ─── Firebase Client SDK (VITE_* được nhúng vào JS bundle lúc build) ──────
+      - key: VITE_API_URL
+        value: ""
       - key: VITE_FIREBASE_API_KEY
         value: AIzaSyB5_VhDytOG3mdII5ZXe1yNjarWCFUX0oo
       - key: VITE_FIREBASE_AUTH_DOMAIN
@@ -61,7 +64,7 @@ services:
       - key: EMAIL_USER
         value: phuc9cham@gmail.com
       - key: GMAIL_CLIENT_ID
-        value: 440859697732-d9vrekqdc64hq15qkfqnno66nadqp4oq.apps.googleusercontent.com
+        sync: false          # ← Điền tay trong Render Dashboard
       - key: GMAIL_CLIENT_SECRET
         sync: false          # ← Điền tay trong Render Dashboard
       - key: GMAIL_REFRESH_TOKEN
@@ -73,13 +76,13 @@ services:
       - key: FIREBASE_CLIENT_EMAIL
         value: firebase-adminsdk-fbsvc@connectclean-945f3.iam.gserviceaccount.com
       - key: FIREBASE_PRIVATE_KEY
-        sync: false          # ← Điền tay trong Render Dashboard (paste nguyên chuỗi -----BEGIN PRIVATE KEY-----)
+        sync: false          # ← Điền tay: paste toàn bộ -----BEGIN PRIVATE KEY-----
 
       # ─── VNPay (sandbox) ──────────────────────────────────────────────────────
       - key: VNP_TMN_CODE
-        value: IA84YMKV
+        value: 0QXZN14N
       - key: VNP_HASH_SECRET
-        sync: false          # ← Điền tay trong Render Dashboard
+        value: WV0HLLEQ8CXPY1JCH1K2BK5HBX4PD3RZ
       - key: VNP_URL
         value: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
       - key: VNP_RETURN_URL

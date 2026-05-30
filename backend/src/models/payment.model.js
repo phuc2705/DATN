@@ -46,42 +46,32 @@ const PaymentModel = {
           [helperUserId]
         );
 
+        // Lấy ví trước khi thay đổi để tính balance_after đúng
+        const [[w]] = await connection.query(
+          'SELECT wallet_id, balance FROM wallets WHERE user_id = ?', [helperUserId]
+        );
+
         if (paymentMethod === 'cash') {
-          // Tiền mặt: helper đã thu tiền trực tiếp từ khách, nền tảng khấu trừ phí vào ví
-          await connection.query(
-            `UPDATE wallets SET balance = balance - ?, updated_at = NOW()
-             WHERE user_id = ?`,
-            [platformFeeAmount, helperUserId]
-          );
-          const [[w]] = await connection.query(
-            'SELECT wallet_id, balance FROM wallets WHERE user_id = ?', [helperUserId]
-          );
+          // Tiền mặt: helper thu trực tiếp → nền tảng khấu trừ phí hoa hồng
+          // Chỉ insert wallet_transaction, trigger tự cập nhật balance (tránh double-deduction)
+          const balanceAfter = Number(w.balance) - platformFeeAmount;
           await connection.query(
             `INSERT INTO wallet_transactions
                (wallet_id, type, amount, balance_after, source, booking_id, description)
              VALUES (?, 'debit', ?, ?, 'booking_payment', ?, ?)`,
-            [w.wallet_id, platformFeeAmount, w.balance, bookingId,
+            [w.wallet_id, platformFeeAmount, balanceAfter, bookingId,
              `Khấu trừ phí nền tảng ${Math.round(commissionRate * 100)}% — Đơn #${bookingId} (tiền mặt)`]
           );
         } else {
-          // Online (VNPay/bank): nền tảng nhận tiền, cộng phần của helper vào ví
-          await connection.query(
-            `UPDATE wallets
-             SET balance      = balance + ?,
-                 total_earned = total_earned + ?,
-                 updated_at   = NOW()
-             WHERE user_id = ?`,
-            [helperEarningAmount, helperEarningAmount, helperUserId]
-          );
-          const [[w]] = await connection.query(
-            'SELECT wallet_id, balance FROM wallets WHERE user_id = ?', [helperUserId]
-          );
+          // Online (VNPay/bank): nền tảng nhận tiền → cộng phần helper vào ví
+          // Chỉ insert wallet_transaction, trigger tự cập nhật balance (tránh double-credit)
+          const balanceAfter = Number(w.balance) + helperEarningAmount;
           const methodLabel = paymentMethod === 'vnpay' ? 'VNPay' : 'Chuyển khoản';
           await connection.query(
             `INSERT INTO wallet_transactions
                (wallet_id, type, amount, balance_after, source, booking_id, description)
              VALUES (?, 'credit', ?, ?, 'booking_payment', ?, ?)`,
-            [w.wallet_id, helperEarningAmount, w.balance, bookingId,
+            [w.wallet_id, helperEarningAmount, balanceAfter, bookingId,
              `Thu nhập từ đơn #${bookingId} (${methodLabel})`]
           );
         }
@@ -126,8 +116,8 @@ const PaymentModel = {
        JOIN services s ON b.service_id = s.service_id
        JOIN customers c ON b.customer_id = c.customer_id
        JOIN users uc ON c.user_id = uc.user_id
-       JOIN helpers h ON b.helper_id = h.helper_id
-       JOIN users uh ON h.user_id = uh.user_id
+       LEFT JOIN helpers h ON b.helper_id = h.helper_id
+       LEFT JOIN users uh ON h.user_id = uh.user_id
        WHERE p.booking_id = ?`,
       [bookingId]
     );
@@ -144,8 +134,8 @@ const PaymentModel = {
        FROM payments p
        JOIN bookings b ON p.booking_id = b.booking_id
        JOIN services s ON b.service_id = s.service_id
-       JOIN helpers h ON b.helper_id = h.helper_id
-       JOIN users u ON h.user_id = u.user_id
+       LEFT JOIN helpers h ON b.helper_id = h.helper_id
+       LEFT JOIN users u ON h.user_id = u.user_id
        WHERE b.customer_id = ?
        ORDER BY p.created_at DESC`,
       [customerId]
