@@ -8,7 +8,7 @@ import {
   Sparkles, Sun, Leaf, Shirt, ChefHat, Star, Droplets,
   Users, Zap, ShieldCheck, CreditCard, MapPin,
   Search, Calendar, CheckCircle, Check,
-  Home, ArrowRight,
+  Home, ArrowRight, X, ChevronDown,
 } from 'lucide-react';
 
 const SERVICE_ICONS = [
@@ -117,9 +117,12 @@ export default function HomePage() {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [city, setCity] = useState(CITIES[0]);
-  const [selectedServiceId, setSelectedServiceId] = useState('');
+  const [selectedServiceIds, setSelectedServiceIds] = useState([]);
+  const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
+  const [activeServiceFilter, setActiveServiceFilter] = useState([]);
   const [statsVisible, setStatsVisible] = useState(false);
   const statsRef = useRef(null);
+  const serviceDropdownRef = useRef(null);
   const [testimonials, setTestimonials] = useState(TESTIMONIALS_FALLBACK);
 
   useEffect(() => {
@@ -152,17 +155,44 @@ export default function HomePage() {
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (serviceDropdownRef.current && !serviceDropdownRef.current.contains(e.target)) {
+        setServiceDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleServiceClick = (serviceId) => {
     navigate(`/services/${serviceId}`);
   };
 
+  const toggleServiceId = (id) => {
+    setSelectedServiceIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
   const handleHeroSearch = () => {
-    if (selectedServiceId) {
-      navigate(`/services/${selectedServiceId}`);
+    if (selectedServiceIds.length === 1) {
+      navigate(`/services/${selectedServiceIds[0]}`);
     } else {
+      setActiveServiceFilter([...selectedServiceIds]);
+      setServiceDropdownOpen(false);
       document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  const clearFilter = () => {
+    setActiveServiceFilter([]);
+    setSelectedServiceIds([]);
+  };
+
+  const filteredServices = activeServiceFilter.length > 0
+    ? services.filter(s => activeServiceFilter.includes(s.serviceId))
+    : services;
 
   return (
     <div className="animate-fadeIn -mt-2">
@@ -199,18 +229,47 @@ export default function HomePage() {
                   {CITIES.map((c) => <option key={c}>{c}</option>)}
                 </select>
               </div>
-              <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-xl">
-                <Sparkles className="w-4 h-4 text-gray-400 shrink-0" />
-                <select
-                  value={selectedServiceId}
-                  onChange={(e) => setSelectedServiceId(e.target.value)}
-                  className="bg-transparent text-gray-700 text-sm font-medium flex-1 focus:outline-none"
+              <div ref={serviceDropdownRef} className="flex-1 relative">
+                <button
+                  type="button"
+                  onClick={() => setServiceDropdownOpen(!serviceDropdownOpen)}
+                  className="w-full flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-xl text-sm text-left"
                 >
-                  <option value="">Chọn dịch vụ...</option>
-                  {services.map((s) => (
-                    <option key={s.serviceId} value={s.serviceId}>{s.serviceName}</option>
-                  ))}
-                </select>
+                  <Sparkles className="w-4 h-4 text-gray-400 shrink-0" />
+                  <span className={`flex-1 truncate font-medium ${selectedServiceIds.length > 0 ? 'text-gray-800' : 'text-gray-400'}`}>
+                    {selectedServiceIds.length === 0
+                      ? 'Chọn dịch vụ...'
+                      : selectedServiceIds.length === 1
+                        ? services.find(s => s.serviceId === selectedServiceIds[0])?.serviceName
+                        : `${selectedServiceIds.length} dịch vụ đã chọn`}
+                  </span>
+                  {selectedServiceIds.length > 0 ? (
+                    <X
+                      className="w-3.5 h-3.5 text-gray-400 hover:text-gray-700 shrink-0"
+                      onClick={(e) => { e.stopPropagation(); setSelectedServiceIds([]); setActiveServiceFilter([]); }}
+                    />
+                  ) : (
+                    <ChevronDown className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${serviceDropdownOpen ? 'rotate-180' : ''}`} />
+                  )}
+                </button>
+                {serviceDropdownOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-full min-w-[220px] bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+                    {services.map(s => (
+                      <label
+                        key={s.serviceId}
+                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-orange-50 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedServiceIds.includes(s.serviceId)}
+                          onChange={() => toggleServiceId(s.serviceId)}
+                          className="accent-orange-500 w-4 h-4 shrink-0"
+                        />
+                        <span className="text-sm text-gray-700">{s.serviceName}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
               <button
                 onClick={handleHeroSearch}
@@ -252,8 +311,20 @@ export default function HomePage() {
           <div>
             <p className="text-orange-500 text-sm font-semibold uppercase tracking-wide mb-1">Dịch vụ của chúng tôi</p>
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Chọn dịch vụ phù hợp</h2>
-            <p className="text-gray-500 text-sm mt-1">Đặt lịch nhanh chóng, người làm uy tín</p>
+            <p className="text-gray-500 text-sm mt-1">
+              {activeServiceFilter.length > 0
+                ? `Hiển thị ${filteredServices.length} dịch vụ phù hợp`
+                : 'Đặt lịch nhanh chóng, người làm uy tín'}
+            </p>
           </div>
+          {activeServiceFilter.length > 0 && (
+            <button
+              onClick={clearFilter}
+              className="flex items-center gap-1 text-sm text-gray-400 hover:text-orange-500 transition-colors"
+            >
+              <X className="w-3.5 h-3.5" /> Xóa bộ lọc
+            </button>
+          )}
         </div>
 
         {loading ? (
@@ -266,9 +337,15 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+        ) : filteredServices.length === 0 ? (
+          <div className="text-center py-16 text-gray-400">
+            <Sparkles className="w-10 h-10 mx-auto mb-3 opacity-30" />
+            <p className="text-sm">Không tìm thấy dịch vụ phù hợp.</p>
+            <button onClick={clearFilter} className="mt-3 text-orange-500 text-sm hover:underline">Xem tất cả dịch vụ</button>
+          </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
-            {services.map((svc, idx) => {
+            {filteredServices.map((svc, idx) => {
               const { bg, Icon } = SERVICE_ICONS[idx % SERVICE_ICONS.length];
               return (
                 <button
