@@ -117,6 +117,7 @@ export default function HomePage() {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [city, setCity] = useState(CITIES[0]);
+  const [selectedServiceId, setSelectedServiceId] = useState('');
   const [statsVisible, setStatsVisible] = useState(false);
   const statsRef = useRef(null);
   const [testimonials, setTestimonials] = useState(TESTIMONIALS_FALLBACK);
@@ -153,6 +154,14 @@ export default function HomePage() {
 
   const handleServiceClick = (serviceId) => {
     navigate(`/services/${serviceId}`);
+  };
+
+  const handleHeroSearch = () => {
+    if (selectedServiceId) {
+      navigate(`/services/${selectedServiceId}`);
+    } else {
+      document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -192,7 +201,11 @@ export default function HomePage() {
               </div>
               <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-xl">
                 <Sparkles className="w-4 h-4 text-gray-400 shrink-0" />
-                <select className="bg-transparent text-gray-700 text-sm font-medium flex-1 focus:outline-none">
+                <select
+                  value={selectedServiceId}
+                  onChange={(e) => setSelectedServiceId(e.target.value)}
+                  className="bg-transparent text-gray-700 text-sm font-medium flex-1 focus:outline-none"
+                >
                   <option value="">Chọn dịch vụ...</option>
                   {services.map((s) => (
                     <option key={s.serviceId} value={s.serviceId}>{s.serviceName}</option>
@@ -200,7 +213,7 @@ export default function HomePage() {
                 </select>
               </div>
               <button
-                onClick={() => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={handleHeroSearch}
                 className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 py-2.5 rounded-xl transition-all active:scale-95 whitespace-nowrap text-sm shadow-md"
               >
                 Tìm ngay

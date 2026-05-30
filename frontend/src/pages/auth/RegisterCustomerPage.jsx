@@ -4,6 +4,14 @@ import { registerCustomerApi, verifyOtpApi, resendOtpApi } from '../../api/auth.
 import { useAuth } from '../../hooks/useAuth';
 import toast from 'react-hot-toast';
 import OtpInput from '../../components/common/OtpInput';
+import { Eye, EyeOff } from 'lucide-react';
+
+const PHONE_RE = /^(0[35789])[0-9]{8}$/;
+
+function FieldError({ msg }) {
+  if (!msg) return null;
+  return <p className="text-red-500 text-xs mt-1">{msg}</p>;
+}
 
 export default function RegisterCustomerPage() {
   const navigate = useNavigate();
@@ -11,20 +19,40 @@ export default function RegisterCustomerPage() {
   const [form, setForm] = useState({
     email: '', password: '', fullName: '', phone: '', address: '', city: '',
   });
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // OTP step state
   const [otpStep, setOtpStep] = useState(false);
   const [otp, setOtp] = useState('');
   const [registeredEmail, setRegisteredEmail] = useState('');
   const [savedPassword, setSavedPassword] = useState('');
   const [resending, setResending] = useState(false);
 
-  const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
+  const set = (field) => (e) => {
+    setForm({ ...form, [field]: e.target.value });
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }));
+  };
+
+  const validate = () => {
+    const e = {};
+    if (!form.fullName.trim()) e.fullName = 'Vui lòng nhập họ và tên';
+    if (!form.email.trim()) e.email = 'Vui lòng nhập email';
+    else if (!/^\S+@\S+\.\S+$/.test(form.email)) e.email = 'Email không hợp lệ';
+    if (!form.phone.trim()) e.phone = 'Vui lòng nhập số điện thoại';
+    else if (!PHONE_RE.test(form.phone)) e.phone = 'Số điện thoại không đúng (VD: 0901234567)';
+    if (!form.password) e.password = 'Vui lòng nhập mật khẩu';
+    else if (form.password.length < 6) e.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+    if (!form.address.trim()) e.address = 'Vui lòng nhập địa chỉ';
+    if (!form.city.trim()) e.city = 'Vui lòng nhập thành phố';
+    return e;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const errs = validate();
+    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+    setErrors({});
     setLoading(true);
     try {
       const res = await registerCustomerApi(form);
@@ -34,7 +62,15 @@ export default function RegisterCustomerPage() {
       setOtpStep(true);
       toast.success('Mã OTP đã được gửi đến email của bạn!');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Đăng ký thất bại');
+      const msg = err.response?.data?.message || '';
+      // Gán lỗi về đúng trường nếu server trả về thông tin cụ thể
+      if (msg.toLowerCase().includes('email')) {
+        setErrors({ email: msg });
+      } else if (msg.toLowerCase().includes('điện thoại') || msg.toLowerCase().includes('phone')) {
+        setErrors({ phone: 'Số điện thoại không đúng hoặc đã được dùng' });
+      } else {
+        toast.error(msg || 'Đăng ký thất bại, vui lòng kiểm tra lại thông tin');
+      }
     } finally {
       setLoading(false);
     }
@@ -68,6 +104,9 @@ export default function RegisterCustomerPage() {
     }
   };
 
+  const inputClass = (field) =>
+    `input-field ${errors[field] ? 'border-red-400 focus:border-red-400' : ''}`;
+
   return (
     <div className="min-h-screen flex">
       {/* Left — branding */}
@@ -75,8 +114,11 @@ export default function RegisterCustomerPage() {
         <div className="absolute -top-20 -right-20 w-72 h-72 bg-white/10 rounded-full" />
         <div className="absolute -bottom-16 -left-16 w-64 h-64 bg-white/5 rounded-full" />
 
+        {/* Logo text */}
         <div className="relative">
-          <img src="/logo.png" alt="CleanConnect" className="h-10 w-auto brightness-0 invert" />
+          <span className="text-2xl font-extrabold text-white tracking-tight">
+            Clean<span className="text-orange-200">Connect</span>
+          </span>
         </div>
 
         <div className="relative">
@@ -103,7 +145,6 @@ export default function RegisterCustomerPage() {
       {/* Right — form */}
       <div className="flex-1 flex items-start justify-center p-6 bg-slate-50 overflow-y-auto">
         <div className="w-full max-w-lg py-6">
-          {/* Back to home */}
           <div className="mb-4">
             <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-orange-500 transition-colors">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -115,11 +156,10 @@ export default function RegisterCustomerPage() {
 
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-6">
-            <img src="/logo.png" alt="CleanConnect" className="h-9 w-auto mx-auto" />
+            <img src="/logo.png" alt="CleanConnect" className="h-9 w-auto mx-auto object-contain" />
           </div>
 
           {otpStep ? (
-            /* OTP verification card */
             <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-8">
               <div className="text-center mb-6">
                 <div className="text-4xl mb-3">📧</div>
@@ -131,12 +171,7 @@ export default function RegisterCustomerPage() {
               </div>
 
               <div className="space-y-6">
-                <OtpInput
-                  value={otp}
-                  onChange={setOtp}
-                  onComplete={handleVerifyOtp}
-                  disabled={loading}
-                />
+                <OtpInput value={otp} onChange={setOtp} onComplete={handleVerifyOtp} disabled={loading} />
 
                 <button
                   onClick={() => handleVerifyOtp()}
@@ -167,73 +202,72 @@ export default function RegisterCustomerPage() {
               </div>
 
               <div className="mt-3 text-center">
-                <button
-                  onClick={() => setOtpStep(false)}
-                  className="text-sm text-gray-400 hover:text-gray-600"
-                >
+                <button onClick={() => setOtpStep(false)} className="text-sm text-gray-400 hover:text-gray-600">
                   ← Quay lại đăng ký
                 </button>
               </div>
             </div>
           ) : (
-            /* Registration form card */
             <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-8">
               <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-900">Tạo tài khoản</h1>
                 <p className="text-gray-500 text-sm mt-1">Đăng ký để đặt dịch vụ giúp việc ngay hôm nay</p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Row 1: Họ tên */}
+              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+                {/* Họ tên */}
                 <div>
                   <label className="label">Họ và tên <span className="text-red-400">*</span></label>
                   <input
-                    type="text" required
+                    type="text"
                     value={form.fullName}
                     onChange={set('fullName')}
                     placeholder="Nguyễn Văn A"
-                    className="input-field"
+                    className={inputClass('fullName')}
                     autoComplete="name"
                   />
+                  <FieldError msg={errors.fullName} />
                 </div>
 
-                {/* Row 2: Email + SĐT */}
+                {/* Email + SĐT */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="label">Email <span className="text-red-400">*</span></label>
                     <input
-                      type="email" required
+                      type="email"
                       value={form.email}
                       onChange={set('email')}
                       placeholder="email@example.com"
-                      className="input-field"
+                      className={inputClass('email')}
                       autoComplete="email"
                     />
+                    <FieldError msg={errors.email} />
                   </div>
                   <div>
                     <label className="label">Số điện thoại <span className="text-red-400">*</span></label>
                     <input
-                      type="tel" required
+                      type="tel"
                       value={form.phone}
                       onChange={set('phone')}
                       placeholder="0901234567"
-                      className="input-field"
+                      className={inputClass('phone')}
                       autoComplete="tel"
+                      maxLength={10}
                     />
+                    <FieldError msg={errors.phone} />
                   </div>
                 </div>
 
-                {/* Row 3: Mật khẩu */}
+                {/* Mật khẩu */}
                 <div>
                   <label className="label">Mật khẩu <span className="text-red-400">*</span></label>
                   <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'}
-                      required
                       value={form.password}
                       onChange={set('password')}
                       placeholder="Tối thiểu 6 ký tự"
-                      className="input-field pr-11"
+                      className={`${inputClass('password')} pr-11`}
                       autoComplete="new-password"
                     />
                     <button
@@ -241,39 +275,35 @@ export default function RegisterCustomerPage() {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                     >
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-                          d={showPassword
-                            ? "M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
-                            : "M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                          }
-                        />
-                      </svg>
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
+                  <FieldError msg={errors.password} />
                 </div>
 
-                {/* Row 4: Địa chỉ + Thành phố */}
+                {/* Địa chỉ + Thành phố */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="label">Địa chỉ <span className="text-red-400">*</span></label>
                     <input
-                      type="text" required
+                      type="text"
                       value={form.address}
                       onChange={set('address')}
                       placeholder="123 Đường ABC"
-                      className="input-field"
+                      className={inputClass('address')}
                     />
+                    <FieldError msg={errors.address} />
                   </div>
                   <div>
                     <label className="label">Thành phố <span className="text-red-400">*</span></label>
                     <input
-                      type="text" required
+                      type="text"
                       value={form.city}
                       onChange={set('city')}
-                      placeholder="Hồ Chí Minh"
-                      className="input-field"
+                      placeholder="Hà Nội"
+                      className={inputClass('city')}
                     />
+                    <FieldError msg={errors.city} />
                   </div>
                 </div>
 
