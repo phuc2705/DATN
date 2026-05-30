@@ -25,10 +25,10 @@ const SERVICE_ICONS = [
 // Số liệu tham khảo từ BTaskee (nguồn: VnExpress 8/2024, Impact Square 1/2024)
 // và được điều chỉnh phù hợp với quy mô pilot tại Hà Nội
 const STATS = [
-  { value: '1.200+',  label: 'Khách hàng tin dùng',       Icon: Users,    color: 'text-blue-500',   bg: 'bg-blue-50 group-hover:bg-blue-500' },
-  { value: '97%',     label: 'Tỷ lệ hài lòng',            Icon: Star,     color: 'text-yellow-500', bg: 'bg-yellow-50 group-hover:bg-yellow-500' },
-  { value: '85+',     label: 'Người giúp việc xác minh',   Icon: Sparkles, color: 'text-orange-500', bg: 'bg-orange-50 group-hover:bg-orange-500' },
-  { value: '4.500+',  label: 'Lịch đã hoàn thành',         Icon: Calendar, color: 'text-green-500',  bg: 'bg-green-50 group-hover:bg-green-500' },
+  { value: '120+',    label: 'Khách hàng tin dùng',       Icon: Users,    color: 'text-blue-500',   bg: 'bg-blue-50 group-hover:bg-blue-500' },
+  { value: '95%',     label: 'Tỷ lệ hài lòng',            Icon: Star,     color: 'text-yellow-500', bg: 'bg-yellow-50 group-hover:bg-yellow-500' },
+  { value: '20+',     label: 'Người giúp việc xác minh',   Icon: Sparkles, color: 'text-orange-500', bg: 'bg-orange-50 group-hover:bg-orange-500' },
+  { value: '350+',    label: 'Lịch đã hoàn thành',         Icon: Calendar, color: 'text-green-500',  bg: 'bg-green-50 group-hover:bg-green-500' },
 ];
 
 const FEATURES = [
