@@ -18,7 +18,7 @@ import {
 
 // ── Design tokens (Linear dark system) ───────────────────────────────────────
 // canvas #010102 | surface-1 #0f1117 | surface-2 #16181f | surface-3 #1e2028
-// hairline #23252a | ink #f7f8f8 | ink-muted #d0d6e0 | ink-subtle #8a8f98
+// hairline #e5e7eb | ink #f7f8f8 | ink-muted #d0d6e0 | ink-subtle #8a8f98
 // ink-tertiary #62666d | primary #5e6ad2 | primary-hover #828fff
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -67,12 +67,12 @@ function DetailModal({ booking, onClose, onAssign }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
-      <div className="w-full max-w-lg bg-[#0f1117] border border-[#23252a] rounded-lg shadow-2xl">
+      <div className="w-full max-w-lg bg-white border border-gray-200 rounded-lg shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#23252a]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div>
-            <p className="text-[10px] font-medium text-[#62666d] uppercase tracking-widest mb-0.5">Đơn hàng</p>
-            <h3 className="text-[#f7f8f8] font-semibold text-base" style={{ letterSpacing: '-0.3px' }}>
+            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-0.5">Đơn hàng</p>
+            <h3 className="text-gray-900 font-semibold text-base" style={{ letterSpacing: '-0.3px' }}>
               {booking.bookingId}
             </h3>
           </div>
@@ -80,7 +80,7 @@ function DetailModal({ booking, onClose, onAssign }) {
             <StatusBadge status={booking.status} />
             <button
               onClick={onClose}
-              className="p-1.5 rounded-md text-[#62666d] hover:text-[#f7f8f8] hover:bg-[#1e2028] transition-colors"
+              className="p-1.5 rounded-md text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -91,36 +91,36 @@ function DetailModal({ booking, onClose, onAssign }) {
         <div className="px-6 py-5 space-y-3">
           <div className="grid grid-cols-2 gap-2.5">
             {fields.map(({ Icon, label, value }) => (
-              <div key={label} className="bg-[#0a0b0f] border border-[#1e2028] rounded-md p-3">
+              <div key={label} className="bg-gray-100 border border-gray-200 rounded-md p-3">
                 <div className="flex items-center gap-1.5 mb-1.5">
-                  <Icon className="w-3 h-3 text-[#62666d]" />
-                  <p className="text-[10px] font-medium text-[#62666d] uppercase tracking-widest">{label}</p>
+                  <Icon className="w-3 h-3 text-gray-400" />
+                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">{label}</p>
                 </div>
-                <p className="text-sm text-[#f7f8f8] font-medium">{value}</p>
+                <p className="text-sm text-gray-900 font-medium">{value}</p>
               </div>
             ))}
           </div>
 
           {booking.address && (
-            <div className="bg-[#0a0b0f] border border-[#1e2028] rounded-md p-3">
-              <p className="text-[10px] font-medium text-[#62666d] uppercase tracking-widest mb-1.5">Địa chỉ</p>
-              <p className="text-sm text-[#d0d6e0]">{booking.address}</p>
+            <div className="bg-gray-100 border border-gray-200 rounded-md p-3">
+              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1.5">Địa chỉ</p>
+              <p className="text-sm text-gray-700">{booking.address}</p>
             </div>
           )}
 
           {booking.notes && (
-            <div className="bg-[#0a0b0f] border border-[#1e2028] rounded-md p-3">
-              <p className="text-[10px] font-medium text-[#62666d] uppercase tracking-widest mb-1.5">Ghi chú</p>
-              <p className="text-sm text-[#d0d6e0]">{booking.notes}</p>
+            <div className="bg-gray-100 border border-gray-200 rounded-md p-3">
+              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1.5">Ghi chú</p>
+              <p className="text-sm text-gray-700">{booking.notes}</p>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-[#23252a] flex items-center justify-between">
+        <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-[#8a8f98] hover:text-[#f7f8f8] transition-colors"
+            className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
           >
             Đóng
           </button>
@@ -142,23 +142,23 @@ function DetailModal({ booking, onClose, onAssign }) {
 function CancelModal({ booking, onClose, onConfirm, loading }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
-      <div className="w-full max-w-sm bg-[#0f1117] border border-[#23252a] rounded-lg shadow-2xl">
+      <div className="w-full max-w-sm bg-white border border-gray-200 rounded-lg shadow-2xl">
         <div className="p-6">
           <div className="flex items-start gap-3 mb-4">
             <div className="w-9 h-9 rounded-md bg-red-400/10 border border-red-400/20 flex items-center justify-center flex-shrink-0 mt-0.5">
               <AlertTriangle className="w-4 h-4 text-red-400" />
             </div>
             <div>
-              <h3 className="text-[#f7f8f8] font-semibold text-base" style={{ letterSpacing: '-0.3px' }}>
+              <h3 className="text-gray-900 font-semibold text-base" style={{ letterSpacing: '-0.3px' }}>
                 Hủy đơn hàng
               </h3>
-              <p className="text-[#8a8f98] text-xs mt-0.5">
+              <p className="text-gray-500 text-xs mt-0.5">
                 Đơn {booking.bookingId} · {booking.customerName}
               </p>
             </div>
           </div>
 
-          <p className="text-sm text-[#d0d6e0] leading-relaxed mb-6">
+          <p className="text-sm text-gray-700 leading-relaxed mb-6">
             Hành động này không thể hoàn tác. Đơn hàng sẽ bị hủy và khách hàng sẽ được thông báo.
           </p>
 
@@ -166,7 +166,7 @@ function CancelModal({ booking, onClose, onConfirm, loading }) {
             <button
               onClick={onClose}
               disabled={loading}
-              className="flex-1 px-4 py-2.5 text-sm font-medium text-[#8a8f98] hover:text-[#f7f8f8] border border-[#23252a] rounded-md hover:bg-[#1e2028] transition-all disabled:opacity-50"
+              className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-900 border border-gray-200 rounded-md hover:bg-gray-100 transition-all disabled:opacity-50"
             >
               Hủy bỏ
             </button>
@@ -219,20 +219,20 @@ function AssignModal({ booking, onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
-      <div className="w-full max-w-md bg-[#0f1117] border border-[#23252a] rounded-lg shadow-2xl">
+      <div className="w-full max-w-md bg-white border border-gray-200 rounded-lg shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#23252a]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div>
-            <h3 className="text-[#f7f8f8] font-semibold text-base" style={{ letterSpacing: '-0.3px' }}>
+            <h3 className="text-gray-900 font-semibold text-base" style={{ letterSpacing: '-0.3px' }}>
               Giao việc cho helper
             </h3>
-            <p className="text-[#8a8f98] text-xs mt-0.5">
+            <p className="text-gray-500 text-xs mt-0.5">
               Đơn {booking.bookingId} · {formatDate(booking.bookingDate)} · {booking.startTime}–{booking.endTime}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-md text-[#62666d] hover:text-[#f7f8f8] hover:bg-[#1e2028] transition-colors"
+            className="p-1.5 rounded-md text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -242,7 +242,7 @@ function AssignModal({ booking, onClose, onSaved }) {
           {loadingHelpers ? (
             <div className="flex justify-center py-10"><LoadingSpinner /></div>
           ) : helpers.length === 0 ? (
-            <p className="text-center text-[#62666d] text-sm py-8">Không có helper phù hợp.</p>
+            <p className="text-center text-gray-400 text-sm py-8">Không có helper phù hợp.</p>
           ) : (
             <div className="space-y-1.5 max-h-60 overflow-y-auto mb-4 -mx-1 px-1">
               {helpers.map((h) => {
@@ -254,7 +254,7 @@ function AssignModal({ booking, onClose, onSaved }) {
                     className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-all ${
                       selected
                         ? 'border-[#5e6ad2] bg-[#5e6ad2]/10'
-                        : 'border-[#23252a] hover:border-[#2e3038] bg-[#0a0b0f]'
+                        : 'border-gray-200 hover:border-gray-200 bg-gray-100'
                     }`}
                   >
                     <input
@@ -267,14 +267,14 @@ function AssignModal({ booking, onClose, onSaved }) {
                     />
                     {/* Custom radio */}
                     <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                      selected ? 'border-[#5e6ad2]' : 'border-[#2e3038]'
+                      selected ? 'border-[#5e6ad2]' : 'border-gray-200'
                     }`}>
                       {selected && <div className="w-2 h-2 rounded-full bg-[#5e6ad2]" />}
                     </div>
                     <Avatar name={h.fullName || h.full_name} avatarUrl={h.avatarUrl || h.avatar_url} size="sm" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#f7f8f8] truncate">{h.fullName || h.full_name}</p>
-                      <p className="text-xs text-[#8a8f98]">
+                      <p className="text-sm font-medium text-gray-900 truncate">{h.fullName || h.full_name}</p>
+                      <p className="text-xs text-gray-500">
                         {Number(h.hourlyRate || h.hourly_rate || 0).toLocaleString()}đ/h
                         {h.distanceKm != null && ` · ${h.distanceKm}km`}
                         {(h.ratingAverage || h.rating_average)
@@ -283,7 +283,7 @@ function AssignModal({ booking, onClose, onSaved }) {
                       </p>
                     </div>
                     <span className={`text-xs font-medium flex-shrink-0 ${
-                      (h.isAvailable || h.is_available) ? 'text-emerald-400' : 'text-[#62666d]'
+                      (h.isAvailable || h.is_available) ? 'text-emerald-400' : 'text-gray-400'
                     }`}>
                       {(h.isAvailable || h.is_available) ? 'Rảnh' : 'Bận'}
                     </span>
@@ -296,7 +296,7 @@ function AssignModal({ booking, onClose, onSaved }) {
           <div className="flex gap-2.5">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 text-sm font-medium text-[#8a8f98] hover:text-[#f7f8f8] border border-[#23252a] rounded-md hover:bg-[#1e2028] transition-all"
+              className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-900 border border-gray-200 rounded-md hover:bg-gray-100 transition-all"
             >
               Hủy
             </button>
@@ -378,8 +378,8 @@ export default function AdminBookingsPage() {
       label: 'Tổng đơn',
       value: bookings.length,
       Icon: ClipboardList,
-      cls: 'text-[#f7f8f8]',
-      iconCls: 'text-[#8a8f98]',
+      cls: 'text-gray-900',
+      iconCls: 'text-gray-500',
     },
     {
       label: 'Chờ xác nhận',
@@ -414,20 +414,20 @@ export default function AdminBookingsPage() {
       {/* ── Page header ────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between mb-8">
         <div>
-          <p className="text-[10px] font-medium text-[#62666d] uppercase tracking-widest mb-1.5">Admin</p>
+          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1.5">Admin</p>
           <h1
-            className="text-2xl font-semibold text-[#f7f8f8]"
+            className="text-2xl font-semibold text-gray-900"
             style={{ letterSpacing: '-0.6px' }}
           >
             Quản lý đơn hàng
           </h1>
-          <p className="text-sm text-[#8a8f98] mt-1">
+          <p className="text-sm text-gray-500 mt-1">
             {bookings.length} đơn trong hệ thống
           </p>
         </div>
         <button
           onClick={refresh}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[#8a8f98] hover:text-[#f7f8f8] bg-[#0f1117] border border-[#23252a] rounded-md hover:bg-[#1e2028] transition-all"
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 bg-white border border-gray-200 rounded-md hover:bg-gray-100 transition-all"
         >
           <RefreshCw className="w-3.5 h-3.5" />
           Làm mới
@@ -443,14 +443,14 @@ export default function AdminBookingsPage() {
               {expiring.length} đơn đang chờ — sắp hết hạn, cần điều phối thủ công
             </p>
           </div>
-          <div className="divide-y divide-[#1e2028]">
+          <div className="divide-y divide-gray-200">
             {expiring.map((b) => (
-              <div key={b.booking_id} className="flex items-center gap-3 px-4 py-3 bg-[#0f1117] hover:bg-[#16181f] transition-colors">
+              <div key={b.booking_id} className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-gray-50 transition-colors">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#d0d6e0] truncate">
+                  <p className="text-sm font-medium text-gray-700 truncate">
                     #{b.booking_id} · {b.service_name}
                   </p>
-                  <p className="text-xs text-[#8a8f98] mt-0.5">
+                  <p className="text-xs text-gray-500 mt-0.5">
                     {b.customer_name} · {b.booking_date} {b.start_time}–{b.end_time}
                   </p>
                 </div>
@@ -483,9 +483,9 @@ export default function AdminBookingsPage() {
       {/* ── Summary stats ──────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
         {statCards.map(({ label, value, Icon, cls, iconCls }) => (
-          <div key={label} className="bg-[#0f1117] border border-[#1e2028] rounded-lg p-4">
+          <div key={label} className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[10px] font-medium text-[#62666d] uppercase tracking-widest">{label}</p>
+              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">{label}</p>
               <Icon className={`w-4 h-4 ${iconCls}`} />
             </div>
             <p className={`text-2xl font-semibold ${cls}`} style={{ letterSpacing: '-0.4px' }}>
@@ -496,9 +496,9 @@ export default function AdminBookingsPage() {
       </div>
 
       {/* ── Filter panel ───────────────────────────────────────────────────── */}
-      <div className="bg-[#0f1117] border border-[#1e2028] rounded-lg mb-5 overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-lg mb-5 overflow-hidden">
         {/* Status tabs */}
-        <div className="flex items-center gap-0.5 px-4 pt-1 overflow-x-auto border-b border-[#1e2028]">
+        <div className="flex items-center gap-0.5 px-4 pt-1 overflow-x-auto border-b border-gray-200">
           {STATUS_TABS.map(({ value, label }) => {
             const count = value
               ? bookings.filter((b) => b.status === value).length
@@ -510,8 +510,8 @@ export default function AdminBookingsPage() {
                 onClick={() => setStatusFilter(value)}
                 className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-all -mb-px ${
                   active
-                    ? 'border-[#5e6ad2] text-[#f7f8f8]'
-                    : 'border-transparent text-[#8a8f98] hover:text-[#d0d6e0]'
+                    ? 'border-[#5e6ad2] text-gray-900'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
                 {label}
@@ -519,7 +519,7 @@ export default function AdminBookingsPage() {
                   className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
                     active
                       ? 'bg-[#5e6ad2]/25 text-[#828fff]'
-                      : 'bg-[#1e2028] text-[#62666d]'
+                      : 'bg-gray-100 text-gray-400'
                   }`}
                 >
                   {count}
@@ -532,18 +532,18 @@ export default function AdminBookingsPage() {
         {/* Search input */}
         <div className="px-4 py-3">
           <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#62666d]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Tìm tên khách hàng..."
-              className="w-full bg-[#0a0b0f] border border-[#23252a] rounded-md pl-9 pr-8 py-2 text-sm text-[#d0d6e0] placeholder-[#62666d] focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 transition-all"
+              className="w-full bg-gray-100 border border-gray-200 rounded-md pl-9 pr-8 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 transition-all"
             />
             {search && (
               <button
                 onClick={() => setSearch('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#62666d] hover:text-[#8a8f98] transition-colors"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-500 transition-colors"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -558,20 +558,20 @@ export default function AdminBookingsPage() {
           <LoadingSpinner />
         </div>
       ) : displayed.length === 0 ? (
-        <div className="bg-[#0f1117] border border-[#1e2028] rounded-lg p-16 text-center">
-          <ClipboardList className="w-7 h-7 text-[#62666d] mx-auto mb-3" />
-          <p className="text-sm font-medium text-[#8a8f98]">Không có đơn hàng nào</p>
+        <div className="bg-white border border-gray-200 rounded-lg p-16 text-center">
+          <ClipboardList className="w-7 h-7 text-gray-400 mx-auto mb-3" />
+          <p className="text-sm font-medium text-gray-500">Không có đơn hàng nào</p>
           {(search || statusFilter) && (
-            <p className="text-xs text-[#62666d] mt-1">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+            <p className="text-xs text-gray-400 mt-1">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
           )}
         </div>
       ) : (
         <>
           {/* Desktop table */}
-          <div className="hidden md:block bg-[#0f1117] border border-[#1e2028] rounded-lg overflow-hidden">
+          <div className="hidden md:block bg-white border border-gray-200 rounded-lg overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-[#0a0b0f] border-b border-[#1e2028]">
+                <tr className="bg-gray-100 border-b border-gray-200">
                   {[
                     'Mã đơn',
                     'Khách hàng',
@@ -584,7 +584,7 @@ export default function AdminBookingsPage() {
                   ].map((h) => (
                     <th
                       key={h}
-                      className="px-4 py-3 text-left text-[10px] font-medium text-[#62666d] uppercase tracking-widest whitespace-nowrap"
+                      className="px-4 py-3 text-left text-[10px] font-medium text-gray-400 uppercase tracking-widest whitespace-nowrap"
                     >
                       {h}
                     </th>
@@ -595,35 +595,35 @@ export default function AdminBookingsPage() {
                 {displayed.map((b, i) => (
                   <tr
                     key={b.bookingId}
-                    className={`group border-b border-[#1e2028] last:border-0 hover:bg-[#131418] transition-colors ${
-                      i % 2 !== 0 ? 'bg-[#0b0c10]/50' : ''
+                    className={`group border-b border-gray-200 last:border-0 hover:bg-gray-50 transition-colors ${
+                      i % 2 !== 0 ? 'bg-gray-50' : ''
                     }`}
                   >
                     <td className="px-4 py-3.5">
-                      <span className="font-mono text-xs text-[#62666d] group-hover:text-[#8a8f98] transition-colors">
+                      <span className="font-mono text-xs text-gray-400 group-hover:text-gray-500 transition-colors">
                         {b.bookingId}
                       </span>
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className="text-sm font-medium text-[#f7f8f8]">
+                      <span className="text-sm font-medium text-gray-900">
                         {b.customerName || '—'}
                       </span>
                     </td>
                     <td className="px-4 py-3.5">
                       {b.helperName ? (
-                        <span className="text-sm text-[#d0d6e0]">{b.helperName}</span>
+                        <span className="text-sm text-gray-700">{b.helperName}</span>
                       ) : (
                         <span className="text-xs text-yellow-400/70 font-medium">Chưa giao</span>
                       )}
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className="text-sm text-[#8a8f98]">{b.serviceName || '—'}</span>
+                      <span className="text-sm text-gray-500">{b.serviceName || '—'}</span>
                     </td>
                     <td className="px-4 py-3.5 whitespace-nowrap">
-                      <span className="text-xs text-[#8a8f98]">{formatDate(b.bookingDate)}</span>
+                      <span className="text-xs text-gray-500">{formatDate(b.bookingDate)}</span>
                     </td>
                     <td className="px-4 py-3.5 whitespace-nowrap">
-                      <span className="text-sm font-semibold text-[#f7f8f8]">
+                      <span className="text-sm font-semibold text-gray-900">
                         {formatPrice(b.totalPrice)}
                       </span>
                     </td>
@@ -635,7 +635,7 @@ export default function AdminBookingsPage() {
                       <div className="flex items-center gap-1.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => setDetailTarget(b)}
-                          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#d0d6e0] bg-[#1e2028] hover:bg-[#272932] border border-[#2a2d38] rounded-md transition-all"
+                          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-md transition-all"
                         >
                           <Eye className="w-3 h-3" />
                           Chi tiết
@@ -662,36 +662,36 @@ export default function AdminBookingsPage() {
             {displayed.map((b) => (
               <div
                 key={b.bookingId}
-                className="bg-[#0f1117] border border-[#1e2028] rounded-lg p-4"
+                className="bg-white border border-gray-200 rounded-lg p-4"
               >
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-mono text-xs text-[#62666d]">{b.bookingId}</span>
+                      <span className="font-mono text-xs text-gray-400">{b.bookingId}</span>
                       <StatusBadge status={b.status} />
                     </div>
-                    <p className="text-sm font-medium text-[#f7f8f8] truncate">
+                    <p className="text-sm font-medium text-gray-900 truncate">
                       {b.customerName || '—'}
                     </p>
-                    <p className="text-xs text-[#8a8f98] mt-0.5">
+                    <p className="text-xs text-gray-500 mt-0.5">
                       {b.helperName || (
                         <span className="text-yellow-400/70">Chưa giao việc</span>
                       )}
                     </p>
                   </div>
-                  <p className="text-sm font-semibold text-[#f7f8f8] whitespace-nowrap flex-shrink-0">
+                  <p className="text-sm font-semibold text-gray-900 whitespace-nowrap flex-shrink-0">
                     {formatPrice(b.totalPrice)}
                   </p>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <p className="text-xs text-[#62666d]">
+                  <p className="text-xs text-gray-400">
                     {formatDate(b.bookingDate)}&nbsp;·&nbsp;{b.serviceName || '—'}
                   </p>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => setDetailTarget(b)}
-                      className="p-1.5 text-[#8a8f98] hover:text-[#f7f8f8] hover:bg-[#1e2028] rounded-md transition-all"
+                      className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-all"
                       title="Xem chi tiết"
                     >
                       <Eye className="w-4 h-4" />
@@ -712,7 +712,7 @@ export default function AdminBookingsPage() {
           </div>
 
           {/* Kết quả */}
-          <p className="text-xs text-[#62666d] mt-3 text-right">
+          <p className="text-xs text-gray-400 mt-3 text-right">
             Hiển thị {displayed.length} / {bookings.length} đơn hàng
           </p>
         </>

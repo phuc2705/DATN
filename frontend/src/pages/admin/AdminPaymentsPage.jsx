@@ -61,8 +61,8 @@ export default function AdminPaymentsPage() {
   return (
     <div className="animate-fadeIn">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#f7f8f8]">Quản lý thanh toán</h1>
-        <p className="text-[#8a8f98] text-sm mt-1">
+        <h1 className="text-2xl font-bold text-gray-900">Quản lý thanh toán</h1>
+        <p className="text-gray-500 text-sm mt-1">
           {payments.length} giao dịch
           {unpaidCount > 0 && (
             <span className="ml-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-yellow-400/10 text-yellow-300 border border-yellow-400/20">
@@ -74,31 +74,31 @@ export default function AdminPaymentsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-[#0f1117] rounded-lg p-5 border border-[#1e2028]">
-          <p className="text-[10px] font-medium text-[#62666d] uppercase tracking-widest mb-1">Tổng doanh thu</p>
+        <div className="bg-white rounded-lg p-5 border border-gray-200">
+          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">Tổng doanh thu</p>
           <p className="text-2xl font-extrabold text-emerald-400">{formatPrice(totalRevenue)}</p>
         </div>
-        <div className="bg-[#0f1117] rounded-lg p-5 border border-[#1e2028]">
-          <p className="text-[10px] font-medium text-[#62666d] uppercase tracking-widest mb-1">Hoa hồng nền tảng</p>
+        <div className="bg-white rounded-lg p-5 border border-gray-200">
+          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">Hoa hồng nền tảng</p>
           <p className="text-2xl font-extrabold text-[#828fff]">{formatPrice(platformRevenue)}</p>
         </div>
-        <div className="bg-[#0f1117] rounded-lg p-5 border border-[#1e2028]">
-          <p className="text-[10px] font-medium text-[#62666d] uppercase tracking-widest mb-1">Đã thanh toán</p>
-          <p className="text-2xl font-extrabold text-[#f7f8f8]">{paidCount}</p>
+        <div className="bg-white rounded-lg p-5 border border-gray-200">
+          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">Đã thanh toán</p>
+          <p className="text-2xl font-extrabold text-gray-900">{paidCount}</p>
         </div>
-        <div className="bg-[#0f1117] rounded-lg p-5 border border-[#1e2028]">
-          <p className="text-[10px] font-medium text-[#62666d] uppercase tracking-widest mb-1">Chưa thanh toán</p>
+        <div className="bg-white rounded-lg p-5 border border-gray-200">
+          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">Chưa thanh toán</p>
           <p className="text-2xl font-extrabold text-yellow-300">{unpaidCount}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-[#0f1117] rounded-lg p-4 border border-[#1e2028] mb-5">
+      <div className="bg-white rounded-lg p-4 border border-gray-200 mb-5">
         <div className="flex flex-wrap gap-3">
           <select
             value={filter.status}
             onChange={(e) => setFilter({ ...filter, status: e.target.value })}
-            className="bg-[#0a0b0f] border border-[#23252a] text-[#d0d6e0] focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm min-w-[150px]"
+            className="bg-gray-100 border border-gray-200 text-gray-700 focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm min-w-[150px]"
           >
             <option value="">Tất cả trạng thái</option>
             {Object.entries(PAYMENT_STATUS_LABEL).map(([k, v]) => (
@@ -109,13 +109,13 @@ export default function AdminPaymentsPage() {
             type="date"
             value={filter.startDate}
             onChange={(e) => setFilter({ ...filter, startDate: e.target.value })}
-            className="bg-[#0a0b0f] border border-[#23252a] text-[#d0d6e0] focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm"
+            className="bg-gray-100 border border-gray-200 text-gray-700 focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm"
           />
           <input
             type="date"
             value={filter.endDate}
             onChange={(e) => setFilter({ ...filter, endDate: e.target.value })}
-            className="bg-[#0a0b0f] border border-[#23252a] text-[#d0d6e0] focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm"
+            className="bg-gray-100 border border-gray-200 text-gray-700 focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm"
           />
           <button
             onClick={refresh}
@@ -129,54 +129,54 @@ export default function AdminPaymentsPage() {
       {loading ? (
         <div className="flex justify-center py-16"><LoadingSpinner /></div>
       ) : payments.length === 0 ? (
-        <div className="bg-[#0f1117] rounded-lg p-12 text-center border border-[#1e2028]">
+        <div className="bg-white rounded-lg p-12 text-center border border-gray-200">
           <div className="text-4xl mb-3">💳</div>
-          <p className="text-[#8a8f98]">Không có giao dịch nào.</p>
+          <p className="text-gray-500">Không có giao dịch nào.</p>
         </div>
       ) : (
-        <div className="bg-[#0f1117] rounded-lg border border-[#1e2028] overflow-hidden">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           {/* Desktop table */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-[#0a0b0f] border-b border-[#1e2028]">
+                <tr className="bg-gray-100 border-b border-gray-200">
                   {['#Đơn', 'Khách hàng', 'Dịch vụ', 'Số tiền', 'Hoa hồng', 'Phương thức', 'Trạng thái', 'Ngày TT', 'Hành động'].map((h) => (
-                    <th key={h} className="text-left px-4 py-3.5 text-[10px] font-medium text-[#62666d] uppercase tracking-widest whitespace-nowrap">
+                    <th key={h} className="text-left px-4 py-3.5 text-[10px] font-medium text-gray-400 uppercase tracking-widest whitespace-nowrap">
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#1e2028]">
+              <tbody className="divide-y divide-gray-200">
                 {payments.map((p) => {
                   const sl = { ...(PAYMENT_STATUS_LABEL[p.paymentStatus] || { text: p.paymentStatus }) };
                   const isUnpaid = p.paymentStatus === 'unpaid';
                   const isConfirming = confirming === p.bookingId;
                   return (
-                    <tr key={p.paymentId} className={`border-b border-[#1e2028] hover:bg-[#131418] transition-colors ${isUnpaid ? 'bg-yellow-400/5' : ''}`}>
-                      <td className="px-4 py-4 font-medium text-[#62666d] text-xs">{p.bookingId}</td>
-                      <td className="px-4 py-4 font-semibold text-[#f7f8f8]">{p.customerName || '—'}</td>
-                      <td className="px-4 py-4 text-[#8a8f98] text-xs">{p.serviceName || '—'}</td>
-                      <td className="px-4 py-4 font-semibold text-[#f7f8f8] whitespace-nowrap">{formatPrice(p.amount)}</td>
+                    <tr key={p.paymentId} className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${isUnpaid ? 'bg-yellow-400/5' : ''}`}>
+                      <td className="px-4 py-4 font-medium text-gray-400 text-xs">{p.bookingId}</td>
+                      <td className="px-4 py-4 font-semibold text-gray-900">{p.customerName || '—'}</td>
+                      <td className="px-4 py-4 text-gray-500 text-xs">{p.serviceName || '—'}</td>
+                      <td className="px-4 py-4 font-semibold text-gray-900 whitespace-nowrap">{formatPrice(p.amount)}</td>
                       <td className="px-4 py-4 whitespace-nowrap">
                         {p.platformFeeAmount != null ? (
                           <div>
                             <span className="text-[#828fff] font-semibold text-xs">{formatPrice(p.platformFeeAmount)}</span>
-                            <span className="text-[#62666d] text-[11px] ml-1">
+                            <span className="text-gray-400 text-[11px] ml-1">
                               ({p.commissionRate != null ? `${(p.commissionRate * 100).toFixed(0)}%` : '—'})
                             </span>
                           </div>
                         ) : (
-                          <span className="text-[#62666d] text-xs">—</span>
+                          <span className="text-gray-400 text-xs">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-4 text-[#8a8f98] capitalize">{p.paymentMethod || 'Tiền mặt'}</td>
+                      <td className="px-4 py-4 text-gray-500 capitalize">{p.paymentMethod || 'Tiền mặt'}</td>
                       <td className="px-4 py-4">
                         <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium ${getStatusBadgeClass(p.paymentStatus)}`}>
                           {sl.text}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-[#8a8f98] text-xs whitespace-nowrap">{p.paidAt ? formatDateTime(p.paidAt) : '—'}</td>
+                      <td className="px-4 py-4 text-gray-500 text-xs whitespace-nowrap">{p.paidAt ? formatDateTime(p.paidAt) : '—'}</td>
                       <td className="px-4 py-4">
                         {isUnpaid && !isConfirming && (
                           <div className="flex gap-1.5">
@@ -212,7 +212,7 @@ export default function AdminPaymentsPage() {
           </div>
 
           {/* Mobile cards */}
-          <div className="md:hidden divide-y divide-[#1e2028]">
+          <div className="md:hidden divide-y divide-gray-200">
             {payments.map((p) => {
               const sl = { ...(PAYMENT_STATUS_LABEL[p.paymentStatus] || { text: p.paymentStatus }) };
               const isUnpaid = p.paymentStatus === 'unpaid';
@@ -221,9 +221,9 @@ export default function AdminPaymentsPage() {
                 <div key={p.paymentId} className={`px-4 py-4 ${isUnpaid ? 'bg-yellow-400/5' : ''}`}>
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <p className="font-semibold text-[#f7f8f8]">Đơn {p.bookingId}</p>
-                      <p className="text-xs text-[#8a8f98]">{p.customerName} · {p.serviceName}</p>
-                      <p className="text-xs text-[#62666d] mt-0.5">{p.paidAt ? formatDateTime(p.paidAt) : 'Chưa thanh toán'}</p>
+                      <p className="font-semibold text-gray-900">Đơn {p.bookingId}</p>
+                      <p className="text-xs text-gray-500">{p.customerName} · {p.serviceName}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{p.paidAt ? formatDateTime(p.paidAt) : 'Chưa thanh toán'}</p>
                       {p.platformFeeAmount != null && (
                         <p className="text-xs text-[#828fff] mt-0.5">
                           Hoa hồng: {formatPrice(p.platformFeeAmount)}
@@ -232,7 +232,7 @@ export default function AdminPaymentsPage() {
                       )}
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-[#f7f8f8]">{formatPrice(p.amount)}</p>
+                      <p className="font-semibold text-gray-900">{formatPrice(p.amount)}</p>
                       <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium mt-1 ${getStatusBadgeClass(p.paymentStatus)}`}>
                         {sl.text}
                       </span>
@@ -266,13 +266,13 @@ export default function AdminPaymentsPage() {
       {/* Modal xác nhận phương thức thanh toán */}
       {confirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
-          <div className="bg-[#0f1117] border border-[#23252a] rounded-lg p-6 w-full max-w-sm">
+          <div className="bg-white border border-gray-200 rounded-lg p-6 w-full max-w-sm">
             <div className="text-center mb-5">
               <div className="text-4xl mb-3">{confirmModal.method === 'cash' ? '💵' : '🏦'}</div>
-              <h3 className="font-bold text-[#f7f8f8] text-lg">Xác nhận thanh toán</h3>
-              <p className="text-sm text-[#8a8f98] mt-1">
+              <h3 className="font-bold text-gray-900 text-lg">Xác nhận thanh toán</h3>
+              <p className="text-sm text-gray-500 mt-1">
                 Đơn {confirmModal.bookingId} đã được thanh toán bằng{' '}
-                <span className="font-semibold text-[#d0d6e0]">
+                <span className="font-semibold text-gray-700">
                   {confirmModal.method === 'cash' ? 'tiền mặt' : 'chuyển khoản ngân hàng'}
                 </span>?
               </p>
@@ -280,7 +280,7 @@ export default function AdminPaymentsPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmModal(null)}
-                className="flex-1 bg-[#1e2028] hover:bg-[#272932] text-[#d0d6e0] border border-[#23252a] text-sm font-medium rounded-md px-4 py-2 transition-colors"
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 text-sm font-medium rounded-md px-4 py-2 transition-colors"
               >
                 Hủy
               </button>

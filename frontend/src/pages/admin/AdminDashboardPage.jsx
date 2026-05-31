@@ -10,7 +10,7 @@ import { User, Sparkles, ClipboardList, Banknote, RefreshCw, CheckCircle, Messag
 const MONTH_LABEL = { '01':'T1','02':'T2','03':'T3','04':'T4','05':'T5','06':'T6','07':'T7','08':'T8','09':'T9','10':'T10','11':'T11','12':'T12' };
 
 function RevenueChart({ data }) {
-  if (!data || data.length === 0) return <p className="text-[#62666d] text-sm py-8 text-center">Chưa có dữ liệu doanh thu</p>;
+  if (!data || data.length === 0) return <p className="text-gray-400 text-sm py-8 text-center">Chưa có dữ liệu doanh thu</p>;
 
   const revenues = data.map((d) => Number(d.revenue));
   const max = Math.max(...revenues, 1);
@@ -37,7 +37,7 @@ function RevenueChart({ data }) {
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
-        <p className="text-xs text-[#62666d]">Tổng 6 tháng</p>
+        <p className="text-xs text-gray-400">Tổng 6 tháng</p>
         <p className="text-sm font-bold text-[#828fff]">{formatPrice(totalRevenue)}</p>
       </div>
 
@@ -48,7 +48,7 @@ function RevenueChart({ data }) {
         {[25, 50, 75].map((pct) => (
           <div
             key={pct}
-            className="absolute left-0 right-0 border-t border-dashed border-[#1e2028]"
+            className="absolute left-0 right-0 border-t border-dashed border-gray-200"
             style={{ bottom: 28 + (pct / 100) * BAR_AREA_H }}
           />
         ))}
@@ -96,7 +96,7 @@ function RevenueChart({ data }) {
                 cy={BAR_AREA_H - y}
                 r="4"
                 fill={color}
-                stroke="#0f1117"
+                stroke="#ffffff"
                 strokeWidth="2"
               />
             );
@@ -113,9 +113,9 @@ function RevenueChart({ data }) {
             const isLatest = i === data.length - 1;
 
             // Màu cột theo tăng/giảm
-            let barColor = 'bg-[#1e2028]';
+            let barColor = 'bg-gray-100';
             if (isLatest) barColor = 'bg-gradient-to-t from-[#5e6ad2] to-[#828fff]';
-            else if (growth === null) barColor = 'bg-[#2a2d35]';
+            else if (growth === null) barColor = 'bg-gray-300';
             else if (growth >= 0) barColor = 'bg-emerald-500/30';
             else barColor = 'bg-red-500/30';
 
@@ -135,9 +135,9 @@ function RevenueChart({ data }) {
                 </div>
 
                 {/* Tooltip */}
-                <div className="absolute z-20 bg-[#1e2028] border border-[#2e3038] text-[#f7f8f8] text-xs px-2.5 py-2 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl"
+                <div className="absolute z-20 bg-gray-100 border border-gray-200 text-gray-900 text-xs px-2.5 py-2 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl"
                   style={{ bottom: 36, left: '50%', transform: 'translateX(-50%)' }}>
-                  <p className="font-bold text-[#f7f8f8]">{MONTH_LABEL[mon]}: {formatPrice(rev)}</p>
+                  <p className="font-bold text-gray-900">{MONTH_LABEL[mon]}: {formatPrice(rev)}</p>
                   {growth !== null && (
                     <p className={`text-[11px] mt-0.5 ${growth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                       {growth >= 0 ? '+' : ''}{growth}% so với tháng trước
@@ -152,7 +152,7 @@ function RevenueChart({ data }) {
                 />
 
                 {/* Nhãn tháng */}
-                <span className={`text-[11px] font-medium mt-1 ${isLatest ? 'text-[#828fff]' : 'text-[#62666d]'}`}>
+                <span className={`text-[11px] font-medium mt-1 ${isLatest ? 'text-[#828fff]' : 'text-gray-400'}`}>
                   {MONTH_LABEL[mon]}
                 </span>
               </div>
@@ -162,22 +162,22 @@ function RevenueChart({ data }) {
       </div>
 
       {/* Chú thích */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 pt-3 border-t border-[#1e2028]">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 pt-3 border-t border-gray-200">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm bg-gradient-to-t from-[#5e6ad2] to-[#828fff]" />
-          <span className="text-[11px] text-[#62666d]">Tháng hiện tại</span>
+          <span className="text-[11px] text-gray-400">Tháng hiện tại</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm bg-emerald-500/30" />
-          <span className="text-[11px] text-[#62666d]">Tăng trưởng</span>
+          <span className="text-[11px] text-gray-400">Tăng trưởng</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm bg-red-500/30" />
-          <span className="text-[11px] text-[#62666d]">Sụt giảm</span>
+          <span className="text-[11px] text-gray-400">Sụt giảm</span>
         </div>
         <div className="flex items-center gap-1.5">
           <svg width="16" height="8"><polyline points="0,6 8,2 16,4" fill="none" stroke="#828fff" strokeWidth="2" strokeLinecap="round"/></svg>
-          <span className="text-[11px] text-[#62666d]">Xu hướng</span>
+          <span className="text-[11px] text-gray-400">Xu hướng</span>
         </div>
       </div>
     </div>
@@ -244,12 +244,12 @@ export default function AdminDashboardPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-[#f7f8f8]">Dashboard</h1>
-          <p className="text-[#8a8f98] text-sm mt-1">Tổng quan hệ thống CleanConnect</p>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-500 text-sm mt-1">Tổng quan hệ thống CleanConnect</p>
         </div>
         <button
           onClick={refresh}
-          className="flex items-center gap-2 px-4 py-2 bg-[#0f1117] border border-[#23252a] text-[#8a8f98] hover:text-[#f7f8f8] hover:bg-[#1e2028] rounded-md text-sm transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md text-sm transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Làm mới
@@ -259,13 +259,13 @@ export default function AdminDashboardPage() {
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {STAT_CARDS.map(({ label, value, Icon, iconBg, sub }) => (
-          <div key={label} className="bg-[#0f1117] rounded-lg p-5 border border-[#1e2028]">
+          <div key={label} className="bg-white rounded-lg p-5 border border-gray-200">
             <div className={`w-10 h-10 rounded-md ${iconBg} flex items-center justify-center mb-3`}>
               <Icon className="w-5 h-5" />
             </div>
-            <p className="text-2xl font-extrabold text-[#f7f8f8] leading-tight">{value}</p>
-            <p className="text-sm font-medium text-[#d0d6e0] mt-0.5">{label}</p>
-            <p className="text-xs text-[#62666d] mt-1">{sub}</p>
+            <p className="text-2xl font-extrabold text-gray-900 leading-tight">{value}</p>
+            <p className="text-sm font-medium text-gray-700 mt-0.5">{label}</p>
+            <p className="text-xs text-gray-400 mt-1">{sub}</p>
           </div>
         ))}
       </div>
@@ -274,17 +274,17 @@ export default function AdminDashboardPage() {
       {stats?.openFeedbacksCount > 0 && (
         <Link
           to="/admin/feedbacks"
-          className="flex items-center justify-between bg-[#0f1117] rounded-lg p-4 border border-red-500/30 mb-6 hover:border-red-500/60 transition-colors group"
+          className="flex items-center justify-between bg-white rounded-lg p-4 border border-red-500/30 mb-6 hover:border-red-500/60 transition-colors group"
         >
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-md bg-red-500/10 flex items-center justify-center">
               <MessageSquare className="w-5 h-5 text-red-400" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-[#f7f8f8]">
+              <p className="text-sm font-semibold text-gray-900">
                 {stats.openFeedbacksCount} phản hồi chưa được xử lý
               </p>
-              <p className="text-xs text-[#8a8f98]">Nhấn để xem và trả lời</p>
+              <p className="text-xs text-gray-500">Nhấn để xem và trả lời</p>
             </div>
           </div>
           <span className="text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/20 px-2.5 py-1 rounded-full group-hover:bg-red-500/20 transition-colors">
@@ -295,46 +295,46 @@ export default function AdminDashboardPage() {
 
       {/* So sánh doanh thu tháng + giá trị TB */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-[#0f1117] rounded-lg p-5 border border-[#1e2028]">
-          <p className="text-xs text-[#62666d] font-medium mb-1">Doanh thu tháng này</p>
-          <p className="text-xl font-extrabold text-[#f7f8f8]">{formatPrice(stats?.revenueThisMonth ?? 0)}</p>
+        <div className="bg-white rounded-lg p-5 border border-gray-200">
+          <p className="text-xs text-gray-400 font-medium mb-1">Doanh thu tháng này</p>
+          <p className="text-xl font-extrabold text-gray-900">{formatPrice(stats?.revenueThisMonth ?? 0)}</p>
           {growthSign && (
             <p className={`text-xs font-semibold mt-1 ${stats.revenueGrowth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
               {growthSign} so với tháng trước
             </p>
           )}
         </div>
-        <div className="bg-[#0f1117] rounded-lg p-5 border border-[#1e2028]">
-          <p className="text-xs text-[#62666d] font-medium mb-1">Doanh thu tháng trước</p>
-          <p className="text-xl font-extrabold text-[#f7f8f8]">{formatPrice(stats?.revenueLastMonth ?? 0)}</p>
-          <p className="text-xs text-[#62666d] mt-1">Đã thanh toán</p>
+        <div className="bg-white rounded-lg p-5 border border-gray-200">
+          <p className="text-xs text-gray-400 font-medium mb-1">Doanh thu tháng trước</p>
+          <p className="text-xl font-extrabold text-gray-900">{formatPrice(stats?.revenueLastMonth ?? 0)}</p>
+          <p className="text-xs text-gray-400 mt-1">Đã thanh toán</p>
         </div>
-        <div className="bg-[#0f1117] rounded-lg p-5 border border-[#1e2028]">
-          <p className="text-xs text-[#62666d] font-medium mb-1">Giá trị đơn trung bình</p>
-          <p className="text-xl font-extrabold text-[#f7f8f8]">{formatPrice(stats?.avgBookingValue ?? 0)}</p>
-          <p className="text-xs text-[#62666d] mt-1">Không tính đơn hủy</p>
+        <div className="bg-white rounded-lg p-5 border border-gray-200">
+          <p className="text-xs text-gray-400 font-medium mb-1">Giá trị đơn trung bình</p>
+          <p className="text-xl font-extrabold text-gray-900">{formatPrice(stats?.avgBookingValue ?? 0)}</p>
+          <p className="text-xs text-gray-400 mt-1">Không tính đơn hủy</p>
         </div>
       </div>
 
       {/* Revenue chart + Status chart */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-[#0f1117] rounded-lg p-6 border border-[#1e2028]">
+        <div className="bg-white rounded-lg p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="font-bold text-[#f7f8f8]">Doanh thu 6 tháng gần nhất</h2>
+            <h2 className="font-bold text-gray-900">Doanh thu 6 tháng gần nhất</h2>
           </div>
           <RevenueChart data={stats?.monthlyRevenue} />
         </div>
 
-        <div className="bg-[#0f1117] rounded-lg p-6 border border-[#1e2028]">
-          <h2 className="font-bold text-[#f7f8f8] mb-4">Trạng thái đơn hàng</h2>
+        <div className="bg-white rounded-lg p-6 border border-gray-200">
+          <h2 className="font-bold text-gray-900 mb-4">Trạng thái đơn hàng</h2>
           <div className="space-y-3">
             {statusEntries.map(({ label, color, count }) => (
               <div key={label}>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-[#d0d6e0] font-medium">{label}</span>
-                  <span className="text-[#8a8f98] font-bold">{count} đơn</span>
+                  <span className="text-gray-700 font-medium">{label}</span>
+                  <span className="text-gray-500 font-bold">{count} đơn</span>
                 </div>
-                <div className="h-1.5 bg-[#0a0b0f] rounded-full overflow-hidden">
+                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                   <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${(count / maxStatusCount) * 100}%` }} />
                 </div>
               </div>
@@ -345,8 +345,8 @@ export default function AdminDashboardPage() {
 
       {/* Top services + Top helpers */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-[#0f1117] rounded-lg p-6 border border-[#1e2028]">
-          <h2 className="font-bold text-[#f7f8f8] mb-4">Dịch vụ phổ biến nhất</h2>
+        <div className="bg-white rounded-lg p-6 border border-gray-200">
+          <h2 className="font-bold text-gray-900 mb-4">Dịch vụ phổ biến nhất</h2>
           {stats?.topServices?.length > 0 ? (
             <div className="space-y-3">
               {stats.topServices.map((s, i) => {
@@ -355,12 +355,12 @@ export default function AdminDashboardPage() {
                 return (
                   <div key={s.serviceName}>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-[#d0d6e0] font-medium">
-                        <span className="text-[#62666d] mr-2">{i + 1}.</span>{s.serviceName}
+                      <span className="text-gray-700 font-medium">
+                        <span className="text-gray-400 mr-2">{i + 1}.</span>{s.serviceName}
                       </span>
                       <span className="text-[#828fff] font-bold">{s.bookingCount} đơn</span>
                     </div>
-                    <div className="h-1.5 bg-[#0a0b0f] rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                       <div className="h-full bg-gradient-to-r from-[#5e6ad2] to-[#828fff] rounded-full" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
@@ -368,21 +368,21 @@ export default function AdminDashboardPage() {
               })}
             </div>
           ) : (
-            <p className="text-[#62666d] text-sm">Chưa có dữ liệu</p>
+            <p className="text-gray-400 text-sm">Chưa có dữ liệu</p>
           )}
         </div>
 
-        <div className="bg-[#0f1117] rounded-lg p-6 border border-[#1e2028]">
-          <h2 className="font-bold text-[#f7f8f8] mb-4">Top người giúp việc</h2>
+        <div className="bg-white rounded-lg p-6 border border-gray-200">
+          <h2 className="font-bold text-gray-900 mb-4">Top người giúp việc</h2>
           {stats?.topHelpers?.length > 0 ? (
             <div className="space-y-3">
               {stats.topHelpers.map((h, i) => (
                 <div key={h.helperId} className="flex items-center gap-3">
-                  <span className="text-[#62666d] text-sm w-4 shrink-0">{i + 1}.</span>
+                  <span className="text-gray-400 text-sm w-4 shrink-0">{i + 1}.</span>
                   <Avatar name={h.fullName} avatarUrl={h.avatarUrl} size="sm" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#d0d6e0] truncate">{h.fullName}</p>
-                    <p className="text-xs text-[#62666d]">
+                    <p className="text-sm font-semibold text-gray-700 truncate">{h.fullName}</p>
+                    <p className="text-xs text-gray-400">
                       ★ {Number(h.ratingAverage || 0).toFixed(1)} · {h.totalBookings} đơn
                     </p>
                   </div>
@@ -390,17 +390,17 @@ export default function AdminDashboardPage() {
               ))}
             </div>
           ) : (
-            <p className="text-[#62666d] text-sm">Chưa có dữ liệu</p>
+            <p className="text-gray-400 text-sm">Chưa có dữ liệu</p>
           )}
         </div>
       </div>
 
       {/* Pending helpers */}
-      <div className="bg-[#0f1117] rounded-lg border border-[#1e2028] overflow-hidden">
-        <div className="px-6 py-4 border-b border-[#1e2028] flex items-center justify-between">
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <div>
-            <h2 className="font-bold text-[#f7f8f8]">Người giúp việc chờ xét duyệt</h2>
-            <p className="text-sm text-[#62666d] mt-0.5">{pendingHelpers.length} hồ sơ đang chờ</p>
+            <h2 className="font-bold text-gray-900">Người giúp việc chờ xét duyệt</h2>
+            <p className="text-sm text-gray-400 mt-0.5">{pendingHelpers.length} hồ sơ đang chờ</p>
           </div>
           <div className="flex items-center gap-3">
             {pendingHelpers.length > 0 && (
@@ -408,7 +408,7 @@ export default function AdminDashboardPage() {
                 {pendingHelpers.length} mới
               </span>
             )}
-            <Link to="/admin/helpers" className="text-[#828fff] text-sm font-semibold hover:text-[#f7f8f8] transition-colors">
+            <Link to="/admin/helpers" className="text-[#828fff] text-sm font-semibold hover:text-gray-900 transition-colors">
               Xem tất cả →
             </Link>
           </div>
@@ -419,17 +419,17 @@ export default function AdminDashboardPage() {
             <div className="w-12 h-12 bg-emerald-400/10 rounded-lg flex items-center justify-center mx-auto mb-2">
               <CheckCircle className="w-6 h-6 text-emerald-400" />
             </div>
-            <p className="text-[#8a8f98] font-medium">Tất cả hồ sơ đã được xét duyệt!</p>
+            <p className="text-gray-500 font-medium">Tất cả hồ sơ đã được xét duyệt!</p>
           </div>
         ) : (
-          <div className="divide-y divide-[#1e2028]">
+          <div className="divide-y divide-gray-200">
             {pendingHelpers.slice(0, 5).map((h) => (
-              <div key={h.userId} className="px-6 py-4 flex items-center justify-between hover:bg-[#131418] transition-colors">
+              <div key={h.userId} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
                 <div className="flex items-center gap-3">
                   <Avatar name={h.fullName} avatarUrl={h.avatarUrl} size="lg" />
                   <div>
-                    <p className="font-semibold text-[#d0d6e0] text-sm">{h.fullName}</p>
-                    <p className="text-xs text-[#62666d]">{h.email} · {h.phone}</p>
+                    <p className="font-semibold text-gray-700 text-sm">{h.fullName}</p>
+                    <p className="text-xs text-gray-400">{h.email} · {h.phone}</p>
                   </div>
                 </div>
                 <button

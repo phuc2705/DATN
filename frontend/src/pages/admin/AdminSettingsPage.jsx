@@ -5,16 +5,16 @@ import toast from 'react-hot-toast';
 
 // Design tokens Linear dark
 const C = {
-  canvas:   '#010102',
-  surface1: '#0f1117',
-  surface2: '#1e2028',
-  hairline: '#23252a',
+  canvas:   '#ffffff',
+  surface1: '#f8f9fb',
+  surface2: '#e5e7eb',
+  hairline: '#e5e7eb',
   primary:  '#5e6ad2',
   primary2: '#828fff',
-  ink:      '#f7f8f8',
-  muted:    '#8a8f98',
-  dim:      '#62666d',
-  inkMuted: '#d0d6e0',
+  ink:      '#111827',
+  muted:    '#6b7280',
+  dim:      '#9ca3af',
+  inkMuted: '#374151',
 };
 
 export default function AdminSettingsPage() {
@@ -150,7 +150,7 @@ export default function AdminSettingsPage() {
                     onChange={(e) => setInputPct(e.target.value)}
                     style={{
                       width: '100%',
-                      backgroundColor: '#0a0b0f',
+                      backgroundColor: '#f3f4f6',
                       border: `1px solid ${C.hairline}`,
                       borderRadius: 8,
                       padding: '10px 44px 10px 14px',

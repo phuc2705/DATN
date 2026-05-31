@@ -10,15 +10,15 @@ import {
 
 // Design tokens
 const C = {
-  canvas:   '#010102',
-  surface1: '#0f1117',
-  surface2: '#1e2028',
-  hairline: '#23252a',
+  canvas:   '#ffffff',
+  surface1: '#f8f9fb',
+  surface2: '#f0f1f5',
+  hairline: '#e5e7eb',
   primary:  '#5e6ad2',
-  primary2: '#828fff',
-  ink:      '#f7f8f8',
-  muted:    '#8a8f98',
-  dim:      '#62666d',
+  primary2: '#4f5bc4',
+  ink:      '#111827',
+  muted:    '#6b7280',
+  dim:      '#9ca3af',
 };
 
 const NAV = [

@@ -69,8 +69,8 @@ export default function AdminUsersPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#f7f8f8]">Quản lý người dùng</h1>
-          <p className="text-[#8a8f98] text-sm mt-1">
+          <h1 className="text-2xl font-bold text-gray-900">Quản lý người dùng</h1>
+          <p className="text-gray-500 text-sm mt-1">
             {users.length} người dùng
             {newCount > 0 && (
               <span className="ml-2 bg-emerald-400/10 text-emerald-400 border border-emerald-400/20 text-xs font-bold px-2 py-0.5 rounded">
@@ -82,11 +82,11 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-[#0f1117] rounded-lg p-4 border border-[#1e2028] mb-5">
+      <div className="bg-white rounded-lg p-4 border border-gray-200 mb-5">
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Search box */}
           <div className="flex-1 relative">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#62666d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
@@ -94,11 +94,11 @@ export default function AdminUsersPage() {
               placeholder="Tìm theo tên, email, số điện thoại..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-10 py-2.5 bg-[#0a0b0f] border border-[#23252a] text-[#d0d6e0] placeholder-[#62666d] rounded-md text-sm focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 transition-all"
+              className="w-full pl-10 pr-10 py-2.5 bg-gray-100 border border-gray-200 text-gray-700 placeholder-gray-400 rounded-md text-sm focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 transition-all"
               autoComplete="off"
             />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#62666d] hover:text-[#d0d6e0] transition-colors">
+              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -110,7 +110,7 @@ export default function AdminUsersPage() {
           <select
             value={userType}
             onChange={(e) => setUserType(e.target.value)}
-            className="bg-[#0a0b0f] border border-[#23252a] text-[#d0d6e0] rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 min-w-[160px]"
+            className="bg-gray-100 border border-gray-200 text-gray-700 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 min-w-[160px]"
           >
             <option value="">Tất cả loại</option>
             <option value="customer">Khách hàng</option>
@@ -121,7 +121,7 @@ export default function AdminUsersPage() {
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="bg-[#0a0b0f] border border-[#23252a] text-[#d0d6e0] rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 min-w-[150px]"
+            className="bg-gray-100 border border-gray-200 text-gray-700 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 min-w-[150px]"
           >
             <option value="">Tất cả trạng thái</option>
             <option value="true">Đang hoạt động</option>
@@ -132,7 +132,7 @@ export default function AdminUsersPage() {
           {(search || userType || status) && (
             <button
               onClick={() => { setSearch(''); setUserType(''); setStatus(''); }}
-              className="px-4 py-2.5 bg-[#1e2028] hover:bg-[#272932] text-[#d0d6e0] border border-[#23252a] rounded-md text-sm whitespace-nowrap transition-colors"
+              className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 rounded-md text-sm whitespace-nowrap transition-colors"
             >
               Xóa bộ lọc
             </button>
@@ -145,19 +145,19 @@ export default function AdminUsersPage() {
             {search && (
               <span className="flex items-center gap-1 bg-[#5e6ad2]/10 text-[#828fff] border border-[#5e6ad2]/20 text-xs px-2.5 py-1 rounded">
                 Tìm: "{search}"
-                <button onClick={() => setSearch('')} className="hover:text-[#f7f8f8] ml-0.5">×</button>
+                <button onClick={() => setSearch('')} className="hover:text-gray-900 ml-0.5">×</button>
               </span>
             )}
             {userType && (
               <span className="flex items-center gap-1 bg-blue-400/10 text-blue-300 border border-blue-400/20 text-xs px-2.5 py-1 rounded">
                 {TYPE_LABEL[userType]}
-                <button onClick={() => setUserType('')} className="hover:text-[#f7f8f8] ml-0.5">×</button>
+                <button onClick={() => setUserType('')} className="hover:text-gray-900 ml-0.5">×</button>
               </span>
             )}
             {status && (
-              <span className="flex items-center gap-1 bg-[#1e2028] text-[#8a8f98] border border-[#23252a] text-xs px-2.5 py-1 rounded">
+              <span className="flex items-center gap-1 bg-gray-100 text-gray-500 border border-gray-200 text-xs px-2.5 py-1 rounded">
                 {status === 'true' ? 'Đang hoạt động' : 'Đã khóa'}
-                <button onClick={() => setStatus('')} className="hover:text-[#f7f8f8] ml-0.5">×</button>
+                <button onClick={() => setStatus('')} className="hover:text-gray-900 ml-0.5">×</button>
               </span>
             )}
           </div>
@@ -167,51 +167,51 @@ export default function AdminUsersPage() {
       {loading ? (
         <div className="flex justify-center py-16"><LoadingSpinner /></div>
       ) : users.length === 0 ? (
-        <div className="bg-[#0f1117] rounded-lg p-12 text-center border border-[#1e2028]">
-          <div className="w-12 h-12 bg-[#1e2028] rounded-lg flex items-center justify-center mx-auto mb-3">
-            <svg className="w-6 h-6 text-[#62666d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="bg-white rounded-lg p-12 text-center border border-gray-200">
+          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+            <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
-          <p className="text-[#d0d6e0] font-medium">Không tìm thấy người dùng nào</p>
-          <p className="text-[#62666d] text-sm mt-1">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+          <p className="text-gray-700 font-medium">Không tìm thấy người dùng nào</p>
+          <p className="text-gray-400 text-sm mt-1">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
         </div>
       ) : (
-        <div className="bg-[#0f1117] rounded-lg border border-[#1e2028] overflow-hidden">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           {/* Desktop */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-[#0a0b0f] border-b border-[#1e2028]">
+                <tr className="bg-gray-100 border-b border-gray-200">
                   {['Người dùng', 'Loại tài khoản', 'Ngày đăng ký', 'Trạng thái', ''].map((h) => (
-                    <th key={h} className="text-left px-5 py-3.5 text-[10px] font-medium text-[#62666d] uppercase tracking-widest">{h}</th>
+                    <th key={h} className="text-left px-5 py-3.5 text-[10px] font-medium text-gray-400 uppercase tracking-widest">{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#1e2028]">
+              <tbody className="divide-y divide-gray-200">
                 {users.map((u) => (
-                  <tr key={u.userId} className="hover:bg-[#131418] transition-colors">
+                  <tr key={u.userId} className="hover:bg-gray-50 transition-colors">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <Avatar name={u.fullName} avatarUrl={u.avatarUrl} size="md" />
                         <div>
                           <div className="flex items-center gap-2">
-                            <p className="font-semibold text-[#f7f8f8]">{u.fullName}</p>
+                            <p className="font-semibold text-gray-900">{u.fullName}</p>
                             {isNew(u.createdAt) && (
                               <span className="bg-emerald-400/10 text-emerald-400 border border-emerald-400/20 text-xs font-bold px-1.5 py-0.5 rounded">Mới</span>
                             )}
                           </div>
-                          <p className="text-xs text-[#62666d]">{u.email}</p>
-                          {u.phone && <p className="text-xs text-[#62666d]">{u.phone}</p>}
+                          <p className="text-xs text-gray-400">{u.email}</p>
+                          {u.phone && <p className="text-xs text-gray-400">{u.phone}</p>}
                         </div>
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <span className={`badge ${TYPE_COLOR[u.userType] || 'bg-[#1e2028] text-[#8a8f98] border border-[#23252a]'}`}>
+                      <span className={`badge ${TYPE_COLOR[u.userType] || 'bg-gray-100 text-gray-500 border border-gray-200'}`}>
                         {TYPE_LABEL[u.userType] || u.userType}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-[#8a8f98] text-xs">{formatDate(u.createdAt)}</td>
+                    <td className="px-5 py-4 text-gray-500 text-xs">{formatDate(u.createdAt)}</td>
                     <td className="px-5 py-4">
                       <span className={`badge ${u.isActive ? 'bg-emerald-400/10 text-emerald-400 border border-emerald-400/20' : 'bg-red-400/10 text-red-400 border border-red-400/20'}`}>
                         {u.isActive ? '● Hoạt động' : '● Đã khóa'}
@@ -246,21 +246,21 @@ export default function AdminUsersPage() {
           </div>
 
           {/* Mobile */}
-          <div className="md:hidden divide-y divide-[#1e2028]">
+          <div className="md:hidden divide-y divide-gray-200">
             {users.map((u) => (
-              <div key={u.userId} className="px-4 py-4 flex items-center justify-between gap-3 hover:bg-[#131418] transition-colors">
+              <div key={u.userId} className="px-4 py-4 flex items-center justify-between gap-3 hover:bg-gray-50 transition-colors">
                 <div className="flex items-center gap-3 min-w-0">
                   <Avatar name={u.fullName} avatarUrl={u.avatarUrl} size="md" />
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <p className="font-semibold text-[#f7f8f8] text-sm truncate">{u.fullName}</p>
+                      <p className="font-semibold text-gray-900 text-sm truncate">{u.fullName}</p>
                       {isNew(u.createdAt) && (
                         <span className="bg-emerald-400/10 text-emerald-400 border border-emerald-400/20 text-xs font-bold px-1.5 py-0.5 rounded flex-shrink-0">Mới</span>
                       )}
                     </div>
-                    <p className="text-xs text-[#62666d] truncate">{u.email}</p>
+                    <p className="text-xs text-gray-400 truncate">{u.email}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className={`badge text-xs ${TYPE_COLOR[u.userType] || 'bg-[#1e2028] text-[#8a8f98] border border-[#23252a]'}`}>{TYPE_LABEL[u.userType]}</span>
+                      <span className={`badge text-xs ${TYPE_COLOR[u.userType] || 'bg-gray-100 text-gray-500 border border-gray-200'}`}>{TYPE_LABEL[u.userType]}</span>
                       <span className={`badge text-xs ${u.isActive ? 'bg-emerald-400/10 text-emerald-400 border border-emerald-400/20' : 'bg-red-400/10 text-red-400 border border-red-400/20'}`}>{u.isActive ? 'Hoạt động' : 'Đã khóa'}</span>
                     </div>
                   </div>

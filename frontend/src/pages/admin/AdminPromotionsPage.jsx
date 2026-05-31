@@ -6,8 +6,8 @@ import toast from 'react-hot-toast';
 
 const EMPTY_FORM = { code: '', discountType: 'percentage', discountValue: '', minOrderAmount: '', maxUses: '', startDate: '', endDate: '' };
 
-const inputCls = 'w-full bg-[#0a0b0f] border border-[#23252a] text-[#d0d6e0] placeholder-[#62666d] focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm';
-const labelCls = 'block text-xs font-medium text-[#8a8f98] mb-1.5';
+const inputCls = 'w-full bg-gray-100 border border-gray-200 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm';
+const labelCls = 'block text-xs font-medium text-gray-500 mb-1.5';
 
 function PromoForm({ initial = EMPTY_FORM, onSubmit, saving, submitLabel, onCancel }) {
   const [form, setForm] = useState(initial);
@@ -56,7 +56,7 @@ function PromoForm({ initial = EMPTY_FORM, onSubmit, saving, submitLabel, onCanc
       <div className="sm:col-span-2 flex gap-3 pt-2">
         {onCancel && (
           <button type="button" onClick={onCancel}
-            className="flex-1 bg-[#1e2028] hover:bg-[#272932] text-[#d0d6e0] border border-[#23252a] text-sm font-medium rounded-md px-4 py-2 transition-colors">
+            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 text-sm font-medium rounded-md px-4 py-2 transition-colors">
             Hủy
           </button>
         )}
@@ -105,10 +105,10 @@ function EditModal({ promo, onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
-      <div className="bg-[#0f1117] border border-[#23252a] rounded-lg p-6 w-full max-w-lg">
+      <div className="bg-white border border-gray-200 rounded-lg p-6 w-full max-w-lg">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="font-bold text-[#f7f8f8] text-lg">Chỉnh sửa mã khuyến mãi</h3>
-          <button onClick={onClose} className="text-[#62666d] hover:text-[#d0d6e0] transition-colors">
+          <h3 className="font-bold text-gray-900 text-lg">Chỉnh sửa mã khuyến mãi</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -181,8 +181,8 @@ export default function AdminPromotionsPage() {
     <div className="animate-fadeIn">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#f7f8f8]">Quản lý khuyến mãi</h1>
-          <p className="text-[#8a8f98] text-sm mt-1">{promos.length} mã khuyến mãi</p>
+          <h1 className="text-2xl font-bold text-gray-900">Quản lý khuyến mãi</h1>
+          <p className="text-gray-500 text-sm mt-1">{promos.length} mã khuyến mãi</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
@@ -197,8 +197,8 @@ export default function AdminPromotionsPage() {
 
       {/* Create form */}
       {showForm && (
-        <div className="bg-[#0f1117] rounded-lg p-6 border border-[#5e6ad2]/20 mb-6">
-          <h3 className="font-bold text-[#f7f8f8] mb-4">Tạo mã khuyến mãi mới</h3>
+        <div className="bg-white rounded-lg p-6 border border-[#5e6ad2]/20 mb-6">
+          <h3 className="font-bold text-gray-900 mb-4">Tạo mã khuyến mãi mới</h3>
           <PromoForm onSubmit={handleCreate} saving={saving} submitLabel="Tạo mã khuyến mãi"
             onCancel={() => setShowForm(false)} />
         </div>
@@ -207,23 +207,23 @@ export default function AdminPromotionsPage() {
       {loading ? (
         <div className="flex justify-center py-16"><LoadingSpinner /></div>
       ) : promos.length === 0 ? (
-        <div className="bg-[#0f1117] rounded-lg p-12 text-center border border-[#1e2028]">
+        <div className="bg-white rounded-lg p-12 text-center border border-gray-200">
           <div className="text-4xl mb-3">🏷️</div>
-          <p className="text-[#8a8f98]">Chưa có mã khuyến mãi nào.</p>
+          <p className="text-gray-500">Chưa có mã khuyến mãi nào.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {promos.map((p) => (
             <div key={p.promoId}
-              className={`bg-[#0f1117] rounded-lg p-5 border border-[#1e2028] transition-all ${!p.isActive ? 'opacity-60' : ''}`}>
+              className={`bg-white rounded-lg p-5 border border-gray-200 transition-all ${!p.isActive ? 'opacity-60' : ''}`}>
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-lg text-[#f7f8f8]">{p.code}</span>
+                    <span className="font-mono font-bold text-lg text-gray-900">{p.code}</span>
                     {p.isActive ? (
                       <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-400/10 text-emerald-400 border border-emerald-400/20">Đang hoạt động</span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-[#1e2028] text-[#62666d] border border-[#23252a]">Đã tắt</span>
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-400 border border-gray-200">Đã tắt</span>
                     )}
                   </div>
                   <p className="text-sm font-semibold text-[#828fff] mt-1">
@@ -256,8 +256,8 @@ export default function AdminPromotionsPage() {
                 </div>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[#8a8f98]">{formatDate(p.startDate)} → {formatDate(p.endDate)}</span>
-                <span className="text-[#62666d]">{p.usedCount ?? 0}{p.maxUses ? `/${p.maxUses}` : ''} lần dùng</span>
+                <span className="text-gray-500">{formatDate(p.startDate)} → {formatDate(p.endDate)}</span>
+                <span className="text-gray-400">{p.usedCount ?? 0}{p.maxUses ? `/${p.maxUses}` : ''} lần dùng</span>
               </div>
             </div>
           ))}

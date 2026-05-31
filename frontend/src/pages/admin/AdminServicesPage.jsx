@@ -28,31 +28,31 @@ function EditModal({ service, onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
-      <div className="bg-[#0f1117] border border-[#23252a] rounded-lg p-6 w-full max-w-md">
-        <h3 className="font-bold text-[#f7f8f8] text-lg mb-5">Chỉnh sửa dịch vụ</h3>
+      <div className="bg-white border border-gray-200 rounded-lg p-6 w-full max-w-md">
+        <h3 className="font-bold text-gray-900 text-lg mb-5">Chỉnh sửa dịch vụ</h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-[#8a8f98] mb-1.5">Tên dịch vụ</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">Tên dịch vụ</label>
             <input
-              className="w-full bg-[#0a0b0f] border border-[#23252a] text-[#d0d6e0] placeholder-[#62666d] focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm"
+              className="w-full bg-gray-100 border border-gray-200 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm"
               value={form.serviceName}
               onChange={(e) => setForm({ ...form, serviceName: e.target.value })}
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-[#8a8f98] mb-1.5">Mô tả</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">Mô tả</label>
             <textarea
-              className="w-full bg-[#0a0b0f] border border-[#23252a] text-[#d0d6e0] placeholder-[#62666d] focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm resize-none"
+              className="w-full bg-gray-100 border border-gray-200 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm resize-none"
               rows={3}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-[#8a8f98] mb-1.5">Giá cơ bản (VND/giờ)</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">Giá cơ bản (VND/giờ)</label>
             <input
               type="number"
-              className="w-full bg-[#0a0b0f] border border-[#23252a] text-[#d0d6e0] placeholder-[#62666d] focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm"
+              className="w-full bg-gray-100 border border-gray-200 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm"
               value={form.basePrice}
               onChange={(e) => setForm({ ...form, basePrice: e.target.value })}
             />
@@ -61,7 +61,7 @@ function EditModal({ service, onClose, onSaved }) {
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
-            className="flex-1 bg-[#1e2028] hover:bg-[#272932] text-[#d0d6e0] border border-[#23252a] text-sm font-medium rounded-md px-4 py-2 transition-colors"
+            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 text-sm font-medium rounded-md px-4 py-2 transition-colors"
           >
             Hủy
           </button>
@@ -98,22 +98,22 @@ function CreateModal({ onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
-      <div className="bg-[#0f1117] border border-[#23252a] rounded-lg p-6 w-full max-w-md">
-        <h3 className="font-bold text-[#f7f8f8] text-lg mb-5">Tạo dịch vụ mới</h3>
+      <div className="bg-white border border-gray-200 rounded-lg p-6 w-full max-w-md">
+        <h3 className="font-bold text-gray-900 text-lg mb-5">Tạo dịch vụ mới</h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-[#8a8f98] mb-1.5">Tên dịch vụ <span className="text-red-400">*</span></label>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">Tên dịch vụ <span className="text-red-400">*</span></label>
             <input
-              className="w-full bg-[#0a0b0f] border border-[#23252a] text-[#d0d6e0] placeholder-[#62666d] focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm"
+              className="w-full bg-gray-100 border border-gray-200 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm"
               placeholder="VD: Dọn dẹp nhà"
               value={form.serviceName}
               onChange={(e) => setForm({ ...form, serviceName: e.target.value })}
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-[#8a8f98] mb-1.5">Mô tả</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">Mô tả</label>
             <textarea
-              className="w-full bg-[#0a0b0f] border border-[#23252a] text-[#d0d6e0] placeholder-[#62666d] focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm resize-none"
+              className="w-full bg-gray-100 border border-gray-200 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm resize-none"
               rows={3}
               placeholder="Mô tả ngắn về dịch vụ..."
               value={form.description}
@@ -121,10 +121,10 @@ function CreateModal({ onClose, onSaved }) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-[#8a8f98] mb-1.5">Giá cơ bản (VND/giờ) <span className="text-red-400">*</span></label>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">Giá cơ bản (VND/giờ) <span className="text-red-400">*</span></label>
             <input
               type="number"
-              className="w-full bg-[#0a0b0f] border border-[#23252a] text-[#d0d6e0] placeholder-[#62666d] focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm"
+              className="w-full bg-gray-100 border border-gray-200 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm"
               placeholder="80000"
               value={form.basePrice}
               onChange={(e) => setForm({ ...form, basePrice: e.target.value })}
@@ -134,7 +134,7 @@ function CreateModal({ onClose, onSaved }) {
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
-            className="flex-1 bg-[#1e2028] hover:bg-[#272932] text-[#d0d6e0] border border-[#23252a] text-sm font-medium rounded-md px-4 py-2 transition-colors"
+            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 text-sm font-medium rounded-md px-4 py-2 transition-colors"
           >
             Hủy
           </button>
@@ -194,8 +194,8 @@ export default function AdminServicesPage() {
     <div className="animate-fadeIn">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#f7f8f8]">Quản lý dịch vụ</h1>
-          <p className="text-[#8a8f98] text-sm mt-1">{services.length} dịch vụ</p>
+          <h1 className="text-2xl font-bold text-gray-900">Quản lý dịch vụ</h1>
+          <p className="text-gray-500 text-sm mt-1">{services.length} dịch vụ</p>
         </div>
         <button
           onClick={() => setCreating(true)}
@@ -213,10 +213,10 @@ export default function AdminServicesPage() {
           {services.map((s, i) => (
             <div
               key={s.serviceId}
-              className={`bg-[#0f1117] rounded-lg p-5 border border-[#1e2028] transition-all ${!s.isActive ? 'opacity-60' : ''}`}
+              className={`bg-white rounded-lg p-5 border border-gray-200 transition-all ${!s.isActive ? 'opacity-60' : ''}`}
             >
               <div className="flex items-start justify-between mb-3">
-                <div className="w-11 h-11 rounded-md bg-[#1e2028] flex items-center justify-center text-2xl">
+                <div className="w-11 h-11 rounded-md bg-gray-100 flex items-center justify-center text-2xl">
                   {SERVICE_ICONS[i] || '🔧'}
                 </div>
                 {!s.isActive && (
@@ -225,10 +225,10 @@ export default function AdminServicesPage() {
                   </span>
                 )}
               </div>
-              <h3 className="font-bold text-[#f7f8f8] mb-1">{s.serviceName}</h3>
-              <p className="text-xs text-[#8a8f98] mb-3 line-clamp-2">{s.description}</p>
+              <h3 className="font-bold text-gray-900 mb-1">{s.serviceName}</h3>
+              <p className="text-xs text-gray-500 mb-3 line-clamp-2">{s.description}</p>
               <p className="text-sm font-semibold text-[#828fff] mb-4">
-                {formatPrice(s.basePrice)}<span className="text-[#62666d] font-normal">/giờ</span>
+                {formatPrice(s.basePrice)}<span className="text-gray-400 font-normal">/giờ</span>
               </p>
               <div className="flex gap-2">
                 <button

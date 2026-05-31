@@ -18,7 +18,7 @@ function Stars({ rating }) {
   return (
     <span className="flex gap-0.5">
       {[1,2,3,4,5].map((s) => (
-        <span key={s} className={s <= rating ? 'text-yellow-400' : 'text-[#3a3d45]'}>★</span>
+        <span key={s} className={s <= rating ? 'text-yellow-400' : 'text-gray-300'}>★</span>
       ))}
     </span>
   );
@@ -87,51 +87,51 @@ export default function AdminReviewsPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#f7f8f8]">Quản lý đánh giá</h1>
-          <p className="text-[#8a8f98] text-sm mt-1">{total} đánh giá</p>
+          <h1 className="text-2xl font-bold text-gray-900">Quản lý đánh giá</h1>
+          <p className="text-gray-500 text-sm mt-1">{total} đánh giá</p>
         </div>
       </div>
 
       {/* Summary + rating distribution */}
       {reviews.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-          <div className="bg-[#0f1117] rounded-lg border border-[#1e2028] p-5 flex items-center gap-5">
+          <div className="bg-white rounded-lg border border-gray-200 p-5 flex items-center gap-5">
             <div className="text-center">
-              <p className="text-4xl font-extrabold text-[#f7f8f8]">{avgRating}</p>
+              <p className="text-4xl font-extrabold text-gray-900">{avgRating}</p>
               <Stars rating={Math.round(avgRating)} />
-              <p className="text-xs text-[#62666d] mt-1">{reviews.length} đánh giá</p>
+              <p className="text-xs text-gray-400 mt-1">{reviews.length} đánh giá</p>
             </div>
             <div className="flex-1 space-y-1.5">
               {ratingDist.map(({ star, count }) => (
                 <div key={star} className="flex items-center gap-2 text-xs">
-                  <span className="text-[#8a8f98] w-3">{star}</span>
-                  <div className="flex-1 h-1.5 bg-[#1e2028] rounded-full overflow-hidden">
+                  <span className="text-gray-500 w-3">{star}</span>
+                  <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-yellow-400 rounded-full transition-all"
                       style={{ width: `${(count / maxDist) * 100}%` }}
                     />
                   </div>
-                  <span className="text-[#62666d] w-4 text-right">{count}</span>
+                  <span className="text-gray-400 w-4 text-right">{count}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-[#0f1117] rounded-lg border border-[#1e2028] p-5 grid grid-cols-2 gap-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-5 grid grid-cols-2 gap-4">
             <div>
-              <p className="text-xs text-[#62666d] mb-1">Đang hiển thị</p>
+              <p className="text-xs text-gray-400 mb-1">Đang hiển thị</p>
               <p className="text-2xl font-bold text-emerald-400">{reviews.filter((r) => r.is_visible).length}</p>
             </div>
             <div>
-              <p className="text-xs text-[#62666d] mb-1">Đang ẩn</p>
+              <p className="text-xs text-gray-400 mb-1">Đang ẩn</p>
               <p className="text-2xl font-bold text-red-400">{reviews.filter((r) => !r.is_visible).length}</p>
             </div>
             <div>
-              <p className="text-xs text-[#62666d] mb-1">Đánh giá 1-2 sao</p>
+              <p className="text-xs text-gray-400 mb-1">Đánh giá 1-2 sao</p>
               <p className="text-2xl font-bold text-yellow-400">{reviews.filter((r) => r.rating <= 2).length}</p>
             </div>
             <div>
-              <p className="text-xs text-[#62666d] mb-1">Đánh giá 5 sao</p>
+              <p className="text-xs text-gray-400 mb-1">Đánh giá 5 sao</p>
               <p className="text-2xl font-bold text-[#828fff]">{reviews.filter((r) => r.rating === 5).length}</p>
             </div>
           </div>
@@ -139,11 +139,11 @@ export default function AdminReviewsPage() {
       )}
 
       {/* Filters */}
-      <div className="bg-[#0f1117] rounded-lg p-4 border border-[#1e2028] mb-5">
+      <div className="bg-white rounded-lg p-4 border border-gray-200 mb-5">
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Search */}
           <div className="flex-1 relative">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#62666d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
@@ -151,7 +151,7 @@ export default function AdminReviewsPage() {
               placeholder="Tìm theo tên helper, khách hàng, nội dung..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-[#0a0b0f] border border-[#23252a] text-[#d0d6e0] placeholder-[#62666d] rounded-md text-sm focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border border-gray-200 text-gray-700 placeholder-gray-400 rounded-md text-sm focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 transition-all"
               autoComplete="off"
             />
           </div>
@@ -165,7 +165,7 @@ export default function AdminReviewsPage() {
                 className={`px-3 py-2 rounded-md text-sm font-medium border transition-colors ${
                   ratingFilter === value
                     ? 'bg-[#5e6ad2] border-[#5e6ad2] text-white'
-                    : 'bg-[#0a0b0f] border-[#23252a] text-[#8a8f98] hover:border-[#5e6ad2]'
+                    : 'bg-gray-100 border-gray-200 text-gray-500 hover:border-[#5e6ad2]'
                 }`}
               >
                 {label}
@@ -177,7 +177,7 @@ export default function AdminReviewsPage() {
           <select
             value={visibleFilter}
             onChange={(e) => setVisibleFilter(e.target.value)}
-            className="bg-[#0a0b0f] border border-[#23252a] text-[#d0d6e0] rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-[#5e6ad2] min-w-[150px]"
+            className="bg-gray-100 border border-gray-200 text-gray-700 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-[#5e6ad2] min-w-[150px]"
           >
             <option value="">Tất cả</option>
             <option value="true">Đang hiển thị</option>
@@ -190,18 +190,18 @@ export default function AdminReviewsPage() {
       {loading ? (
         <div className="flex justify-center py-16"><LoadingSpinner /></div>
       ) : reviews.length === 0 ? (
-        <div className="bg-[#0f1117] rounded-lg p-12 text-center border border-[#1e2028]">
+        <div className="bg-white rounded-lg p-12 text-center border border-gray-200">
           <div className="text-4xl mb-3">⭐</div>
-          <p className="text-[#d0d6e0] font-medium">Không có đánh giá nào</p>
-          <p className="text-[#62666d] text-sm mt-1">Thử thay đổi bộ lọc</p>
+          <p className="text-gray-700 font-medium">Không có đánh giá nào</p>
+          <p className="text-gray-400 text-sm mt-1">Thử thay đổi bộ lọc</p>
         </div>
       ) : (
-        <div className="bg-[#0f1117] rounded-lg border border-[#1e2028] overflow-hidden">
-          <div className="divide-y divide-[#1e2028]">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="divide-y divide-gray-200">
             {reviews.map((r) => (
               <div
                 key={r.review_id}
-                className={`px-5 py-4 hover:bg-[#131418] transition-colors ${!r.is_visible ? 'opacity-50' : ''}`}
+                className={`px-5 py-4 hover:bg-gray-50 transition-colors ${!r.is_visible ? 'opacity-50' : ''}`}
               >
                 <div className="flex items-start gap-4">
                   {/* Parties */}
@@ -211,19 +211,19 @@ export default function AdminReviewsPage() {
                       <div className="flex items-center gap-2">
                         <Avatar name={r.customer_name} avatarUrl={r.customer_avatar} size="sm" />
                         <div>
-                          <p className="text-xs text-[#62666d]">Khách hàng</p>
-                          <p className="text-sm font-semibold text-[#d0d6e0]">{r.customer_name}</p>
+                          <p className="text-xs text-gray-400">Khách hàng</p>
+                          <p className="text-sm font-semibold text-gray-700">{r.customer_name}</p>
                         </div>
                       </div>
 
-                      <span className="text-[#3a3d45]">→</span>
+                      <span className="text-gray-300">→</span>
 
                       {/* Helper */}
                       <div className="flex items-center gap-2">
                         <Avatar name={r.helper_name} avatarUrl={r.helper_avatar} size="sm" />
                         <div>
-                          <p className="text-xs text-[#62666d]">Người giúp việc</p>
-                          <p className="text-sm font-semibold text-[#d0d6e0]">{r.helper_name}</p>
+                          <p className="text-xs text-gray-400">Người giúp việc</p>
+                          <p className="text-sm font-semibold text-gray-700">{r.helper_name}</p>
                         </div>
                       </div>
                     </div>
@@ -231,7 +231,7 @@ export default function AdminReviewsPage() {
                     {/* Rating + date */}
                     <div className="flex items-center gap-3 mb-2">
                       <Stars rating={r.rating} />
-                      <span className="text-xs text-[#62666d]">
+                      <span className="text-xs text-gray-400">
                         {new Date(r.created_at).toLocaleDateString('vi-VN')} · Đơn {r.booking_id}
                       </span>
                       {!r.is_visible && (
@@ -241,9 +241,9 @@ export default function AdminReviewsPage() {
 
                     {/* Comment */}
                     {r.comment ? (
-                      <p className="text-sm text-[#8a8f98] italic">"{r.comment}"</p>
+                      <p className="text-sm text-gray-500 italic">"{r.comment}"</p>
                     ) : (
-                      <p className="text-sm text-[#3a3d45] italic">Không có nhận xét</p>
+                      <p className="text-sm text-gray-300 italic">Không có nhận xét</p>
                     )}
                   </div>
 
