@@ -44,7 +44,7 @@ const SERVICES_V2 = [
 ];
 
 const NEW_SERVICES_V2 = [
-  { name: 'Vệ sinh Sofa, Nệm & Rèm', price: 250000, slug: 've-sinh-sofa-nem-rem', unit: 'm²',
+  { name: 'Vệ sinh Sofa, Nệm & Rèm', price: 150000, slug: 've-sinh-sofa-nem-rem', unit: 'bộ',
     short: 'Đánh bay bụi mịn, vết ố bẩn và mùi hôi trên chất liệu vải, nỉ, da bằng công nghệ phun hút áp lực hiện đại. Chúng tôi áp dụng phương pháp sấy hơi nước nóng diệt khuẩn đến 99.9% các loại ký sinh trùng, ẩm mốc ẩn sâu bên trong, bảo vệ tối đa sức khỏe hệ hô hấp và làn da cho cả gia đình bạn.',
     desc: 'Đánh bay bụi mịn, vết ố bẩn và mùi hôi trên chất liệu vải, nỉ, da bằng công nghệ phun hút áp lực hiện đại. Áp dụng phương pháp sấy hơi nước nóng diệt khuẩn đến 99.9% ký sinh trùng, ẩm mốc, bảo vệ sức khỏe hệ hô hấp cho cả gia đình.\n\nBAO GỒM: Hút bụi mịn sâu trên bề mặt và các khe kẽ; Phun hóa chất tẩy ố sinh học an toàn; Đánh tan vết bẩn bằng bàn chải mềm chuyên dụng; Phun hút áp lực tách nước bẩn; Phun hơi nước nóng diệt khuẩn và sấy khô 80–90%.\n\nKHÔNG BAO GỒM: Phục hồi vết rách, xước da, hoặc nhuộm lại màu vải bị phai.\n\nLƯU Ý: Giá tính theo đơn vị (bộ sofa, tấm nệm). Rèm cửa tính theo kg, bao gồm công tháo lắp và mang đi giặt sấy.' },
   { name: 'Vệ sinh Điều hòa', price: 150000, slug: 've-sinh-dieu-hoa', unit: 'lần',

@@ -922,7 +922,7 @@ INSERT INTO services (service_name, slug, description, base_price, price_unit, i
 ('Trông trẻ tại nhà',    'trong-tre-tai-nha',    'Giải pháp giữ trẻ theo giờ an toàn, tin cậy cho các bậc phụ huynh bận rộn.',   70000.00, 'giờ', TRUE),
 ('Chăm sóc người cao tuổi','cham-soc-nguoi-cao-tuoi','San sẻ gánh nặng chăm sóc cha mẹ, ông bà khi bạn bận rộn với công việc.',   75000.00, 'giờ', TRUE),
 ('Tổng vệ sinh (Deep Clean)','tong-ve-sinh-deep-clean','Dịch vụ làm sạch sâu toàn diện bằng máy móc công nghiệp.',   15000.00, 'm²', TRUE),
-('Vệ sinh Sofa, Nệm & Rèm','ve-sinh-sofa-nem-rem','Đánh bay bụi mịn, vết ố bẩn và mùi hôi bằng công nghệ phun hút áp lực.',   250000.00, 'm²', TRUE),
+('Vệ sinh Sofa, Nệm & Rèm','ve-sinh-sofa-nem-rem','Đánh bay bụi mịn, vết ố bẩn và mùi hôi bằng công nghệ phun hút áp lực. Sofa/nệm 250.000/bộ, rèm từ 150.000/bộ.',   150000.00, 'bộ', TRUE),
 ('Vệ sinh Điều hòa',     've-sinh-dieu-hoa',     'Đảm bảo nguồn không khí trong lành, tăng hiệu suất làm lạnh và tiết kiệm điện năng.',   150000.00, 'lần', TRUE),
 ('Vệ sinh Máy giặt & Thiết bị bếp','ve-sinh-may-giat-thiet-bi-bep','Loại bỏ cặn xà phòng, nấm mốc, dầu mỡ đóng tảng trong thiết bị.',   250000.00, 'lần', TRUE),
 ('Chăm sóc Thú cưng',    'cham-soc-thu-cung',    'Dịch vụ Pet Sitting tại nhà khi bạn đi du lịch hoặc bận rộn.',   65000.00, 'giờ', TRUE),
