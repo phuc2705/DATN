@@ -915,13 +915,19 @@ CREATE INDEX idx_helper_docs_status     ON helper_documents(helper_id, status);
 -- DỮ LIỆU MẪU
 -- ============================================================
 
-INSERT INTO services (service_name, slug, description, base_price, is_active) VALUES
-('Dọn dẹp nhà cửa',   'don-dep-nha-cua',   'Quét nhà, lau nhà, sắp xếp đồ đạc',   50000.00, TRUE),
-('Giặt ủi',           'giat-ui',            'Giặt và ủi quần áo',                   40000.00, TRUE),
-('Nấu ăn',            'nau-an',             'Nấu các bữa ăn gia đình',              60000.00, TRUE),
-('Chăm sóc trẻ em',   'cham-soc-tre-em',   'Trông trẻ, cho ăn, học bài',           70000.00, TRUE),
-('Chăm sóc người già','cham-soc-nguoi-gia','Chăm sóc, hỗ trợ sinh hoạt',           80000.00, TRUE),
-('Vệ sinh công nghiệp','ve-sinh-cong-nghiep','Vệ sinh văn phòng, nhà xưởng',        55000.00, TRUE);
+INSERT INTO services (service_name, slug, description, base_price, price_unit, is_active) VALUES
+('Giúp việc theo giờ',   'giup-viec-theo-gio',   'Dịch vụ dọn dẹp nhà cửa toàn diện theo khung giờ linh hoạt.',   60000.00, 'giờ', TRUE),
+('Giúp việc định kỳ',    'giup-viec-dinh-ky',    'Giải pháp tối ưu cho gia đình bận rộn muốn duy trì không gian sống sạch sẽ ổn định.',   55000.00, 'giờ', TRUE),
+('Nấu ăn gia đình',      'nau-an-gia-dinh',      'Thưởng thức bữa cơm nhà nóng hổi, chuẩn vị mà không tốn thời gian vào bếp.',   70000.00, 'giờ', TRUE),
+('Trông trẻ tại nhà',    'trong-tre-tai-nha',    'Giải pháp giữ trẻ theo giờ an toàn, tin cậy cho các bậc phụ huynh bận rộn.',   70000.00, 'giờ', TRUE),
+('Chăm sóc người cao tuổi','cham-soc-nguoi-cao-tuoi','San sẻ gánh nặng chăm sóc cha mẹ, ông bà khi bạn bận rộn với công việc.',   75000.00, 'giờ', TRUE),
+('Tổng vệ sinh (Deep Clean)','tong-ve-sinh-deep-clean','Dịch vụ làm sạch sâu toàn diện bằng máy móc công nghiệp.',   15000.00, 'm²', TRUE),
+('Vệ sinh Sofa, Nệm & Rèm','ve-sinh-sofa-nem-rem','Đánh bay bụi mịn, vết ố bẩn và mùi hôi bằng công nghệ phun hút áp lực.',   250000.00, 'm²', TRUE),
+('Vệ sinh Điều hòa',     've-sinh-dieu-hoa',     'Đảm bảo nguồn không khí trong lành, tăng hiệu suất làm lạnh và tiết kiệm điện năng.',   150000.00, 'lần', TRUE),
+('Vệ sinh Máy giặt & Thiết bị bếp','ve-sinh-may-giat-thiet-bi-bep','Loại bỏ cặn xà phòng, nấm mốc, dầu mỡ đóng tảng trong thiết bị.',   250000.00, 'lần', TRUE),
+('Chăm sóc Thú cưng',    'cham-soc-thu-cung',    'Dịch vụ Pet Sitting tại nhà khi bạn đi du lịch hoặc bận rộn.',   65000.00, 'giờ', TRUE),
+('Vệ sinh Văn phòng & Shop','ve-sinh-van-phong-shop','Duy trì không gian làm việc sạch sẽ, chuyên nghiệp.',   20000.00, 'm²', TRUE),
+('Phun khử khuẩn & Kiểm soát côn trùng','phun-khu-khuan-con-trung','Bảo vệ gia đình khỏi mầm bệnh và côn trùng bằng hóa chất sinh học an toàn.',   10000.00, 'm²', TRUE);
 
 INSERT INTO blog_categories (name, slug, description, is_active) VALUES
 ('Mẹo vặt gia đình',   'meo-vat-gia-dinh',  'Các mẹo hữu ích cho công việc nhà',   TRUE),

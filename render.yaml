@@ -26,7 +26,7 @@ services:
       - key: DB_PASSWORD
         sync: false          # ← Điền tay trong Render Dashboard
       - key: DB_NAME
-        value: housekeeping_service
+        value: defaultdb
       - key: DB_SSL
         value: "true"
 
