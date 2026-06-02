@@ -22,6 +22,28 @@ const SERVICE_ICONS = [
   { bg: 'from-red-400 to-red-600',      Icon: Droplets },
 ];
 
+// Ảnh thực tế tương ứng từng dịch vụ (Unsplash, ưu tiên cảnh châu Á/Việt Nam)
+const SLUG_PHOTOS = {
+  'don-dep-nha-cua':           'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=480&h=320&fit=crop&auto=format&q=80',
+  'giup-viec-theo-gio':        'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=480&h=320&fit=crop&auto=format&q=80',
+  'giup-viec-dinh-ky':         'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=480&h=320&fit=crop&auto=format&q=80',
+  'giat-ui':                   'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?w=480&h=320&fit=crop&auto=format&q=80',
+  'nau-an':                    'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=480&h=320&fit=crop&auto=format&q=80',
+  'nau-an-gia-dinh':           'https://images.unsplash.com/photo-1547592180-85f173990554?w=480&h=320&fit=crop&auto=format&q=80',
+  'cham-soc-tre-em':           'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=480&h=320&fit=crop&auto=format&q=80',
+  'trong-tre-tai-nha':         'https://images.unsplash.com/photo-1516627145497-ae6968895b74?w=480&h=320&fit=crop&auto=format&q=80',
+  'cham-soc-nguoi-gia':        'https://images.unsplash.com/photo-1576765974256-3927e0f92e94?w=480&h=320&fit=crop&auto=format&q=80',
+  'cham-soc-nguoi-cao-tuoi':   'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=480&h=320&fit=crop&auto=format&q=80',
+  've-sinh-cong-nghiep':       'https://images.unsplash.com/photo-1527515545081-5db817172677?w=480&h=320&fit=crop&auto=format&q=80',
+  'tong-ve-sinh-deep-clean':   'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=480&h=320&fit=crop&auto=format&q=80',
+  've-sinh-sofa-nem-rem':      'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=480&h=320&fit=crop&auto=format&q=80',
+  've-sinh-dieu-hoa':          'https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=480&h=320&fit=crop&auto=format&q=80',
+  've-sinh-may-giat-thiet-bi-bep': 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=480&h=320&fit=crop&auto=format&q=80',
+  'cham-soc-thu-cung':         'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=480&h=320&fit=crop&auto=format&q=80',
+  've-sinh-van-phong-shop':    'https://images.unsplash.com/photo-1497366216548-37526070297c?w=480&h=320&fit=crop&auto=format&q=80',
+  'phun-khu-khuan-con-trung':  'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=480&h=320&fit=crop&auto=format&q=80',
+};
+
 // Số liệu tham khảo từ BTaskee (nguồn: VnExpress 8/2024, Impact Square 1/2024)
 // và được điều chỉnh phù hợp với quy mô pilot tại Hà Nội
 const STATS = [
@@ -386,26 +408,45 @@ export default function HomePage() {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
             {filteredServices.map((svc, idx) => {
               const { bg, Icon } = SERVICE_ICONS[idx % SERVICE_ICONS.length];
+              const photo = SLUG_PHOTOS[svc.slug] || svc.iconUrl || null;
               return (
                 <button
                   key={svc.serviceId}
                   onClick={() => handleServiceClick(svc.serviceId)}
-                  className="group bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-lg hover:border-orange-200 transition-all duration-300 text-left active:scale-[0.98]"
+                  className="group bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl hover:border-orange-200 transition-all duration-300 text-left active:scale-[0.98]"
                 >
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${bg} flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform duration-300`}>
-                    <Icon className="w-7 h-7 text-white" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-base mb-1 group-hover:text-orange-600 transition-colors">{svc.serviceName}</h3>
-                  {(svc.shortDescription || svc.description) && (
-                    <p className="text-xs text-gray-400 line-clamp-2 mb-3 leading-relaxed">{svc.shortDescription || svc.description}</p>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <span className="text-orange-500 font-bold text-sm">
+                  {/* Ảnh dịch vụ */}
+                  <div className="relative w-full h-40 overflow-hidden">
+                    {photo ? (
+                      <img
+                        src={photo}
+                        alt={svc.serviceName}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className={`w-full h-full bg-gradient-to-br ${bg} flex items-center justify-center`}>
+                        <Icon className="w-12 h-12 text-white/80" />
+                      </div>
+                    )}
+                    {/* Gradient overlay phía dưới ảnh */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                    {/* Giá hiển thị trên ảnh */}
+                    <span className="absolute bottom-2 left-3 text-white text-xs font-semibold drop-shadow">
                       Từ {formatPrice(svc.basePrice)}/{svc.priceUnit || 'giờ'}
                     </span>
-                    <span className="w-7 h-7 rounded-full bg-orange-50 flex items-center justify-center text-orange-400 group-hover:bg-orange-500 group-hover:text-white transition-all duration-200">
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </span>
+                  </div>
+
+                  {/* Nội dung card */}
+                  <div className="p-4">
+                    <h3 className="font-semibold text-gray-900 text-sm mb-1 group-hover:text-orange-600 transition-colors line-clamp-1">
+                      {svc.serviceName}
+                    </h3>
+                    {(svc.shortDescription || svc.description) && (
+                      <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">
+                        {svc.shortDescription || svc.description}
+                      </p>
+                    )}
                   </div>
                 </button>
               );
