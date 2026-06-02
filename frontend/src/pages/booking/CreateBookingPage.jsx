@@ -173,12 +173,33 @@ export default function CreateBookingPage() {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
   };
 
+  // Trả về thông báo lỗi nếu ngày/giờ đặt đã qua, null nếu hợp lệ
+  const getPastDateTimeError = (bookingDate, startTime) => {
+    if (!bookingDate || !startTime) return null;
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (bookingDate < todayStr) return 'Không thể đặt lịch cho ngày đã qua.';
+    if (bookingDate === todayStr) {
+      const now = new Date();
+      const [sh, sm] = startTime.split(':').map(Number);
+      const startMins = sh * 60 + sm;
+      const nowMins   = now.getHours() * 60 + now.getMinutes() + 30; // buffer 30 phút
+      if (startMins < nowMins) {
+        const minH = String(Math.floor(nowMins / 60) % 24).padStart(2, '0');
+        const minM = String(nowMins % 60).padStart(2, '0');
+        return `Giờ bắt đầu phải sau ${minH}:${minM} (ít nhất 30 phút từ bây giờ).`;
+      }
+    }
+    return null;
+  };
+
   const validateStep1 = () => {
     if (!form.serviceId)  { toast.error('Vui lòng chọn dịch vụ'); return false; }
     if (!form.bookingDate){ toast.error('Vui lòng chọn ngày làm việc'); return false; }
     if (!form.startTime)  { toast.error('Vui lòng chọn giờ bắt đầu'); return false; }
     if (!form.endTime)    { toast.error('Vui lòng chọn giờ kết thúc'); return false; }
     if (form.startTime >= form.endTime) { toast.error('Giờ kết thúc phải sau giờ bắt đầu'); return false; }
+    const pastErr = getPastDateTimeError(form.bookingDate, form.startTime);
+    if (pastErr) { toast.error(pastErr); return false; }
     return true;
   };
 
@@ -190,6 +211,8 @@ export default function CreateBookingPage() {
 
   const handleSubmit = async () => {
     if (!form.address.trim()) { toast.error('Vui lòng nhập địa chỉ'); return; }
+    const pastErr = getPastDateTimeError(form.bookingDate, form.startTime);
+    if (pastErr) { toast.error(pastErr); return; }
     setSubmitting(true);
     try {
       const { data } = await createBookingApi({
@@ -314,11 +337,29 @@ export default function CreateBookingPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label required>Giờ bắt đầu</Label>
-                  <input type="time" value={form.startTime} onChange={set('startTime')} className={INPUT_CLS} />
+                  <input
+                    type="time"
+                    value={form.startTime}
+                    onChange={set('startTime')}
+                    min={(() => {
+                      const todayStr = new Date().toISOString().split('T')[0];
+                      if (form.bookingDate !== todayStr) return undefined;
+                      const now = new Date();
+                      const minMins = now.getHours() * 60 + now.getMinutes() + 30;
+                      return `${String(Math.floor(minMins / 60) % 24).padStart(2, '0')}:${String(minMins % 60).padStart(2, '0')}`;
+                    })()}
+                    className={INPUT_CLS}
+                  />
                 </div>
                 <div>
                   <Label required>Giờ kết thúc</Label>
-                  <input type="time" value={form.endTime} onChange={set('endTime')} className={INPUT_CLS} />
+                  <input
+                    type="time"
+                    value={form.endTime}
+                    onChange={set('endTime')}
+                    min={form.startTime || undefined}
+                    className={INPUT_CLS}
+                  />
                 </div>
               </div>
               {/* Price preview inline */}

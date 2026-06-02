@@ -86,10 +86,26 @@ const BookingController = {
       const customerProfile = await UserModel.getCustomerProfile(user_id);
       if (!customerProfile) return sendError(res, 'Không tìm thấy thông tin khách hàng.', 404);
 
-      // Không cho đặt lịch ngày trong quá khứ
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      if (new Date(bookingDate) < today)
+      // Không cho đặt lịch ngày/giờ trong quá khứ (dùng timezone Việt Nam UTC+7)
+      const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
+      const nowVN      = new Date(Date.now() + VN_OFFSET_MS);
+      const todayVN    = nowVN.toISOString().slice(0, 10); // "YYYY-MM-DD"
+      const nowVNHour  = nowVN.getUTCHours();
+      const nowVNMin   = nowVN.getUTCMinutes();
+
+      if (bookingDate < todayVN)
         return sendError(res, 'Không thể đặt lịch cho ngày đã qua. Vui lòng chọn ngày hôm nay hoặc tương lai.', 400);
+
+      if (bookingDate === todayVN) {
+        const [sh, sm]   = startTime.split(':').map(Number);
+        const startMins  = sh * 60 + sm;
+        const nowMins    = nowVNHour * 60 + nowVNMin + 30; // buffer 30 phút
+        if (startMins < nowMins) {
+          const minH = String(Math.floor(nowMins / 60) % 24).padStart(2, '0');
+          const minM = String(nowMins % 60).padStart(2, '0');
+          return sendError(res, `Giờ bắt đầu phải sau ${minH}:${minM} (ít nhất 30 phút kể từ bây giờ).`, 400);
+        }
+      }
 
       // Kiểm tra xung đột lịch của khách hàng (tránh đặt 2 đơn cùng khung giờ)
       const customerHasConflict = await BookingModel.checkCustomerConflict(
