@@ -232,7 +232,7 @@ export default function RegisterCustomerPage() {
                 </div>
 
                 {/* Email + SĐT */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="label">Email <span className="text-red-400">*</span></label>
                     <input
@@ -284,7 +284,7 @@ export default function RegisterCustomerPage() {
                 </div>
 
                 {/* Địa chỉ + Thành phố */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="label">Địa chỉ <span className="text-red-400">*</span></label>
                     <input

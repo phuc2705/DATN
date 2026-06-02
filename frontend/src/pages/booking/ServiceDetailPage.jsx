@@ -368,13 +368,18 @@ function PhotoGallery({ images }) {
 }
 
 // ── Sub-component: BookingWidget (card sticky bên phải) ──────────────────────
-function BookingWidget({ service }) {
+function BookingWidget({ service, sharedDate, setSharedDate, sharedStart, setSharedStart, sharedEnd, setSharedEnd }) {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [date, setDate]           = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime]     = useState('');
+  // Dùng shared state từ parent (để MobileStickyBar cũng biết)
+  const date      = sharedDate  ?? '';
+  const startTime = sharedStart ?? '';
+  const endTime   = sharedEnd   ?? '';
+  const setDate      = setSharedDate  ?? (() => {});
+  const setStartTime = setSharedStart ?? (() => {});
+  const setEndTime   = setSharedEnd   ?? (() => {});
+
   const [priceData, setPriceData] = useState(null);
   const [priceLoading, setPriceLoading] = useState(false);
   const [dateError, setDateError] = useState('');
@@ -569,6 +574,11 @@ export default function ServiceDetailPage() {
   const [loading, setLoading] = useState(true);
   const [descExpanded, setDescExpanded] = useState(false);
   const [showAllReviews, setShowAllReviews] = useState(false);
+
+  // Chia sẻ booking state giữa BookingWidget và MobileStickyBar
+  const [sharedDate, setSharedDate]   = useState('');
+  const [sharedStart, setSharedStart] = useState('');
+  const [sharedEnd, setSharedEnd]     = useState('');
 
   useEffect(() => {
     setLoading(true);
@@ -766,7 +776,11 @@ export default function ServiceDetailPage() {
 
           {/* [Mobile only] BookingWidget inline */}
           <div className="lg:hidden mb-8">
-            <BookingWidget service={service} />
+            <BookingWidget service={service}
+              sharedDate={sharedDate} setSharedDate={setSharedDate}
+              sharedStart={sharedStart} setSharedStart={setSharedStart}
+              sharedEnd={sharedEnd} setSharedEnd={setSharedEnd}
+            />
           </div>
 
           {/* Divider (mobile) */}
@@ -815,7 +829,11 @@ export default function ServiceDetailPage() {
 
         {/* ════════════════ RIGHT COLUMN — STICKY WIDGET ════════════════ */}
         <div className="hidden lg:block lg:sticky lg:top-8">
-          <BookingWidget service={service} />
+          <BookingWidget service={service}
+            sharedDate={sharedDate} setSharedDate={setSharedDate}
+            sharedStart={sharedStart} setSharedStart={setSharedStart}
+            sharedEnd={sharedEnd} setSharedEnd={setSharedEnd}
+          />
 
           {/* Liên hệ hỗ trợ */}
           <p className="text-center text-sm text-gray-500 mt-4">
@@ -830,22 +848,30 @@ export default function ServiceDetailPage() {
       </div>
 
       {/* ── Mobile sticky bottom bar (chỉ hiện trên < lg) ──────────────────── */}
-      <MobileStickyBar service={service} />
+      <MobileStickyBar service={service}
+        bookingDate={sharedDate} bookingStart={sharedStart} bookingEnd={sharedEnd}
+      />
     </div>
   );
 }
 
 // ── Sub-component: MobileStickyBar ───────────────────────────────────────────
-function MobileStickyBar({ service }) {
+function MobileStickyBar({ service, bookingDate, bookingStart, bookingEnd }) {
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  const hasFullBooking = bookingDate && bookingStart && bookingEnd;
 
   const handleBook = () => {
     if (!user) {
       navigate(`/login?redirect=/services/${service.serviceId}`);
       return;
     }
-    navigate(`/bookings/new?serviceId=${service.serviceId}`);
+    const params = new URLSearchParams({ serviceId: service.serviceId });
+    if (bookingDate)  params.set('date', bookingDate);
+    if (bookingStart) params.set('startTime', bookingStart);
+    if (bookingEnd)   params.set('endTime', bookingEnd);
+    navigate(`/bookings/new?${params.toString()}`);
   };
 
   return (
@@ -858,17 +884,21 @@ function MobileStickyBar({ service }) {
           <span className="text-lg font-bold text-gray-900">{formatPrice(service.basePrice)}</span>
           <span className="text-sm text-gray-500">/{service.priceUnit || service.price_unit || 'giờ'}</span>
         </div>
-        <div className="flex items-center gap-1 mt-0.5">
-          <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-          <span className="text-xs font-semibold text-gray-700">{service.rating}</span>
-          <span className="text-xs text-gray-400">({service.reviewCount})</span>
-        </div>
+        {hasFullBooking ? (
+          <p className="text-xs text-orange-500 font-medium mt-0.5">{bookingDate} · {bookingStart}–{bookingEnd}</p>
+        ) : (
+          <div className="flex items-center gap-1 mt-0.5">
+            <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+            <span className="text-xs font-semibold text-gray-700">{service.rating}</span>
+            <span className="text-xs text-gray-400">({service.reviewCount})</span>
+          </div>
+        )}
       </div>
       <button
         onClick={handleBook}
         className="flex-1 max-w-[200px] h-12 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold text-sm rounded-xl transition-all active:scale-95 shadow-sm hover:shadow-md"
       >
-        Đặt lịch ngay
+        {hasFullBooking ? 'Đặt lịch ngay' : 'Xem & chọn lịch'}
       </button>
     </div>
   );

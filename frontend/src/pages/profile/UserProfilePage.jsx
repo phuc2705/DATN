@@ -293,7 +293,7 @@ export default function UserProfilePage() {
                 <FormField label="Địa chỉ">
                   <TextInput name="address" value={form.address} onChange={set} placeholder="123 Đường ABC" />
                 </FormField>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField label="Quận / Huyện">
                     <TextInput name="district" value={form.district} onChange={set} placeholder="Quận 1" />
                   </FormField>

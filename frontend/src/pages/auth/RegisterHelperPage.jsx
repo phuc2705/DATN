@@ -287,7 +287,7 @@ export default function RegisterHelperPage() {
                 </div>
 
                 {/* Email + SĐT */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="label">Email <span className="text-red-400">*</span></label>
                     <input
@@ -343,7 +343,7 @@ export default function RegisterHelperPage() {
                 </div>
 
                 {/* Ngày sinh + Giới tính */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="label">Ngày sinh <span className="text-red-400">*</span></label>
                     <input
@@ -394,7 +394,7 @@ export default function RegisterHelperPage() {
                 {/* Công việc có thể làm */}
                 <div>
                   <label className="label">Công việc có thể làm <span className="text-red-400">*</span></label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {SERVICES.map(s => (
                       <label
                         key={s.id}
