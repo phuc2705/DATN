@@ -64,7 +64,27 @@ app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'), {
 
 // Serve React app (chỉ khi đã build — production hoặc local demo)
 const distPath = path.join(__dirname, '../frontend/dist');
-app.use(express.static(distPath, { maxAge: IS_PROD ? '1d' : 0 }));
+
+// Assets có content-hash trong tên file → cache dài (1 năm, immutable)
+app.use('/assets', express.static(path.join(distPath, 'assets'), {
+  maxAge: IS_PROD ? '1y' : 0,
+  immutable: IS_PROD,
+}));
+
+// index.html và các file tĩnh gốc (logo, favicon...) → KHÔNG cache
+// để browser luôn lấy phiên bản mới nhất sau mỗi lần deploy
+app.use(express.static(distPath, {
+  maxAge: 0,
+  etag: true,
+  lastModified: true,
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  },
+}));
 
 // ─── Body parser ──────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
@@ -110,6 +130,10 @@ app.get('*', (req, res) => {
   const indexPath = path.join(distPath, 'index.html');
   const fs = require('fs');
   if (fs.existsSync(indexPath)) {
+    // Luôn no-cache cho index.html — đảm bảo deploy mới được nhận ngay
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.sendFile(indexPath);
   } else {
     res.status(503).json({
