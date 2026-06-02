@@ -307,25 +307,64 @@ export default function HomePage() {
 
       {/* ─── DỊCH VỤ ─────────────────────────────────────────────── */}
       <section id="services" className="mb-12">
-        <div className="flex items-end justify-between mb-6">
+        <div className="flex items-end justify-between mb-4">
           <div>
             <p className="text-orange-500 text-sm font-semibold uppercase tracking-wide mb-1">Dịch vụ của chúng tôi</p>
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Chọn dịch vụ phù hợp</h2>
             <p className="text-gray-500 text-sm mt-1">
               {activeServiceFilter.length > 0
-                ? `Hiển thị ${filteredServices.length} dịch vụ phù hợp`
+                ? `Hiển thị ${filteredServices.length} / ${services.length} dịch vụ`
                 : 'Đặt lịch nhanh chóng, người làm uy tín'}
             </p>
           </div>
           {activeServiceFilter.length > 0 && (
             <button
               onClick={clearFilter}
-              className="flex items-center gap-1 text-sm text-gray-400 hover:text-orange-500 transition-colors"
+              className="flex items-center gap-1 text-sm text-gray-400 hover:text-orange-500 transition-colors shrink-0"
             >
               <X className="w-3.5 h-3.5" /> Xóa bộ lọc
             </button>
           )}
         </div>
+
+        {/* Filter chip strip — cuộn ngang, hiển thị tất cả dịch vụ */}
+        {!loading && services.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto pb-3 mb-6 scrollbar-hide -mx-1 px-1">
+            <button
+              onClick={clearFilter}
+              className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-all whitespace-nowrap ${
+                activeServiceFilter.length === 0
+                  ? 'bg-gray-900 text-white border-gray-900'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+              }`}
+            >
+              Tất cả
+            </button>
+            {services.map((s) => {
+              const active = activeServiceFilter.includes(s.serviceId);
+              return (
+                <button
+                  key={s.serviceId}
+                  onClick={() => {
+                    if (active) {
+                      clearFilter();
+                    } else {
+                      setActiveServiceFilter([s.serviceId]);
+                      setSelectedServiceIds([s.serviceId]);
+                    }
+                  }}
+                  className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-all whitespace-nowrap ${
+                    active
+                      ? 'bg-orange-500 text-white border-orange-500'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-500'
+                  }`}
+                >
+                  {s.serviceName}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
