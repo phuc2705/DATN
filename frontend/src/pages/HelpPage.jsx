@@ -20,8 +20,8 @@ const FAQS = [
         a: 'Rất đơn giản! Chọn dịch vụ bạn cần → chọn ngày giờ → cung cấp địa chỉ → thanh toán. Toàn bộ quy trình mất khoảng 2-3 phút. Chúng tôi sẽ tự động ghép bạn với người giúp việc phù hợp nhất trong khu vực.',
       },
       {
-        q: 'ConnectClean cung cấp những dịch vụ nào?',
-        a: 'ConnectClean hiện phục vụ tại Hà Nội với các dịch vụ: dọn dẹp nhà theo giờ (từ 80.000đ/giờ), nấu ăn theo giờ, giặt ủi, vệ sinh điều hòa (từ 180.000đ/cái, theo mức giá thị trường 2024), vệ sinh tổng thể, trông trẻ và chăm sóc người cao tuổi. Mức giá tham chiếu thị trường Hà Nội dao động 80.000–150.000đ/giờ tùy dịch vụ.',
+        q: 'CleanConnect cung cấp những dịch vụ nào?',
+        a: 'CleanConnect hiện phục vụ tại Hà Nội với các dịch vụ: dọn dẹp nhà theo giờ (từ 80.000đ/giờ), nấu ăn theo giờ, giặt ủi, vệ sinh điều hòa (từ 180.000đ/cái, theo mức giá thị trường 2024), vệ sinh tổng thể, trông trẻ và chăm sóc người cao tuổi. Mức giá tham chiếu thị trường Hà Nội dao động 80.000–150.000đ/giờ tùy dịch vụ.',
       },
       {
         q: 'Tôi có thể yêu cầu cùng một người giúp việc không?',
@@ -38,7 +38,7 @@ const FAQS = [
     icon: '👤',
     items: [
       {
-        q: 'Người giúp việc trên ConnectClean có được xác minh không?',
+        q: 'Người giúp việc trên CleanConnect có được xác minh không?',
         a: 'Có. Mọi người giúp việc phải trải qua: xác minh CCCD/CMND thật, kiểm tra lý lịch tư pháp, phỏng vấn và kiểm tra kỹ năng thực tế, giai đoạn thử việc có giám sát. Chỉ khoảng 35% hồ sơ đăng ký được chấp thuận. Hồ sơ đạt chuẩn được gắn badge "Đã xác minh" và hiển thị điểm đánh giá minh bạch.',
       },
       {
@@ -104,7 +104,7 @@ const FAQS = [
         a: 'Người giúp việc nhận khoảng 78% giá trị mỗi đơn (tương tự mô hình ~80% của BTaskee theo VnExpress 2022). Với mức giá dịch vụ thị trường 80.000–120.000đ/giờ, thu nhập thực tế dao động 65.000–95.000đ/giờ. Thanh toán qua chuyển khoản ngân hàng hàng tuần hoặc hàng tháng theo lựa chọn.',
       },
       {
-        q: 'Yêu cầu để trở thành người giúp việc trên ConnectClean?',
+        q: 'Yêu cầu để trở thành người giúp việc trên CleanConnect?',
         a: 'Bạn cần đáp ứng: (1) CCCD/CMND hợp lệ và còn hiệu lực, (2) Không có tiền án tiền sự (xác minh qua lý lịch tư pháp), (3) Kinh nghiệm tối thiểu 6 tháng trong lĩnh vực đăng ký, (4) Smartphone Android/iOS để dùng app check-in/check-out, (5) Cam kết đúng giờ và duy trì điểm đánh giá ≥ 3.5/5 sau 10 đơn đầu tiên.',
       },
     ],
@@ -275,7 +275,7 @@ export default function HelpPage() {
             Gọi 1800 1234
           </a>
           <a
-            href="mailto:support@connectclean.vn"
+            href="mailto:support@cleanconnect.vn"
             className="inline-flex items-center justify-center gap-2 h-11 px-6 border-2 border-gray-200 hover:border-gray-900 text-gray-700 hover:text-gray-900 font-medium text-sm rounded-xl transition-colors"
           >
             <Mail className="w-4 h-4" />

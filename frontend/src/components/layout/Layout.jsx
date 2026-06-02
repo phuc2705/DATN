@@ -88,7 +88,7 @@ export default function Layout() {
                 <h3 className="text-white font-semibold mb-3">Liên hệ</h3>
                 <div className="space-y-2 text-sm text-gray-400">
                   <p className="flex items-center gap-2"><Phone className="w-4 h-4 text-orange-400 shrink-0" /> Hotline: <span className="text-orange-400 font-medium">1800 1234</span> (miễn phí 24/7)</p>
-                  <p className="flex items-center gap-2"><Mail className="w-4 h-4 text-orange-400 shrink-0" /> Email: <span className="text-orange-400">support@connectclean.vn</span></p>
+                  <p className="flex items-center gap-2"><Mail className="w-4 h-4 text-orange-400 shrink-0" /> Email: <span className="text-orange-400">support@cleanconnect.vn</span></p>
                   <p className="flex items-center gap-2"><MapPin className="w-4 h-4 text-orange-400 shrink-0" /> Trụ sở: 3 Cầu Giấy, Hà Nội</p>
                 </div>
               </div>
@@ -107,7 +107,7 @@ export default function Layout() {
 
           {/* Bottom bar */}
           <div className="border-t border-gray-800 pt-6 flex flex-col md:flex-row justify-between items-center gap-3 text-sm text-gray-500">
-            <p>© 2026 ConnectClean — ĐATN của Nguyễn Trọng Phúc</p>
+            <p>© 2026 CleanConnect — ĐATN của Nguyễn Trọng Phúc</p>
             <div className="flex gap-4">
               <Link to="/terms" className="hover:text-gray-300 transition-colors">Điều khoản sử dụng</Link>
               <Link to="/terms" className="hover:text-gray-300 transition-colors">Chính sách bảo mật</Link>

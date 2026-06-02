@@ -63,7 +63,7 @@ export default function AboutPage() {
           Kết nối gia đình Việt<br />với dịch vụ giúp việc đáng tin
         </h1>
         <p className="text-gray-500 text-lg max-w-2xl mx-auto leading-relaxed">
-          ConnectClean ra đời để giải quyết bài toán đau đầu của hàng triệu gia đình Việt Nam:
+          CleanConnect ra đời để giải quyết bài toán đau đầu của hàng triệu gia đình Việt Nam:
           tìm người giúp việc uy tín, giá minh bạch, đúng giờ và dễ dàng đặt lịch.
         </p>
       </div>
@@ -106,7 +106,7 @@ export default function AboutPage() {
             Theo ILO (2023), chỉ <strong className="text-gray-900">19%</strong> lao động giúp việc tại Việt Nam
             tiếp cận việc làm qua kênh chính thức — phần còn lại chủ yếu qua mạng xã hội, Zalo nhóm và
             truyền miệng. Điều này dẫn đến thiếu minh bạch về giá, không có cơ chế đánh giá tin cậy,
-            và khó kiểm soát chất lượng. ConnectClean ra đời để giải quyết bài toán này.
+            và khó kiểm soát chất lượng. CleanConnect ra đời để giải quyết bài toán này.
           </p>
           <p>
             Nền tảng được xây dựng với trọng tâm là <strong className="text-gray-900">giá cả minh bạch — hiển thị đầy đủ trước khi đặt</strong>,
@@ -165,7 +165,7 @@ export default function AboutPage() {
         <div className="grid sm:grid-cols-3 gap-4 mb-6">
           {[
             { Icon: Phone, label: 'Hotline', value: '1800 1234', href: 'tel:18001234' },
-            { Icon: Mail, label: 'Email', value: 'support@connectclean.vn', href: 'mailto:support@connectclean.vn' },
+            { Icon: Mail, label: 'Email', value: 'support@cleanconnect.vn', href: 'mailto:support@cleanconnect.vn' },
             { Icon: MapPin, label: 'Địa chỉ', value: '3 Cầu Giấy, Hà Nội', href: '#' },
           ].map(({ Icon, label, value, href }) => (
             <a key={label} href={href} className="flex items-start gap-3 p-4 bg-white rounded-xl border border-gray-100 hover:border-orange-200 transition-colors group">

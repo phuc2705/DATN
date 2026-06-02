@@ -10,11 +10,11 @@ const TABS = [
 const TERMS_SECTIONS = [
   {
     title: '1. Chấp nhận điều khoản',
-    content: `Bằng cách truy cập và sử dụng nền tảng ConnectClean ("Dịch vụ"), bạn đồng ý bị ràng buộc bởi các Điều khoản Dịch vụ này. Nếu bạn không đồng ý với bất kỳ phần nào của các điều khoản này, bạn không thể sử dụng Dịch vụ.`,
+    content: `Bằng cách truy cập và sử dụng nền tảng CleanConnect ("Dịch vụ"), bạn đồng ý bị ràng buộc bởi các Điều khoản Dịch vụ này. Nếu bạn không đồng ý với bất kỳ phần nào của các điều khoản này, bạn không thể sử dụng Dịch vụ.`,
   },
   {
     title: '2. Mô tả dịch vụ',
-    content: `ConnectClean là nền tảng kết nối khách hàng ("Người dùng") với người giúp việc gia đình ("Người giúp việc") để thực hiện các dịch vụ gia đình theo yêu cầu. ConnectClean đóng vai trò là trung gian kết nối và không trực tiếp cung cấp dịch vụ giúp việc.`,
+    content: `CleanConnect là nền tảng kết nối khách hàng ("Người dùng") với người giúp việc gia đình ("Người giúp việc") để thực hiện các dịch vụ gia đình theo yêu cầu. CleanConnect đóng vai trò là trung gian kết nối và không trực tiếp cung cấp dịch vụ giúp việc.`,
   },
   {
     title: '3. Tài khoản người dùng',
@@ -38,11 +38,11 @@ const TERMS_SECTIONS = [
   },
   {
     title: '8. Giới hạn trách nhiệm',
-    content: `ConnectClean không chịu trách nhiệm về mất mát tài sản, thương tích hoặc thiệt hại xảy ra trong quá trình cung cấp dịch vụ vượt quá giá trị của đơn hàng đó. Chúng tôi khuyến khích người dùng mua bảo hiểm bổ sung cho tài sản có giá trị cao.`,
+    content: `CleanConnect không chịu trách nhiệm về mất mát tài sản, thương tích hoặc thiệt hại xảy ra trong quá trình cung cấp dịch vụ vượt quá giá trị của đơn hàng đó. Chúng tôi khuyến khích người dùng mua bảo hiểm bổ sung cho tài sản có giá trị cao.`,
   },
   {
     title: '9. Thay đổi điều khoản',
-    content: `ConnectClean có quyền cập nhật Điều khoản Dịch vụ bất kỳ lúc nào. Thay đổi sẽ có hiệu lực sau 7 ngày kể từ khi thông báo qua email hoặc thông báo trong ứng dụng. Tiếp tục sử dụng dịch vụ sau thời gian này đồng nghĩa với việc chấp nhận điều khoản mới.`,
+    content: `CleanConnect có quyền cập nhật Điều khoản Dịch vụ bất kỳ lúc nào. Thay đổi sẽ có hiệu lực sau 7 ngày kể từ khi thông báo qua email hoặc thông báo trong ứng dụng. Tiếp tục sử dụng dịch vụ sau thời gian này đồng nghĩa với việc chấp nhận điều khoản mới.`,
   },
 ];
 
@@ -69,7 +69,7 @@ const PRIVACY_SECTIONS = [
   },
   {
     title: '6. Quyền của người dùng',
-    content: `Bạn có quyền: xem toàn bộ thông tin cá nhân đang lưu trữ, yêu cầu chỉnh sửa thông tin không chính xác, yêu cầu xóa tài khoản và dữ liệu (trong vòng 30 ngày), phản đối việc xử lý dữ liệu trong một số trường hợp. Gửi yêu cầu đến support@connectclean.vn.`,
+    content: `Bạn có quyền: xem toàn bộ thông tin cá nhân đang lưu trữ, yêu cầu chỉnh sửa thông tin không chính xác, yêu cầu xóa tài khoản và dữ liệu (trong vòng 30 ngày), phản đối việc xử lý dữ liệu trong một số trường hợp. Gửi yêu cầu đến support@cleanconnect.vn.`,
   },
   {
     title: '7. Lưu trữ dữ liệu',
@@ -77,7 +77,7 @@ const PRIVACY_SECTIONS = [
   },
   {
     title: '8. Liên hệ về quyền riêng tư',
-    content: `Nếu có thắc mắc về chính sách bảo mật, liên hệ: Email: support@connectclean.vn — Hotline: 1800 1234 — Địa chỉ: 3 Cầu Giấy, Hà Nội. Chúng tôi sẽ phản hồi trong vòng 5 ngày làm việc.`,
+    content: `Nếu có thắc mắc về chính sách bảo mật, liên hệ: Email: support@cleanconnect.vn — Hotline: 1800 1234 — Địa chỉ: 3 Cầu Giấy, Hà Nội. Chúng tôi sẽ phản hồi trong vòng 5 ngày làm việc.`,
   },
 ];
 
@@ -137,7 +137,7 @@ export default function TermsPage() {
           activeTab === 'terms' ? 'text-blue-700' : 'text-green-700'
         }`}>
           {activeTab === 'terms'
-            ? 'Vui lòng đọc kỹ các điều khoản này trước khi sử dụng dịch vụ. Việc tiếp tục sử dụng ConnectClean đồng nghĩa bạn đã đọc và chấp nhận toàn bộ điều khoản.'
+            ? 'Vui lòng đọc kỹ các điều khoản này trước khi sử dụng dịch vụ. Việc tiếp tục sử dụng CleanConnect đồng nghĩa bạn đã đọc và chấp nhận toàn bộ điều khoản.'
             : 'Chúng tôi coi trọng quyền riêng tư của bạn. Chính sách này mô tả cách chúng tôi thu thập, sử dụng và bảo vệ thông tin cá nhân của bạn.'
           }
         </p>
@@ -166,7 +166,7 @@ export default function TermsPage() {
             Xem FAQ
           </Link>
           <a
-            href="mailto:support@connectclean.vn"
+            href="mailto:support@cleanconnect.vn"
             className="inline-flex items-center justify-center gap-2 h-11 px-6 bg-orange-500 hover:bg-orange-600 text-white font-medium text-sm rounded-xl transition-colors"
           >
             Liên hệ hỗ trợ

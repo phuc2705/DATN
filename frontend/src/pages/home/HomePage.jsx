@@ -600,7 +600,7 @@ export default function HomePage() {
       <section className="mb-12">
         <div className="text-center mb-8">
           <p className="text-orange-500 text-sm font-semibold uppercase tracking-wide mb-1">Cam kết chất lượng</p>
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Tại sao chọn ConnectClean?</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Tại sao chọn CleanConnect?</h2>
         </div>
         <div className="grid md:grid-cols-2 gap-5">
           {FEATURES.map(({ Icon, title, desc, color }) => (
