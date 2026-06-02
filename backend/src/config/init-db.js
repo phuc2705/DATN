@@ -111,10 +111,10 @@ async function runMigrations(connection) {
     // ignore — cột đã tồn tại
   }
 
-  // Sửa giá: Vệ sinh Văn phòng → 20.000/m², Phun khử khuẩn → 10.000/m²
+  // Đồng bộ giá theo migrate_services_v2.sql
   try {
-    await connection.query("UPDATE services SET base_price=20000 WHERE slug='ve-sinh-van-phong-shop' AND base_price<>20000");
-    await connection.query("UPDATE services SET base_price=10000 WHERE slug='phun-khu-khuan-con-trung' AND base_price<>10000");
+    await connection.query("UPDATE services SET base_price=12000 WHERE slug='ve-sinh-van-phong-shop' AND base_price<>12000");
+    await connection.query("UPDATE services SET base_price=5000 WHERE slug='phun-khu-khuan-con-trung' AND base_price<>5000");
   } catch (err) {
     // ignore
   }
