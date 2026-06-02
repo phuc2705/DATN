@@ -368,12 +368,12 @@ export default function HomePage() {
                 </button>
 
                 {serviceDropdownOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-full min-w-[300px] bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
-                    <div className="px-4 py-2.5 bg-gray-50/80 border-b border-gray-100">
+                  <div className="absolute top-full left-0 mt-1 w-full min-w-[300px] bg-white rounded-2xl shadow-2xl border border-gray-100 z-50">
+                    <div className="px-4 py-2.5 bg-gray-50/80 border-b border-gray-100 rounded-t-2xl">
                       <p className="text-xs text-gray-500 font-medium">Chọn một hoặc nhiều dịch vụ</p>
                     </div>
 
-                    <div className="max-h-72 overflow-y-auto">
+                    <div className="max-h-80 overflow-y-auto">
                       {SERVICE_GROUPS.map(group => {
                         const groupSvcs = services.filter(s => group.slugs.includes(s.slug));
                         if (!groupSvcs.length) return null;
@@ -417,7 +417,7 @@ export default function HomePage() {
                     </div>
 
                     {selectedServiceIds.length > 0 && (
-                      <div className="px-4 py-2.5 border-t border-gray-100 bg-orange-50/60 flex items-center justify-between">
+                      <div className="px-4 py-2.5 border-t border-gray-100 bg-orange-50/60 flex items-center justify-between rounded-b-2xl">
                         <span className="text-xs text-orange-600 font-medium">
                           Đã chọn {selectedServiceIds.length} dịch vụ
                         </span>
