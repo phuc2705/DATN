@@ -216,7 +216,7 @@ export default function HelperSchedulePage() {
     setLoading(true);
     getHelperShiftsApi()
       .then(({ data: res }) => setShifts(res.data?.shifts || []))
-      .catch(() => toast.error('Không thể tải danh sách ca làm.'))
+      .catch(() => toast.error('Không thể tải danh sách ca làm. Vui lòng tải lại trang.'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -239,7 +239,7 @@ export default function HelperSchedulePage() {
       setSelectedSlot(null);
       fetchShifts();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Đăng ký thất bại.');
+      toast.error(err.response?.data?.message || 'Đăng ký ca làm thất bại. Vui lòng thử lại.');
     } finally {
       setRegistering(false);
     }
@@ -252,7 +252,7 @@ export default function HelperSchedulePage() {
       toast.success('Đã hủy ca làm.');
       fetchShifts();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Hủy ca thất bại.');
+      toast.error(err.response?.data?.message || 'Hủy ca thất bại. Vui lòng thử lại.');
     } finally {
       setCancelling(null);
     }

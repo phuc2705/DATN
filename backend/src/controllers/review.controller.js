@@ -27,12 +27,12 @@ const ReviewController = {
 
       const booking = bookingRows[0];
       if (!booking) return sendError(res, 'Không tìm thấy booking.', 404);
-      if (booking.status !== 'completed') return sendError(res, 'Chỉ có thể đánh giá booking đã hoàn thành.', 400);
-      if (booking.is_reviewed) return sendError(res, 'Booking này đã được đánh giá.', 409);
+      if (booking.status !== 'completed') return sendError(res, `Chỉ có thể đánh giá đơn dịch vụ đã hoàn thành. Đơn #${bookingId} hiện có trạng thái "${booking.status}", chưa đủ điều kiện đánh giá.`, 400);
+      if (booking.is_reviewed) return sendError(res, `Bạn đã gửi đánh giá cho đơn #${bookingId} rồi. Mỗi đơn chỉ được đánh giá một lần.`, 409);
 
       // Kiểm tra booking chưa có review
       const existing = await ReviewModel.findByBooking(bookingId);
-      if (existing) return sendError(res, 'Booking này đã được đánh giá.', 409);
+      if (existing) return sendError(res, `Đơn #${bookingId} đã có đánh giá. Mỗi đơn chỉ được đánh giá một lần.`, 409);
 
       const reviewId = await ReviewModel.create({
         bookingId,
@@ -122,8 +122,8 @@ const ReviewController = {
         [bookingId, helperId]
       );
       if (!booking)                     return sendError(res, 'Không tìm thấy booking.', 404);
-      if (booking.status !== 'completed') return sendError(res, 'Chỉ có thể đánh giá booking đã hoàn thành.', 400);
-      if (booking.is_helper_reviewed)   return sendError(res, 'Bạn đã đánh giá khách hàng này rồi.', 409);
+      if (booking.status !== 'completed') return sendError(res, `Chỉ có thể đánh giá sau khi đơn hoàn thành. Đơn #${bookingId} hiện có trạng thái "${booking.status}".`, 400);
+      if (booking.is_helper_reviewed)   return sendError(res, `Bạn đã gửi đánh giá cho khách hàng trong đơn #${bookingId} rồi.`, 409);
 
       const [result] = await pool.query(
         `INSERT INTO helper_reviews (booking_id, helper_id, customer_id, rating, comment)

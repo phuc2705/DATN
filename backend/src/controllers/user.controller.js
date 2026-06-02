@@ -175,7 +175,7 @@ const UserController = {
       const todayVN = nowVN.toISOString().slice(0, 10);
 
       if (shiftDate < todayVN)
-        return sendError(res, 'Không thể đăng ký ca trong quá khứ.', 400);
+        return sendError(res, `Không thể đăng ký ca cho ngày ${shiftDate} đã qua. Vui lòng chọn ngày từ ${todayVN} trở đi.`, 400);
 
       // Nếu là hôm nay: không cho đăng ký ca đã kết thúc
       if (shiftDate === todayVN) {

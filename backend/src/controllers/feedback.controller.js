@@ -21,7 +21,7 @@ const FeedbackController = {
       const { category, subject, description, bookingId } = req.body;
 
       if (!category || !subject?.trim() || !description?.trim()) {
-        return sendError(res, 'Vui lòng điền đầy đủ thông tin phản hồi.', 400);
+        return sendError(res, 'Vui lòng điền đầy đủ danh mục, tiêu đề và nội dung mô tả trước khi gửi phản hồi.', 400);
       }
 
       // Nếu gắn với booking, kiểm tra user có quyền truy cập booking đó không
@@ -145,7 +145,7 @@ const FeedbackController = {
 
       const VALID_STATUS = ['open', 'in_progress', 'resolved', 'closed'];
       if (status && !VALID_STATUS.includes(status)) {
-        return sendError(res, 'Trạng thái không hợp lệ.', 400);
+        return sendError(res, `Trạng thái "${status}" không hợp lệ. Chỉ chấp nhận: ${VALID_STATUS.join(', ')}.`, 400);
       }
 
       const [[fb]] = await pool.query(
@@ -170,7 +170,7 @@ const FeedbackController = {
       }
       if (adminNote !== undefined) { updates.push('admin_note = ?'); vals.push(adminNote); }
 
-      if (updates.length === 0) return sendError(res, 'Không có thay đổi nào.', 400);
+      if (updates.length === 0) return sendError(res, 'Không có trường nào thay đổi. Vui lòng cập nhật trạng thái hoặc ghi chú trước khi lưu.', 400);
 
       vals.push(feedbackId);
       await pool.query(`UPDATE system_feedbacks SET ${updates.join(', ')} WHERE feedback_id = ?`, vals);

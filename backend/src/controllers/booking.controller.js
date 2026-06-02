@@ -111,7 +111,7 @@ const BookingController = {
       const customerHasConflict = await BookingModel.checkCustomerConflict(
         customerProfile.customer_id, bookingDate, startTime, endTime
       );
-      if (customerHasConflict) return sendError(res, 'Bạn đã có lịch đặt trong khung giờ này.', 409);
+      if (customerHasConflict) return sendError(res, `Bạn đã có đơn đặt lịch khác vào ngày ${bookingDate} lúc ${startTime}–${endTime}. Vui lòng chọn khung giờ khác hoặc kiểm tra lịch của bạn.`, 409);
 
       // Lấy thông tin dịch vụ để tính giá
       const [serviceRows] = await pool.query('SELECT * FROM services WHERE service_id = ? AND is_active = 1', [serviceId]);
@@ -151,7 +151,7 @@ const BookingController = {
 
         // Kiểm tra xung đột lịch làm việc của helper
         const hasConflict = await BookingModel.checkHelperConflict(helperId, bookingDate, startTime, endTime);
-        if (hasConflict) return sendError(res, 'Người giúp việc đã có lịch trong khung giờ này.', 409);
+        if (hasConflict) return sendError(res, 'Người giúp việc này đã có lịch làm khác trong khung giờ bạn chọn. Bạn có thể đặt không chỉ định người giúp việc để hệ thống tự tìm người phù hợp.', 409);
       }
 
       // Xử lý mã khuyến mãi (nếu có)
@@ -582,7 +582,7 @@ const BookingController = {
         [user_id]
       );
       if (!helperRows[0]) return sendError(res, 'Không tìm thấy thông tin helper.', 404);
-      if (!helperRows[0].is_verified) return sendError(res, 'Tài khoản chưa được Admin xác minh.', 403);
+      if (!helperRows[0].is_verified) return sendError(res, 'Tài khoản của bạn chưa được Admin xác minh. Vui lòng liên hệ hỗ trợ qua mục Phản hồi để được kích hoạt.', 403);
 
       const jobs = await BookingModel.findAvailableJobsForHelper(helperRows[0].helper_id);
       return sendSuccess(res, jobs.map(mapBooking));
@@ -602,13 +602,13 @@ const BookingController = {
         [user_id]
       );
       if (!helperRows[0]) return sendError(res, 'Không tìm thấy thông tin helper.', 404);
-      if (!helperRows[0].is_verified) return sendError(res, 'Tài khoản chưa được Admin xác minh.', 403);
+      if (!helperRows[0].is_verified) return sendError(res, 'Tài khoản của bạn chưa được Admin xác minh. Vui lòng liên hệ hỗ trợ qua mục Phản hồi để được kích hoạt.', 403);
 
       const { helper_id } = helperRows[0];
 
       const booking = await BookingModel.findById(bookingId);
       if (!booking) return sendError(res, 'Không tìm thấy booking.', 404);
-      if (booking.status !== 'pending') return sendError(res, 'Booking này không còn khả dụng.', 409);
+      if (booking.status !== 'pending') return sendError(res, `Đơn #${bookingId} không còn khả dụng (trạng thái hiện tại: ${booking.status}). Có thể đơn đã được người khác nhận hoặc khách hàng đã hủy. Vui lòng làm mới danh sách.`, 409);
 
       // Nếu booking đã yêu cầu đích danh helper khác → từ chối
       if (booking.helper_id && booking.helper_id !== helper_id) {
@@ -619,7 +619,7 @@ const BookingController = {
       const hasConflict = await BookingModel.checkHelperConflict(
         helper_id, booking.booking_date, booking.start_time, booking.end_time, parseInt(bookingId)
       );
-      if (hasConflict) return sendError(res, 'Bạn đã có lịch trong khung giờ này.', 409);
+      if (hasConflict) return sendError(res, `Bạn đã có lịch làm khác vào ngày ${booking.booking_date} lúc ${String(booking.start_time).slice(0,5)}–${String(booking.end_time).slice(0,5)}. Vui lòng kiểm tra lịch làm việc của bạn trước khi nhận đơn này.`, 409);
 
       // Kiểm tra quy tắc nghỉ 30 phút giữa các ca
       const hasGapViolation = await BookingModel.checkHelperGapRule(

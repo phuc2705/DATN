@@ -151,9 +151,9 @@ export default function CreateBookingPage() {
   }, [form.serviceId, form.startTime, form.endTime, promoApplied]);
 
   const handleApplyPromo = async () => {
-    if (!promoCode.trim()) return toast.error('Vui lòng nhập mã khuyến mãi');
+    if (!promoCode.trim()) return toast.error('Vui lòng nhập mã khuyến mãi trước khi áp dụng.');
     if (!priceData || priceData.basePrice <= 0)
-      return toast.error('Vui lòng chọn dịch vụ và giờ làm việc trước');
+      return toast.error('Vui lòng chọn dịch vụ và điền đầy đủ giờ bắt đầu/kết thúc để có thể kiểm tra mã.');
     setPromoLoading(true);
     try {
       const { data } = await validatePromoCodeApi(promoCode.trim(), priceData.basePrice);
@@ -161,7 +161,7 @@ export default function CreateBookingPage() {
       toast.success(data.message || 'Áp dụng mã thành công!');
     } catch (err) {
       setPromoApplied(null);
-      toast.error(err.response?.data?.message || 'Mã không hợp lệ');
+      toast.error(err.response?.data?.message || 'Mã khuyến mãi không đúng hoặc đã hết hạn.');
     } finally {
       setPromoLoading(false);
     }
@@ -213,7 +213,7 @@ export default function CreateBookingPage() {
   };
 
   const handleSubmit = async () => {
-    if (!form.address.trim()) { toast.error('Vui lòng nhập địa chỉ'); return; }
+    if (!form.address.trim()) { toast.error('Vui lòng nhập địa chỉ làm việc để tiếp tục đặt lịch.'); return; }
     const pastErr = getPastDateTimeError(form.bookingDate, form.startTime);
     if (pastErr) { toast.error(pastErr); return; }
     setSubmitting(true);
@@ -249,9 +249,9 @@ export default function CreateBookingPage() {
       }
     } catch (err) {
       if (err.response?.status === 409) {
-        setConflictError(err.response.data?.message || 'Lịch đã bị trùng, không thể đặt.');
+        setConflictError(err.response.data?.message || 'Lịch đã bị trùng. Vui lòng chọn khung giờ khác.');
       } else {
-        toast.error(err.response?.data?.message || 'Đặt lịch thất bại');
+        toast.error(err.response?.data?.message || 'Đặt lịch thất bại. Vui lòng kiểm tra lại thông tin và thử lại.');
       }
     } finally {
       setSubmitting(false);

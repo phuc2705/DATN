@@ -136,7 +136,7 @@ export default function UserProfilePage() {
       setUser(data.data);
       toast.success('Cập nhật thông tin thành công!');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Không thể cập nhật thông tin');
+      toast.error(err.response?.data?.message || 'Cập nhật thông tin thất bại. Vui lòng thử lại.');
     } finally { setSaving(false); }
   };
 
@@ -154,7 +154,7 @@ export default function UserProfilePage() {
       toast.success('Đổi mật khẩu thành công!');
       setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Không thể đổi mật khẩu');
+      toast.error(err.response?.data?.message || 'Đổi mật khẩu thất bại. Vui lòng kiểm tra lại mật khẩu hiện tại và thử lại.');
     } finally { setSaving(false); }
   };
 
@@ -163,8 +163,8 @@ export default function UserProfilePage() {
       const { data } = await toggleAvailabilityApi(!user.isAvailable);
       setUser(prev => ({ ...prev, isAvailable: data.data.isAvailable }));
       toast.success(data.message);
-    } catch {
-      toast.error('Không thể thay đổi trạng thái');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Thay đổi trạng thái thất bại. Vui lòng thử lại.');
     }
   };
 
