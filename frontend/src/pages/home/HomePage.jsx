@@ -23,18 +23,18 @@ const SERVICE_ICONS = [
 ];
 
 const SLUG_PHOTOS = {
-  'giup-viec-theo-gio':            'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=480&h=320&fit=crop&auto=format&q=80',
-  'giup-viec-dinh-ky':             'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=480&h=320&fit=crop&auto=format&q=80',
-  'nau-an-gia-dinh':               'https://images.unsplash.com/photo-1547592180-85f173990554?w=480&h=320&fit=crop&auto=format&q=80',
-  'trong-tre-tai-nha':             'https://images.unsplash.com/photo-1516627145497-ae6968895b74?w=480&h=320&fit=crop&auto=format&q=80',
-  'cham-soc-nguoi-cao-tuoi':       'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=480&h=320&fit=crop&auto=format&q=80',
+  'giup-viec-theo-gio':            'https://plus.unsplash.com/premium_photo-1679500354595-0feead204a28?w=480&h=320&fit=crop&auto=format&q=80',
+  'giup-viec-dinh-ky':             'https://plus.unsplash.com/premium_photo-1678304224523-d25b4117558f?w=480&h=320&fit=crop&auto=format&q=80',
+  'nau-an-gia-dinh':               'https://plus.unsplash.com/premium_photo-1694714103696-25e10d1b907e?w=480&h=320&fit=crop&auto=format&q=80',
+  'trong-tre-tai-nha':             'https://plus.unsplash.com/premium_photo-1661281306510-eee6c942a838?w=480&h=320&fit=crop&auto=format&q=80',
+  'cham-soc-nguoi-cao-tuoi':       'https://plus.unsplash.com/premium_photo-1663036976879-4baf18adfd5b?w=480&h=320&fit=crop&auto=format&q=80',
   'tong-ve-sinh-deep-clean':       'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=480&h=320&fit=crop&auto=format&q=80',
-  've-sinh-sofa-nem-rem':          'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=480&h=320&fit=crop&auto=format&q=80',
-  've-sinh-dieu-hoa':              'https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=480&h=320&fit=crop&auto=format&q=80',
-  've-sinh-may-giat-thiet-bi-bep': 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=480&h=320&fit=crop&auto=format&q=80',
-  'cham-soc-thu-cung':             'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=480&h=320&fit=crop&auto=format&q=80',
-  've-sinh-van-phong-shop':        'https://images.unsplash.com/photo-1497366216548-37526070297c?w=480&h=320&fit=crop&auto=format&q=80',
-  'phun-khu-khuan-con-trung':      'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=480&h=320&fit=crop&auto=format&q=80',
+  've-sinh-sofa-nem-rem':          'https://images.unsplash.com/photo-1686178827149-6d55c72d81df?w=480&h=320&fit=crop&auto=format&q=80',
+  've-sinh-dieu-hoa':              'https://plus.unsplash.com/premium_photo-1679943423706-570c6462f9a4?w=480&h=320&fit=crop&auto=format&q=80',
+  've-sinh-may-giat-thiet-bi-bep': 'https://plus.unsplash.com/premium_photo-1667520405114-47d3677f966e?w=480&h=320&fit=crop&auto=format&q=80',
+  'cham-soc-thu-cung':             'https://plus.unsplash.com/premium_photo-1663012822996-ba7e04f3627a?w=480&h=320&fit=crop&auto=format&q=80',
+  've-sinh-van-phong-shop':        'https://plus.unsplash.com/premium_photo-1663011218145-c1d0c3ba3542?w=480&h=320&fit=crop&auto=format&q=80',
+  'phun-khu-khuan-con-trung':      'https://images.unsplash.com/photo-1593999094742-4f5280054b23?w=480&h=320&fit=crop&auto=format&q=80',
 };
 
 // Nhóm dịch vụ theo loại
