@@ -8,7 +8,7 @@ import {
   Sparkles, Sun, Leaf, Shirt, ChefHat, Star, Droplets,
   Users, Zap, ShieldCheck, CreditCard, MapPin,
   Search, Calendar, CheckCircle, Check,
-  Home, ArrowRight, X, ChevronDown,
+  Home, ArrowRight, X, ChevronDown, Heart, Wrench,
 } from 'lucide-react';
 
 const SERVICE_ICONS = [
@@ -22,30 +22,60 @@ const SERVICE_ICONS = [
   { bg: 'from-red-400 to-red-600',      Icon: Droplets },
 ];
 
-// Ảnh thực tế tương ứng từng dịch vụ (Unsplash, ưu tiên cảnh châu Á/Việt Nam)
 const SLUG_PHOTOS = {
-  'don-dep-nha-cua':           'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=480&h=320&fit=crop&auto=format&q=80',
-  'giup-viec-theo-gio':        'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=480&h=320&fit=crop&auto=format&q=80',
-  'giup-viec-dinh-ky':         'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=480&h=320&fit=crop&auto=format&q=80',
-  'giat-ui':                   'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?w=480&h=320&fit=crop&auto=format&q=80',
-  'nau-an':                    'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=480&h=320&fit=crop&auto=format&q=80',
-  'nau-an-gia-dinh':           'https://images.unsplash.com/photo-1547592180-85f173990554?w=480&h=320&fit=crop&auto=format&q=80',
-  'cham-soc-tre-em':           'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=480&h=320&fit=crop&auto=format&q=80',
-  'trong-tre-tai-nha':         'https://images.unsplash.com/photo-1516627145497-ae6968895b74?w=480&h=320&fit=crop&auto=format&q=80',
-  'cham-soc-nguoi-gia':        'https://images.unsplash.com/photo-1576765974256-3927e0f92e94?w=480&h=320&fit=crop&auto=format&q=80',
-  'cham-soc-nguoi-cao-tuoi':   'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=480&h=320&fit=crop&auto=format&q=80',
-  've-sinh-cong-nghiep':       'https://images.unsplash.com/photo-1527515545081-5db817172677?w=480&h=320&fit=crop&auto=format&q=80',
-  'tong-ve-sinh-deep-clean':   'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=480&h=320&fit=crop&auto=format&q=80',
-  've-sinh-sofa-nem-rem':      'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=480&h=320&fit=crop&auto=format&q=80',
-  've-sinh-dieu-hoa':          'https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=480&h=320&fit=crop&auto=format&q=80',
+  'giup-viec-theo-gio':            'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=480&h=320&fit=crop&auto=format&q=80',
+  'giup-viec-dinh-ky':             'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=480&h=320&fit=crop&auto=format&q=80',
+  'nau-an-gia-dinh':               'https://images.unsplash.com/photo-1547592180-85f173990554?w=480&h=320&fit=crop&auto=format&q=80',
+  'trong-tre-tai-nha':             'https://images.unsplash.com/photo-1516627145497-ae6968895b74?w=480&h=320&fit=crop&auto=format&q=80',
+  'cham-soc-nguoi-cao-tuoi':       'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=480&h=320&fit=crop&auto=format&q=80',
+  'tong-ve-sinh-deep-clean':       'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=480&h=320&fit=crop&auto=format&q=80',
+  've-sinh-sofa-nem-rem':          'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=480&h=320&fit=crop&auto=format&q=80',
+  've-sinh-dieu-hoa':              'https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=480&h=320&fit=crop&auto=format&q=80',
   've-sinh-may-giat-thiet-bi-bep': 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=480&h=320&fit=crop&auto=format&q=80',
-  'cham-soc-thu-cung':         'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=480&h=320&fit=crop&auto=format&q=80',
-  've-sinh-van-phong-shop':    'https://images.unsplash.com/photo-1497366216548-37526070297c?w=480&h=320&fit=crop&auto=format&q=80',
-  'phun-khu-khuan-con-trung':  'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=480&h=320&fit=crop&auto=format&q=80',
+  'cham-soc-thu-cung':             'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=480&h=320&fit=crop&auto=format&q=80',
+  've-sinh-van-phong-shop':        'https://images.unsplash.com/photo-1497366216548-37526070297c?w=480&h=320&fit=crop&auto=format&q=80',
+  'phun-khu-khuan-con-trung':      'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=480&h=320&fit=crop&auto=format&q=80',
 };
 
-// Số liệu tham khảo từ BTaskee (nguồn: VnExpress 8/2024, Impact Square 1/2024)
-// và được điều chỉnh phù hợp với quy mô pilot tại Hà Nội
+// Nhóm dịch vụ theo loại
+const SERVICE_GROUPS = [
+  {
+    id: 'housework',
+    label: 'Dọn dẹp & Giúp việc',
+    Icon: Home,
+    chipColor: 'blue',
+    slugs: ['giup-viec-theo-gio', 'giup-viec-dinh-ky', 'tong-ve-sinh-deep-clean'],
+  },
+  {
+    id: 'care',
+    label: 'Dịch vụ chăm sóc',
+    Icon: Heart,
+    chipColor: 'pink',
+    slugs: ['trong-tre-tai-nha', 'cham-soc-nguoi-cao-tuoi', 'cham-soc-thu-cung'],
+  },
+  {
+    id: 'cooking',
+    label: 'Nấu ăn',
+    Icon: ChefHat,
+    chipColor: 'orange',
+    slugs: ['nau-an-gia-dinh'],
+  },
+  {
+    id: 'equipment',
+    label: 'Vệ sinh thiết bị',
+    Icon: Wrench,
+    chipColor: 'teal',
+    slugs: ['ve-sinh-sofa-nem-rem', 've-sinh-dieu-hoa', 've-sinh-may-giat-thiet-bi-bep'],
+  },
+  {
+    id: 'office',
+    label: 'Văn phòng & Khử khuẩn',
+    Icon: ShieldCheck,
+    chipColor: 'purple',
+    slugs: ['ve-sinh-van-phong-shop', 'phun-khu-khuan-con-trung'],
+  },
+];
+
 const STATS = [
   { value: '120+',    label: 'Khách hàng tin dùng',       Icon: Users,    color: 'text-blue-500',   bg: 'bg-blue-50 group-hover:bg-blue-500' },
   { value: '95%',     label: 'Tỷ lệ hài lòng',            Icon: Star,     color: 'text-yellow-500', bg: 'bg-yellow-50 group-hover:bg-yellow-500' },
@@ -55,26 +85,22 @@ const STATS = [
 
 const FEATURES = [
   {
-    Icon: ShieldCheck, iconBg: 'bg-green-100', iconColor: 'text-green-600',
-    title: 'Đã xác minh danh tính',
+    Icon: ShieldCheck, title: 'Đã xác minh danh tính',
     desc: 'Mọi người giúp việc đều được kiểm tra CCCD và lý lịch trước khi hoạt động trên nền tảng.',
     color: 'from-green-400 to-teal-500',
   },
   {
-    Icon: Star, iconBg: 'bg-yellow-100', iconColor: 'text-yellow-600',
-    title: 'Đánh giá minh bạch',
+    Icon: Star, title: 'Đánh giá minh bạch',
     desc: 'Hệ thống đánh giá 2 chiều giúp bạn chọn được người phù hợp nhất với nhu cầu.',
     color: 'from-yellow-400 to-orange-500',
   },
   {
-    Icon: CreditCard, iconBg: 'bg-blue-100', iconColor: 'text-blue-600',
-    title: 'Giá cả rõ ràng',
+    Icon: CreditCard, title: 'Giá cả rõ ràng',
     desc: 'Giá hiển thị đầy đủ trước khi đặt, không phát sinh phí ẩn. Thanh toán linh hoạt.',
     color: 'from-blue-400 to-indigo-500',
   },
   {
-    Icon: MapPin, iconBg: 'bg-pink-100', iconColor: 'text-pink-600',
-    title: 'Check-in/Check-out GPS',
+    Icon: MapPin, title: 'Check-in/Check-out GPS',
     desc: 'Theo dõi thời gian làm việc thực tế, đảm bảo quyền lợi và minh bạch cho cả hai bên.',
     color: 'from-pink-400 to-rose-500',
   },
@@ -133,19 +159,60 @@ function StatItem({ value, label, Icon, color, bg, shouldStart }) {
   );
 }
 
+function ServiceCard({ svc, idx, onClick }) {
+  const { bg, Icon } = SERVICE_ICONS[idx % SERVICE_ICONS.length];
+  const photo = SLUG_PHOTOS[svc.slug] || null;
+  return (
+    <button
+      onClick={() => onClick(svc.serviceId)}
+      className="group bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl hover:border-orange-200 transition-all duration-300 text-left active:scale-[0.98]"
+    >
+      <div className="relative w-full h-40 overflow-hidden">
+        {photo ? (
+          <img
+            src={photo}
+            alt={svc.serviceName}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+          />
+        ) : (
+          <div className={`w-full h-full bg-gradient-to-br ${bg} flex items-center justify-center`}>
+            <Icon className="w-12 h-12 text-white/80" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+        <span className="absolute bottom-2 left-3 text-white text-xs font-semibold drop-shadow">
+          Từ {formatPrice(svc.basePrice)}/{svc.priceUnit || 'giờ'}
+        </span>
+      </div>
+      <div className="p-4">
+        <h3 className="font-semibold text-gray-900 text-sm mb-1 group-hover:text-orange-600 transition-colors line-clamp-1">
+          {svc.serviceName}
+        </h3>
+        {(svc.shortDescription || svc.description) && (
+          <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">
+            {svc.shortDescription || svc.description}
+          </p>
+        )}
+      </div>
+    </button>
+  );
+}
+
 export default function HomePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [city, setCity] = useState(CITIES[0]);
+  const [services, setServices]           = useState([]);
+  const [loading, setLoading]             = useState(true);
+  const [city, setCity]                   = useState(CITIES[0]);
   const [selectedServiceIds, setSelectedServiceIds] = useState([]);
   const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
+  const [activeGroup, setActiveGroup]     = useState('all');
   const [activeServiceFilter, setActiveServiceFilter] = useState([]);
-  const [statsVisible, setStatsVisible] = useState(false);
-  const statsRef = useRef(null);
+  const [statsVisible, setStatsVisible]   = useState(false);
+  const statsRef          = useRef(null);
   const serviceDropdownRef = useRef(null);
-  const [testimonials, setTestimonials] = useState(TESTIMONIALS_FALLBACK);
+  const [testimonials, setTestimonials]   = useState(TESTIMONIALS_FALLBACK);
 
   useEffect(() => {
     getAllServicesApi()
@@ -158,8 +225,7 @@ export default function HomePage() {
     getRecentReviewsApi(6)
       .then(({ data }) => {
         const list = data.data || [];
-        if (list.length === 0) return; // giữ fallback
-        // Nếu chưa đủ 3, lấy thêm từ fallback để lưới không bị trống
+        if (list.length === 0) return;
         const padded = list.length >= 3
           ? list.slice(0, 6)
           : [...list, ...TESTIMONIALS_FALLBACK.slice(list.length)];
@@ -179,17 +245,14 @@ export default function HomePage() {
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (serviceDropdownRef.current && !serviceDropdownRef.current.contains(e.target)) {
+      if (serviceDropdownRef.current && !serviceDropdownRef.current.contains(e.target))
         setServiceDropdownOpen(false);
-      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleServiceClick = (serviceId) => {
-    navigate(`/services/${serviceId}`);
-  };
+  const handleServiceClick = (serviceId) => navigate(`/services/${serviceId}`);
 
   const toggleServiceId = (id) => {
     setSelectedServiceIds(prev =>
@@ -202,6 +265,7 @@ export default function HomePage() {
       navigate(`/services/${selectedServiceIds[0]}`);
     } else {
       setActiveServiceFilter([...selectedServiceIds]);
+      setActiveGroup('all');
       setServiceDropdownOpen(false);
       document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' });
     }
@@ -212,9 +276,39 @@ export default function HomePage() {
     setSelectedServiceIds([]);
   };
 
-  const filteredServices = activeServiceFilter.length > 0
+  const handleGroupTab = (groupId) => {
+    setActiveGroup(groupId);
+    // Xóa hero filter khi chọn nhóm
+    if (groupId !== 'all') {
+      setActiveServiceFilter([]);
+      setSelectedServiceIds([]);
+    }
+  };
+
+  // Dịch vụ sau khi lọc theo hero search
+  const heroFiltered = activeServiceFilter.length > 0
     ? services.filter(s => activeServiceFilter.includes(s.serviceId))
     : services;
+
+  // Dịch vụ sau khi lọc theo nhóm tab
+  const filteredServices = activeGroup === 'all'
+    ? heroFiltered
+    : heroFiltered.filter(s => {
+        const g = SERVICE_GROUPS.find(g => g.id === activeGroup);
+        return g ? g.slugs.includes(s.slug) : true;
+      });
+
+  // Dịch vụ theo nhóm để render khi "Tất cả"
+  const servicesByGroup = SERVICE_GROUPS.map(g => ({
+    ...g,
+    services: heroFiltered.filter(s => g.slugs.includes(s.slug)),
+  })).filter(g => g.services.length > 0);
+
+  const selectedLabel = selectedServiceIds.length === 0
+    ? 'Chọn dịch vụ...'
+    : selectedServiceIds.length === 1
+      ? services.find(s => s.serviceId === selectedServiceIds[0])?.serviceName
+      : `${selectedServiceIds.length} dịch vụ đã chọn`;
 
   return (
     <div className="animate-fadeIn -mt-2">
@@ -241,16 +335,19 @@ export default function HomePage() {
             Minh bạch, uy tín, giá cả rõ ràng.
           </p>
 
-          {/* Quick booking form */}
+          {/* Search form */}
           <div className="bg-white rounded-2xl p-3 shadow-2xl max-w-2xl">
             <div className="flex flex-col sm:flex-row gap-2">
-              <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-xl">
+              {/* Khu vực */}
+              <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-xl sm:w-36 shrink-0">
                 <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
-                <select value={city} onChange={(e) => setCity(e.target.value)}
-                  className="bg-transparent text-gray-700 text-sm font-medium flex-1 focus:outline-none">
-                  {CITIES.map((c) => <option key={c}>{c}</option>)}
+                <select value={city} onChange={e => setCity(e.target.value)}
+                  className="bg-transparent text-gray-700 text-sm font-medium w-full focus:outline-none">
+                  {CITIES.map(c => <option key={c}>{c}</option>)}
                 </select>
               </div>
+
+              {/* Chọn dịch vụ — checkbox dropdown theo nhóm */}
               <div ref={serviceDropdownRef} className="flex-1 relative">
                 <button
                   type="button"
@@ -259,40 +356,83 @@ export default function HomePage() {
                 >
                   <Sparkles className="w-4 h-4 text-gray-400 shrink-0" />
                   <span className={`flex-1 truncate font-medium ${selectedServiceIds.length > 0 ? 'text-gray-800' : 'text-gray-400'}`}>
-                    {selectedServiceIds.length === 0
-                      ? 'Chọn dịch vụ...'
-                      : selectedServiceIds.length === 1
-                        ? services.find(s => s.serviceId === selectedServiceIds[0])?.serviceName
-                        : `${selectedServiceIds.length} dịch vụ đã chọn`}
+                    {selectedLabel}
                   </span>
                   {selectedServiceIds.length > 0 ? (
-                    <X
-                      className="w-3.5 h-3.5 text-gray-400 hover:text-gray-700 shrink-0"
-                      onClick={(e) => { e.stopPropagation(); setSelectedServiceIds([]); setActiveServiceFilter([]); }}
+                    <X className="w-3.5 h-3.5 text-gray-400 hover:text-gray-700 shrink-0"
+                      onClick={e => { e.stopPropagation(); setSelectedServiceIds([]); setActiveServiceFilter([]); }}
                     />
                   ) : (
                     <ChevronDown className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${serviceDropdownOpen ? 'rotate-180' : ''}`} />
                   )}
                 </button>
+
                 {serviceDropdownOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-full min-w-[220px] bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
-                    {services.map(s => (
-                      <label
-                        key={s.serviceId}
-                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-orange-50 cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedServiceIds.includes(s.serviceId)}
-                          onChange={() => toggleServiceId(s.serviceId)}
-                          className="accent-orange-500 w-4 h-4 shrink-0"
-                        />
-                        <span className="text-sm text-gray-700">{s.serviceName}</span>
-                      </label>
-                    ))}
+                  <div className="absolute top-full left-0 mt-1 w-full min-w-[300px] bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+                    <div className="px-4 py-2.5 bg-gray-50/80 border-b border-gray-100">
+                      <p className="text-xs text-gray-500 font-medium">Chọn một hoặc nhiều dịch vụ</p>
+                    </div>
+
+                    <div className="max-h-72 overflow-y-auto">
+                      {SERVICE_GROUPS.map(group => {
+                        const groupSvcs = services.filter(s => group.slugs.includes(s.slug));
+                        if (!groupSvcs.length) return null;
+                        return (
+                          <div key={group.id}>
+                            {/* Group header */}
+                            <div className="flex items-center gap-2 px-4 pt-3 pb-1">
+                              <group.Icon className="w-3.5 h-3.5 text-gray-400" />
+                              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                {group.label}
+                              </span>
+                            </div>
+                            {/* Services in group */}
+                            {groupSvcs.map(s => {
+                              const checked = selectedServiceIds.includes(s.serviceId);
+                              return (
+                                <label
+                                  key={s.serviceId}
+                                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-orange-50 cursor-pointer transition-colors"
+                                >
+                                  <div
+                                    onClick={() => toggleServiceId(s.serviceId)}
+                                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
+                                      checked
+                                        ? 'bg-orange-500 border-orange-500'
+                                        : 'border-gray-300 hover:border-orange-400'
+                                    }`}
+                                  >
+                                    {checked && <Check className="w-3 h-3 text-white" />}
+                                  </div>
+                                  <span className="text-sm text-gray-700 flex-1">{s.serviceName}</span>
+                                  <span className="text-xs text-gray-400 shrink-0">
+                                    {formatPrice(s.basePrice)}/{s.priceUnit || 'giờ'}
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {selectedServiceIds.length > 0 && (
+                      <div className="px-4 py-2.5 border-t border-gray-100 bg-orange-50/60 flex items-center justify-between">
+                        <span className="text-xs text-orange-600 font-medium">
+                          Đã chọn {selectedServiceIds.length} dịch vụ
+                        </span>
+                        <button
+                          onClick={() => setSelectedServiceIds([])}
+                          className="text-xs text-gray-400 hover:text-gray-700 transition-colors"
+                        >
+                          Xóa tất cả
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
+
               <button
                 onClick={handleHeroSearch}
                 className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 py-2.5 rounded-xl transition-all active:scale-95 whitespace-nowrap text-sm shadow-md"
@@ -321,9 +461,7 @@ export default function HomePage() {
       {/* ─── STATS ───────────────────────────────────────────────── */}
       <section ref={statsRef} className="bg-white rounded-2xl shadow-sm border border-gray-100 px-6 py-8 mb-10">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {STATS.map((s) => (
-            <StatItem key={s.label} {...s} shouldStart={statsVisible} />
-          ))}
+          {STATS.map(s => <StatItem key={s.label} {...s} shouldStart={statsVisible} />)}
         </div>
       </section>
 
@@ -349,45 +487,37 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Filter chip strip — cuộn ngang, hiển thị tất cả dịch vụ */}
+        {/* Tab lọc theo nhóm dịch vụ */}
         {!loading && services.length > 0 && (
           <div className="flex gap-2 overflow-x-auto pb-3 mb-6 scrollbar-hide -mx-1 px-1">
             <button
-              onClick={clearFilter}
+              onClick={() => handleGroupTab('all')}
               className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-all whitespace-nowrap ${
-                activeServiceFilter.length === 0
+                activeGroup === 'all'
                   ? 'bg-gray-900 text-white border-gray-900'
                   : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
               }`}
             >
               Tất cả
             </button>
-            {services.map((s) => {
-              const active = activeServiceFilter.includes(s.serviceId);
-              return (
-                <button
-                  key={s.serviceId}
-                  onClick={() => {
-                    if (active) {
-                      clearFilter();
-                    } else {
-                      setActiveServiceFilter([s.serviceId]);
-                      setSelectedServiceIds([s.serviceId]);
-                    }
-                  }}
-                  className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-all whitespace-nowrap ${
-                    active
-                      ? 'bg-orange-500 text-white border-orange-500'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-500'
-                  }`}
-                >
-                  {s.serviceName}
-                </button>
-              );
-            })}
+            {SERVICE_GROUPS.map(g => (
+              <button
+                key={g.id}
+                onClick={() => handleGroupTab(g.id)}
+                className={`shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium border transition-all whitespace-nowrap ${
+                  activeGroup === g.id
+                    ? 'bg-orange-500 text-white border-orange-500'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-500'
+                }`}
+              >
+                <g.Icon className="w-3.5 h-3.5" />
+                {g.label}
+              </button>
+            ))}
           </div>
         )}
 
+        {/* Nội dung dịch vụ */}
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
             {[...Array(6)].map((_, i) => (
@@ -402,55 +532,38 @@ export default function HomePage() {
           <div className="text-center py-16 text-gray-400">
             <Sparkles className="w-10 h-10 mx-auto mb-3 opacity-30" />
             <p className="text-sm">Không tìm thấy dịch vụ phù hợp.</p>
-            <button onClick={clearFilter} className="mt-3 text-orange-500 text-sm hover:underline">Xem tất cả dịch vụ</button>
+            <button onClick={() => { clearFilter(); setActiveGroup('all'); }} className="mt-3 text-orange-500 text-sm hover:underline">
+              Xem tất cả dịch vụ
+            </button>
+          </div>
+        ) : activeGroup === 'all' ? (
+          /* Tất cả: chia theo nhóm với tiêu đề nhóm */
+          <div className="space-y-8">
+            {servicesByGroup.map(group => (
+              <div key={group.id}>
+                {/* Group header */}
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-7 h-7 rounded-lg bg-orange-50 flex items-center justify-center">
+                    <group.Icon className="w-4 h-4 text-orange-500" />
+                  </div>
+                  <h3 className="font-semibold text-gray-800 text-base">{group.label}</h3>
+                  <div className="flex-1 h-px bg-gray-100 ml-1" />
+                  <span className="text-xs text-gray-400">{group.services.length} dịch vụ</span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+                  {group.services.map((svc, idx) => (
+                    <ServiceCard key={svc.serviceId} svc={svc} idx={idx} onClick={handleServiceClick} />
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
+          /* Một nhóm cụ thể: grid phẳng */
           <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
-            {filteredServices.map((svc, idx) => {
-              const { bg, Icon } = SERVICE_ICONS[idx % SERVICE_ICONS.length];
-              const photo = SLUG_PHOTOS[svc.slug] || svc.iconUrl || null;
-              return (
-                <button
-                  key={svc.serviceId}
-                  onClick={() => handleServiceClick(svc.serviceId)}
-                  className="group bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl hover:border-orange-200 transition-all duration-300 text-left active:scale-[0.98]"
-                >
-                  {/* Ảnh dịch vụ */}
-                  <div className="relative w-full h-40 overflow-hidden">
-                    {photo ? (
-                      <img
-                        src={photo}
-                        alt={svc.serviceName}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className={`w-full h-full bg-gradient-to-br ${bg} flex items-center justify-center`}>
-                        <Icon className="w-12 h-12 text-white/80" />
-                      </div>
-                    )}
-                    {/* Gradient overlay phía dưới ảnh */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                    {/* Giá hiển thị trên ảnh */}
-                    <span className="absolute bottom-2 left-3 text-white text-xs font-semibold drop-shadow">
-                      Từ {formatPrice(svc.basePrice)}/{svc.priceUnit || 'giờ'}
-                    </span>
-                  </div>
-
-                  {/* Nội dung card */}
-                  <div className="p-4">
-                    <h3 className="font-semibold text-gray-900 text-sm mb-1 group-hover:text-orange-600 transition-colors line-clamp-1">
-                      {svc.serviceName}
-                    </h3>
-                    {(svc.shortDescription || svc.description) && (
-                      <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">
-                        {svc.shortDescription || svc.description}
-                      </p>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
+            {filteredServices.map((svc, idx) => (
+              <ServiceCard key={svc.serviceId} svc={svc} idx={idx} onClick={handleServiceClick} />
+            ))}
           </div>
         )}
       </section>
@@ -461,14 +574,12 @@ export default function HomePage() {
           <p className="text-orange-500 text-sm font-semibold uppercase tracking-wide mb-1">Đơn giản & nhanh chóng</p>
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Chỉ 3 bước để có nhà sạch</h2>
         </div>
-
         <div className="grid md:grid-cols-3 gap-6 relative">
           <div className="hidden md:block absolute top-14 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-orange-200 via-orange-300 to-orange-200" />
-
           {[
-            { step: '01', Icon: Search,       title: 'Chọn dịch vụ', desc: 'Chọn loại dịch vụ và xem danh sách người giúp việc được xếp hạng phù hợp.' },
-            { step: '02', Icon: Calendar,     title: 'Đặt lịch hẹn',  desc: 'Chọn ngày giờ, địa chỉ, phương thức thanh toán và xác nhận trong vài giây.' },
-            { step: '03', Icon: CheckCircle,  title: 'Nghỉ ngơi thôi!', desc: 'Người giúp việc đến đúng giờ. Đánh giá sau khi hoàn thành để giúp cộng đồng.' },
+            { step: '01', Icon: Search,      title: 'Chọn dịch vụ',    desc: 'Chọn loại dịch vụ và xem danh sách người giúp việc được xếp hạng phù hợp.' },
+            { step: '02', Icon: Calendar,    title: 'Đặt lịch hẹn',    desc: 'Chọn ngày giờ, địa chỉ, phương thức thanh toán và xác nhận trong vài giây.' },
+            { step: '03', Icon: CheckCircle, title: 'Nghỉ ngơi thôi!', desc: 'Người giúp việc đến đúng giờ. Đánh giá sau khi hoàn thành để giúp cộng đồng.' },
           ].map(({ step, Icon, title, desc }) => (
             <div key={step} className="relative bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center hover:shadow-md transition-shadow">
               <div className="absolute top-4 right-5 text-6xl font-black text-gray-50 select-none leading-none">{step}</div>
@@ -489,7 +600,7 @@ export default function HomePage() {
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Tại sao chọn ConnectClean?</h2>
         </div>
         <div className="grid md:grid-cols-2 gap-5">
-          {FEATURES.map(({ Icon, iconBg, iconColor, title, desc, color }) => (
+          {FEATURES.map(({ Icon, title, desc, color }) => (
             <div key={title} className="group flex gap-4 bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-orange-100 transition-all duration-200">
               <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform`}>
                 <Icon className="w-7 h-7 text-white" />
@@ -521,7 +632,7 @@ export default function HomePage() {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden">
                   {t.customerAvatar
-                    ? <img src={t.customerAvatar} alt="" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                    ? <img src={t.customerAvatar} alt="" className="w-full h-full object-cover" onError={e => { e.currentTarget.style.display = 'none'; }} />
                     : t.customerName?.[0]?.toUpperCase()}
                 </div>
                 <div>
@@ -548,7 +659,7 @@ export default function HomePage() {
               Đã có hơn <strong className="text-orange-400">85 người</strong> đang làm việc cùng chúng tôi.
             </p>
             <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-300">
-              {['Thu nhập ổn định', 'Lịch linh hoạt', 'Được đào tạo'].map((t) => (
+              {['Thu nhập ổn định', 'Lịch linh hoạt', 'Được đào tạo'].map(t => (
                 <span key={t} className="flex items-center gap-1.5">
                   <Check className="w-4 h-4 text-green-400" /> {t}
                 </span>
