@@ -5,6 +5,7 @@ import { auth, googleProvider } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
 import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import SEO from '../../components/common/SEO';
 
 // Map Firebase error code → thông báo tiếng Việt
 const FIREBASE_ERROR_MSG = {
@@ -82,6 +83,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex">
+      <SEO title="Đăng nhập" canonical="/login" noindex />
       {/* Left — branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 flex-col justify-between p-12 relative overflow-hidden">
         <div className="absolute -top-20 -right-20 w-72 h-72 bg-white/10 rounded-full" />

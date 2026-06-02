@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Home, Shield, FileText } from 'lucide-react';
+import SEO from '../components/common/SEO';
 
 const TABS = [
   { key: 'terms', label: 'Điều khoản sử dụng', Icon: FileText },
@@ -87,6 +88,11 @@ export default function TermsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
+      <SEO
+        title="Điều khoản & Chính sách bảo mật"
+        description="Điều khoản sử dụng dịch vụ và chính sách bảo mật của CleanConnect. Cam kết bảo vệ quyền lợi người dùng và người giúp việc."
+        canonical="/terms"
+      />
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-gray-500 mb-8">
         <Link to="/" className="hover:text-orange-500 transition-colors flex items-center gap-1">

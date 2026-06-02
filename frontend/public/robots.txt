@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /bookings/
+Disallow: /profile
+Disallow: /notifications
+Disallow: /helper/
+
+Sitemap: https://connectclean.onrender.com/sitemap.xml

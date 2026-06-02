@@ -54,11 +54,12 @@ function EarningsBar({ payments }) {
         <h2 className="font-semibold text-gray-900">Thu nhập theo tháng</h2>
       </div>
 
-      <div className="flex items-end gap-3 h-28">
+      <div className="overflow-x-auto -mx-2 px-2">
+      <div className="flex items-end gap-3 h-28" style={{ minWidth: `${entries.length * 56}px` }}>
         {entries.map(([month, total]) => {
           const heightPct = Math.max(8, Math.round((total / max) * 100));
           return (
-            <div key={month} className="flex-1 flex flex-col items-center gap-2 min-w-0">
+            <div key={month} className="flex-1 flex flex-col items-center gap-2 min-w-[44px]">
               <p className="text-xs font-semibold text-gray-600 text-center truncate w-full">
                 {formatPrice(total).replace('₫', '').trim()}
               </p>
@@ -79,6 +80,7 @@ function EarningsBar({ payments }) {
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );
@@ -190,7 +192,7 @@ export default function HelperEarningsPage() {
         </div>
 
         {/* Stats grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-5">
           {stats.map((s) => <StatCard key={s.label} {...s} />)}
         </div>
 

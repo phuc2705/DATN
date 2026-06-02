@@ -4,6 +4,7 @@ import { getServiceByIdApi, getServiceReviewsApi } from '../../api/service.api';
 import { pricePreviewApi } from '../../api/booking.api';
 import { formatPrice } from '../../utils/format';
 import { useAuth } from '../../hooks/useAuth';
+import SEO from '../../components/common/SEO';
 import {
   Star, MapPin, Clock, Check, X, Shield, CreditCard,
   Users, ArrowLeft, Sparkles, ChevronDown, ChevronUp,
@@ -636,8 +637,34 @@ export default function ServiceDetailPage() {
   const displayedReviews = showAllReviews ? reviews : reviews.slice(0, 4);
   const serviceImages = service.images || SERVICE_IMAGES[service.slug] || getImagesByName(service.serviceName);
 
+  const serviceJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: service.serviceName,
+    description: shortDesc || descShort,
+    provider: { '@type': 'LocalBusiness', name: 'CleanConnect' },
+    areaServed: { '@type': 'City', name: 'Hà Nội' },
+    offers: {
+      '@type': 'Offer',
+      price: service.basePrice,
+      priceCurrency: 'VND',
+      priceSpecification: { '@type': 'UnitPriceSpecification', unitText: priceUnit },
+    },
+    aggregateRating: service.reviewCount > 0 ? {
+      '@type': 'AggregateRating',
+      ratingValue: service.rating,
+      reviewCount: service.reviewCount,
+    } : undefined,
+  };
+
   return (
     <div className="animate-fadeIn pb-24 lg:pb-0">
+      <SEO
+        title={service.serviceName}
+        description={`${shortDesc || descShort || service.serviceName} – Đặt lịch ngay từ ${formatPrice(service.basePrice)}/${priceUnit} tại CleanConnect Hà Nội.`}
+        canonical={`/services/${service.serviceId}`}
+        jsonLd={serviceJsonLd}
+      />
 
       {/* ── Breadcrumb ──────────────────────────────────────────────────────── */}
       <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">

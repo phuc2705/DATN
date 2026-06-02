@@ -4,6 +4,7 @@ import { registerHelperApi, verifyOtpApi, resendOtpApi } from '../../api/auth.ap
 import { useAuth } from '../../hooks/useAuth';
 import toast from 'react-hot-toast';
 import OtpInput from '../../components/common/OtpInput';
+import SEO from '../../components/common/SEO';
 
 export default function RegisterHelperPage() {
   const navigate = useNavigate();
@@ -108,6 +109,7 @@ export default function RegisterHelperPage() {
 
   return (
     <div className="min-h-screen flex">
+      <SEO title="Đăng ký làm người giúp việc" description="Gia nhập mạng lưới người giúp việc CleanConnect – thu nhập ổn định từ 65.000–95.000đ/giờ, lịch làm linh hoạt, nhận ca qua app." canonical="/register/helper" />
       {/* Left — branding */}
       <div className="hidden lg:flex lg:w-2/5 bg-gradient-to-br from-green-500 via-green-600 to-teal-600 flex-col justify-between p-12 relative overflow-hidden">
         <div className="absolute -top-20 -right-20 w-72 h-72 bg-white/10 rounded-full" />

@@ -1,6 +1,7 @@
 // Router chính — định nghĩa tất cả routes với phân quyền theo role
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/layout/Layout';
 import AdminLayout from './components/layout/AdminLayout';
@@ -41,6 +42,7 @@ import VNPayReturnPage from './pages/payment/VNPayReturnPage';
 
 export default function App() {
   return (
+    <HelmetProvider>
     <AuthProvider>
       <BrowserRouter>
         <Toaster position="top-right" toastOptions={{
@@ -106,5 +108,6 @@ export default function App() {
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+    </HelmetProvider>
   );
 }

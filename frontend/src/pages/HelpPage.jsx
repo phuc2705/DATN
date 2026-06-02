@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams, useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronUp, Search, Phone, Mail, MessageCircle, Home } from 'lucide-react';
+import SEO from '../components/common/SEO';
 
 const CAT_MAP = {
   booking:        'Đặt lịch & Dịch vụ',
@@ -170,6 +171,11 @@ export default function HelpPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
+      <SEO
+        title="Trung tâm hỗ trợ"
+        description="Câu hỏi thường gặp và hướng dẫn sử dụng CleanConnect. Tìm hiểu cách đặt lịch, thanh toán, và liên hệ hỗ trợ."
+        canonical="/help"
+      />
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-gray-500 mb-8">
         <Link to="/" className="hover:text-orange-500 transition-colors flex items-center gap-1">

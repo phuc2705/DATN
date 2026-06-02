@@ -4,6 +4,7 @@ import { getAllServicesApi } from '../../api/service.api';
 import { getRecentReviewsApi } from '../../api/review.api';
 import { formatPrice } from '../../utils/format';
 import { useAuth } from '../../hooks/useAuth';
+import SEO from '../../components/common/SEO';
 import {
   Sparkles, Sun, Leaf, Shirt, ChefHat, Star, Droplets,
   Users, Zap, ShieldCheck, CreditCard, MapPin,
@@ -310,8 +311,23 @@ export default function HomePage() {
       ? services.find(s => s.serviceId === selectedServiceIds[0])?.serviceName
       : `${selectedServiceIds.length} dịch vụ đã chọn`;
 
+  const homeJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: 'CleanConnect',
+    description: 'Nền tảng kết nối dịch vụ giúp việc gia đình theo giờ tại Hà Nội',
+    url: 'https://connectclean.onrender.com',
+    areaServed: { '@type': 'City', name: 'Hà Nội' },
+    serviceType: 'Dịch vụ giúp việc gia đình',
+    priceRange: 'từ 80.000đ/giờ',
+  };
+
   return (
     <div className="animate-fadeIn -mt-2">
+      <SEO
+        canonical="/"
+        jsonLd={homeJsonLd}
+      />
 
       {/* ─── HERO ─────────────────────────────────────────────────── */}
       <section className="relative rounded-3xl bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 text-white mb-10 shadow-2xl">

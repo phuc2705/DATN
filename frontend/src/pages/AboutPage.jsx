@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import SEO from '../components/common/SEO';
 import {
   Users, Star, Calendar, ShieldCheck, Heart, Target, Award,
   Phone, Mail, MapPin, Home, ArrowRight,
@@ -43,6 +44,11 @@ const TEAM = [
 export default function AboutPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
+      <SEO
+        title="Về CleanConnect – Nền tảng giúp việc gia đình"
+        description="CleanConnect là nền tảng số hóa dịch vụ giúp việc gia đình theo giờ tại Hà Nội. Kết nối khách hàng với người giúp việc được xác minh danh tính, giá minh bạch."
+        canonical="/about"
+      />
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-gray-500 mb-8">
         <Link to="/" className="hover:text-orange-500 transition-colors flex items-center gap-1">

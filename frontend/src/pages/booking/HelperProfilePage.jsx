@@ -5,6 +5,7 @@ import { getHelperReviewsApi } from '../../api/review.api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { formatPrice, formatDate } from '../../utils/format';
 import { useAuth } from '../../hooks/useAuth';
+import SEO from '../../components/common/SEO';
 import {
   Star, User, Sprout, Trophy, Frown, MessageCircle, ArrowLeft,
   CheckCircle2, MapPin, Briefcase, Clock, ChevronDown, ChevronUp,
@@ -147,8 +148,25 @@ export default function HelperProfilePage() {
     navigate(`/bookings/new?helperId=${helperId}&serviceId=${serviceId || ''}`);
   };
 
+  const helperJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: helper.fullName,
+    jobTitle: 'Người giúp việc gia đình',
+    worksFor: { '@type': 'Organization', name: 'CleanConnect' },
+    ...(helper.rating > 0 && {
+      aggregateRating: { '@type': 'AggregateRating', ratingValue: helper.rating, reviewCount: helper.totalReviews || 0 },
+    }),
+  };
+
   return (
     <div className="min-h-screen bg-white">
+      <SEO
+        title={`${helper.fullName} – Người giúp việc`}
+        description={`${helper.fullName} – ${helper.experienceYears ?? 0} năm kinh nghiệm, ${helper.totalBookings || 0} lần làm việc, đánh giá ${helper.rating}/5. Đặt lịch ngay trên CleanConnect.`}
+        canonical={`/helpers/${helperId}`}
+        jsonLd={helperJsonLd}
+      />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
 
         {/* Nút quay lại */}
