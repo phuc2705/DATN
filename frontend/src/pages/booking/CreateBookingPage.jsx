@@ -175,13 +175,16 @@ export default function CreateBookingPage() {
 
   // Trả về thông báo lỗi nếu ngày/giờ đặt đã qua, null nếu hợp lệ
   // Dùng UTC+7 (Vietnam) để tính ngày/giờ hiện tại — tránh lệch ngày giữa UTC và VN
-  const getVNNow = () => new Date(Date.now() + 7 * 60 * 60 * 1000);
+  const getVNNow   = () => new Date(Date.now() + 7 * 60 * 60 * 1000);
+  const todayVN    = getVNNow().toISOString().slice(0, 10);
+  const maxDateVN  = (() => { const d = getVNNow(); d.setUTCDate(d.getUTCDate() + 30); return d.toISOString().slice(0, 10); })();
 
   const getPastDateTimeError = (bookingDate, startTime) => {
     if (!bookingDate || !startTime) return null;
     const vnNow    = getVNNow();
     const todayStr = vnNow.toISOString().slice(0, 10);
-    if (bookingDate < todayStr) return 'Không thể đặt lịch cho ngày đã qua.';
+    if (bookingDate < todayStr) return 'Không thể đặt lịch cho ngày đã qua. Vui lòng chọn từ hôm nay trở đi.';
+    if (bookingDate > maxDateVN) return 'Chỉ có thể đặt lịch trước tối đa 30 ngày.';
     if (bookingDate === todayStr) {
       const [sh, sm] = startTime.split(':').map(Number);
       const startMins = sh * 60 + sm;
@@ -334,7 +337,7 @@ export default function CreateBookingPage() {
             <div className="space-y-4">
               <div>
                 <Label required>Ngày làm việc</Label>
-                <input type="date" min={new Date().toISOString().split('T')[0]}
+                <input type="date" min={todayVN} max={maxDateVN}
                   value={form.bookingDate} onChange={set('bookingDate')} className={INPUT_CLS} />
               </div>
               <div className="grid grid-cols-2 gap-3">

@@ -377,7 +377,16 @@ function BookingWidget({ service }) {
   const [endTime, setEndTime]     = useState('');
   const [priceData, setPriceData] = useState(null);
   const [priceLoading, setPriceLoading] = useState(false);
-  const today = new Date().toISOString().split('T')[0];
+  const [dateError, setDateError] = useState('');
+
+  // Dùng giờ Việt Nam (UTC+7) cho min/max date
+  const getVNNow  = () => new Date(Date.now() + 7 * 60 * 60 * 1000);
+  const todayVN   = getVNNow().toISOString().slice(0, 10);
+  const maxDateVN = (() => {
+    const d = getVNNow();
+    d.setUTCDate(d.getUTCDate() + 30);
+    return d.toISOString().slice(0, 10);
+  })();
 
   // Tính giá preview khi chọn đủ giờ
   useEffect(() => {
@@ -397,11 +406,20 @@ function BookingWidget({ service }) {
     return () => clearTimeout(t);
   }, [service.serviceId, startTime, endTime]);
 
-  const canBook = date && startTime && endTime && startTime < endTime;
+  const canBook = date && startTime && endTime && startTime < endTime && !dateError;
 
   const handleBook = () => {
     if (!user) {
       navigate(`/login?redirect=/services/${service.serviceId}`);
+      return;
+    }
+    // Validate ngày không được là quá khứ
+    if (date < todayVN) {
+      setDateError('Không thể đặt lịch cho ngày đã qua. Vui lòng chọn từ hôm nay trở đi.');
+      return;
+    }
+    if (date > maxDateVN) {
+      setDateError('Chỉ có thể đặt lịch trước tối đa 30 ngày.');
       return;
     }
     const params = new URLSearchParams({ serviceId: service.serviceId });
@@ -435,9 +453,10 @@ function BookingWidget({ service }) {
           </label>
           <input
             type="date"
-            min={today}
+            min={todayVN}
+            max={maxDateVN}
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={(e) => { setDate(e.target.value); setDateError(''); }}
             className="block w-full px-4 pb-3 text-sm text-gray-700 bg-transparent focus:outline-none"
           />
         </div>
@@ -469,7 +488,12 @@ function BookingWidget({ service }) {
         </div>
       </div>
 
-      {/* Validation hint */}
+      {/* Validation hints */}
+      {dateError && (
+        <p className="text-xs text-red-500 mb-2 flex items-center gap-1">
+          <X className="w-3.5 h-3.5 shrink-0" /> {dateError}
+        </p>
+      )}
       {startTime && endTime && startTime >= endTime && (
         <p className="text-xs text-red-500 mb-3 flex items-center gap-1">
           <X className="w-3.5 h-3.5" /> Giờ kết thúc phải sau giờ bắt đầu
