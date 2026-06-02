@@ -802,7 +802,7 @@ export default function ServiceDetailPage() {
           <div className="border-t border-gray-200 mb-6" />
 
           {/* [Mobile only] BookingWidget inline */}
-          <div className="lg:hidden mb-8">
+          <div className="lg:hidden mb-8" id="booking-widget-inline">
             <BookingWidget service={service}
               sharedDate={sharedDate} setSharedDate={setSharedDate}
               sharedStart={sharedStart} setSharedStart={setSharedStart}
@@ -894,10 +894,16 @@ function MobileStickyBar({ service, bookingDate, bookingStart, bookingEnd }) {
       navigate(`/login?redirect=/services/${service.serviceId}`);
       return;
     }
+    if (!hasFullBooking) {
+      // Chưa chọn ngày/giờ → scroll đến inline widget để user điền
+      document.getElementById('booking-widget-inline')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     const params = new URLSearchParams({ serviceId: service.serviceId });
-    if (bookingDate)  params.set('date', bookingDate);
-    if (bookingStart) params.set('startTime', bookingStart);
-    if (bookingEnd)   params.set('endTime', bookingEnd);
+    params.set('date', bookingDate);
+    params.set('startTime', bookingStart);
+    params.set('endTime', bookingEnd);
     navigate(`/bookings/new?${params.toString()}`);
   };
 
@@ -925,7 +931,7 @@ function MobileStickyBar({ service, bookingDate, bookingStart, bookingEnd }) {
         onClick={handleBook}
         className="flex-1 max-w-[200px] h-12 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold text-sm rounded-xl transition-all active:scale-95 shadow-sm hover:shadow-md"
       >
-        {hasFullBooking ? 'Đặt lịch ngay' : 'Xem & chọn lịch'}
+        {hasFullBooking ? 'Đặt lịch ngay' : 'Chọn ngày & giờ ↑'}
       </button>
     </div>
   );

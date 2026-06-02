@@ -95,6 +95,8 @@ export default function CreateBookingPage() {
 
   // Nếu đủ params từ service page → bỏ qua step 1
   const fromServicePage = !!(paramServiceId && paramDate && paramStartTime && paramEndTime);
+  // Có serviceId nhưng chưa có giờ → ẩn service picker, chỉ chọn giờ
+  const hasServiceParam = !!paramServiceId;
 
   const [step, setStep]         = useState(fromServicePage ? 2 : 1);
   const [services, setServices] = useState([]);
@@ -295,42 +297,57 @@ export default function CreateBookingPage() {
         <p className="text-sm text-[#6a6a6a] mt-1">Xác nhận thông tin và chọn phương thức thanh toán</p>
       </div>
 
-      {/* Step indicator — ẩn khi đến thẳng từ service page */}
-      {!fromServicePage && <StepIndicator current={step} />}
+      {/* Step indicator — ẩn khi đến từ service page (dù đủ hay chưa đủ giờ) */}
+      {!hasServiceParam && <StepIndicator current={step} />}
 
       {/* ─── STEP 1: Dịch vụ & Thời gian ─────────────────────────────── */}
       {step === 1 && (
         <div className="space-y-4 animate-[fadeIn_0.2s_ease]">
 
-          {/* Chọn dịch vụ */}
-          <SectionCard title="Chọn dịch vụ" icon={CheckCircle2}>
-            {services.length === 0 ? (
-              <p className="text-sm text-[#6a6a6a] text-center py-4">Không có dịch vụ nào</p>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {services.map((s, idx) => {
-                  const selected = String(form.serviceId) === String(s.serviceId);
-                  return (
-                    <button
-                      key={s.serviceId}
-                      type="button"
-                      onClick={() => setForm((p) => ({ ...p, serviceId: String(s.serviceId) }))}
-                      className={`text-left p-4 rounded-xl border-2 transition-all duration-150
-                        ${selected
-                          ? 'border-orange-500 bg-orange-50'
-                          : 'border-gray-200 bg-white hover:border-orange-300'}`}
-                    >
-                      <div className="text-2xl mb-2">{SERVICE_ICONS[idx % SERVICE_ICONS.length]}</div>
-                      <p className={`text-sm font-semibold leading-tight mb-1 ${selected ? 'text-orange-600' : 'text-[#222222]'}`}>
-                        {s.serviceName}
-                      </p>
-                      <p className="text-xs text-orange-500 font-medium">{formatPrice(s.basePrice)}/giờ</p>
-                    </button>
-                  );
-                })}
+          {/* Chọn dịch vụ — ẩn grid khi đã có serviceId từ URL */}
+          {hasServiceParam ? (
+            selectedService && (
+              <div className="bg-orange-50 border border-orange-200 rounded-2xl px-5 py-4 flex items-center gap-3">
+                <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0 text-xl">
+                  {SERVICE_ICONS[services.findIndex(s => String(s.serviceId) === String(form.serviceId)) % SERVICE_ICONS.length] || '🧹'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-orange-700">{selectedService.serviceName}</p>
+                  <p className="text-xs text-orange-500">{formatPrice(selectedService.basePrice)}/{selectedService.priceUnit || 'giờ'}</p>
+                </div>
+                <CheckCircle2 className="w-5 h-5 text-orange-500 flex-shrink-0" />
               </div>
-            )}
-          </SectionCard>
+            )
+          ) : (
+            <SectionCard title="Chọn dịch vụ" icon={CheckCircle2}>
+              {services.length === 0 ? (
+                <p className="text-sm text-[#6a6a6a] text-center py-4">Không có dịch vụ nào</p>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {services.map((s, idx) => {
+                    const selected = String(form.serviceId) === String(s.serviceId);
+                    return (
+                      <button
+                        key={s.serviceId}
+                        type="button"
+                        onClick={() => setForm((p) => ({ ...p, serviceId: String(s.serviceId) }))}
+                        className={`text-left p-4 rounded-xl border-2 transition-all duration-150
+                          ${selected
+                            ? 'border-orange-500 bg-orange-50'
+                            : 'border-gray-200 bg-white hover:border-orange-300'}`}
+                      >
+                        <div className="text-2xl mb-2">{SERVICE_ICONS[idx % SERVICE_ICONS.length]}</div>
+                        <p className={`text-sm font-semibold leading-tight mb-1 ${selected ? 'text-orange-600' : 'text-[#222222]'}`}>
+                          {s.serviceName}
+                        </p>
+                        <p className="text-xs text-orange-500 font-medium">{formatPrice(s.basePrice)}/giờ</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </SectionCard>
+          )}
 
           {/* Thời gian */}
           <SectionCard title="Thời gian làm việc" icon={Calendar}>
