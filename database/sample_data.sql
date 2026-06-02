@@ -460,17 +460,17 @@ SELECT * FROM view_helper_statistics ORDER BY rating_average DESC;
 
 -- Test 1: Tính giá booking
 -- Helper 1 (70k/h) + Service 1 (50k/h) × 3h = 360k
-CALL calculate_booking_price(1, 1, 3, @price);
+CALL sp_calculate_booking_price(1, 1, 3, @price);
 SELECT @price AS calculated_price;
 
 -- Test 2: Kiểm tra availability
 -- Helper 1 có available vào ngày 2026-02-20 từ 9h-12h không?
-CALL check_helper_availability(1, '2026-02-20', '09:00:00', '12:00:00', @available);
+CALL sp_check_helper_availability(1, '2026-02-20', '09:00:00', '12:00:00', @available);
 SELECT @available AS is_helper_available;
 
 -- Test 3: Kiểm tra conflict
 -- Helper 1 đã có booking vào 2026-02-08, kiểm tra xem có conflict không
-CALL check_helper_availability(1, '2026-02-08', '09:00:00', '12:00:00', @available);
+CALL sp_check_helper_availability(1, '2026-02-08', '09:00:00', '12:00:00', @available);
 SELECT @available AS has_conflict;
 
 SELECT 'Dữ liệu mẫu đã được thêm thành công!' AS message;
