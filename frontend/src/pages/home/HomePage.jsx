@@ -314,11 +314,14 @@ export default function HomePage() {
     <div className="animate-fadeIn -mt-2">
 
       {/* ─── HERO ─────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 text-white mb-10 shadow-2xl">
-        <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/10 rounded-full blur-sm" />
-        <div className="absolute -bottom-32 -left-16 w-96 h-96 bg-white/5 rounded-full" />
-        <div className="absolute top-10 right-40 w-20 h-20 bg-white/10 rounded-full" />
-        <div className="absolute bottom-10 right-10 w-12 h-12 bg-white/15 rounded-full" />
+      <section className="relative rounded-3xl bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 text-white mb-10 shadow-2xl">
+        {/* Layer trang trí riêng — overflow-hidden chỉ clip các hình tròn, không ảnh hưởng dropdown */}
+        <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
+          <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/10 rounded-full blur-sm" />
+          <div className="absolute -bottom-32 -left-16 w-96 h-96 bg-white/5 rounded-full" />
+          <div className="absolute top-10 right-40 w-20 h-20 bg-white/10 rounded-full" />
+          <div className="absolute bottom-10 right-10 w-12 h-12 bg-white/15 rounded-full" />
+        </div>
 
         <div className="relative px-6 py-14 md:py-20 max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-full text-sm font-medium mb-6 border border-white/20">
