@@ -174,15 +174,18 @@ export default function CreateBookingPage() {
   };
 
   // Trả về thông báo lỗi nếu ngày/giờ đặt đã qua, null nếu hợp lệ
+  // Dùng UTC+7 (Vietnam) để tính ngày/giờ hiện tại — tránh lệch ngày giữa UTC và VN
+  const getVNNow = () => new Date(Date.now() + 7 * 60 * 60 * 1000);
+
   const getPastDateTimeError = (bookingDate, startTime) => {
     if (!bookingDate || !startTime) return null;
-    const todayStr = new Date().toISOString().split('T')[0];
+    const vnNow    = getVNNow();
+    const todayStr = vnNow.toISOString().slice(0, 10);
     if (bookingDate < todayStr) return 'Không thể đặt lịch cho ngày đã qua.';
     if (bookingDate === todayStr) {
-      const now = new Date();
       const [sh, sm] = startTime.split(':').map(Number);
       const startMins = sh * 60 + sm;
-      const nowMins   = now.getHours() * 60 + now.getMinutes() + 30; // buffer 30 phút
+      const nowMins   = vnNow.getUTCHours() * 60 + vnNow.getUTCMinutes() + 30; // buffer 30 phút
       if (startMins < nowMins) {
         const minH = String(Math.floor(nowMins / 60) % 24).padStart(2, '0');
         const minM = String(nowMins % 60).padStart(2, '0');
@@ -342,10 +345,10 @@ export default function CreateBookingPage() {
                     value={form.startTime}
                     onChange={set('startTime')}
                     min={(() => {
-                      const todayStr = new Date().toISOString().split('T')[0];
+                      const vnNow    = getVNNow();
+                      const todayStr = vnNow.toISOString().slice(0, 10);
                       if (form.bookingDate !== todayStr) return undefined;
-                      const now = new Date();
-                      const minMins = now.getHours() * 60 + now.getMinutes() + 30;
+                      const minMins = vnNow.getUTCHours() * 60 + vnNow.getUTCMinutes() + 30;
                       return `${String(Math.floor(minMins / 60) % 24).padStart(2, '0')}:${String(minMins % 60).padStart(2, '0')}`;
                     })()}
                     className={INPUT_CLS}

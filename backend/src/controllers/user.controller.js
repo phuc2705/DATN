@@ -169,10 +169,22 @@ const UserController = {
       if (!shiftDate || !startTime || !endTime)
         return sendError(res, 'Thiếu thông tin ca làm (ngày, giờ bắt đầu, giờ kết thúc).', 400);
 
-      // Không cho đăng ký ca trong quá khứ
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      if (new Date(shiftDate) < today)
+      // Không cho đăng ký ca trong quá khứ (dùng timezone Việt Nam UTC+7)
+      const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
+      const nowVN   = new Date(Date.now() + VN_OFFSET_MS);
+      const todayVN = nowVN.toISOString().slice(0, 10);
+
+      if (shiftDate < todayVN)
         return sendError(res, 'Không thể đăng ký ca trong quá khứ.', 400);
+
+      // Nếu là hôm nay: không cho đăng ký ca đã kết thúc
+      if (shiftDate === todayVN) {
+        const [eh, em] = endTime.split(':').map(Number);
+        const endMins  = eh * 60 + em;
+        const nowMins  = nowVN.getUTCHours() * 60 + nowVN.getUTCMinutes();
+        if (endMins <= nowMins)
+          return sendError(res, 'Ca này đã kết thúc, vui lòng chọn ca khác hoặc ngày khác.', 400);
+      }
 
       const [[helperRow]] = await pool.query('SELECT helper_id FROM helpers WHERE user_id = ?', [user_id]);
       if (!helperRow) return sendError(res, 'Không tìm thấy thông tin helper.', 404);

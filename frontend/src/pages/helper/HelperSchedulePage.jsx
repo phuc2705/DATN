@@ -73,9 +73,34 @@ function isConflict(slot, registeredOnDate) {
   });
 }
 
+// Kiểm tra ca đã qua (chỉ khi selectedDate là hôm nay theo giờ Việt Nam)
+function isPastSlot(slot, selectedDate, todayVN) {
+  if (selectedDate !== todayVN) return false;
+  const nowVN  = new Date(Date.now() + 7 * 60 * 60 * 1000);
+  const nowMins = nowVN.getUTCHours() * 60 + nowVN.getUTCMinutes();
+  const [eh, em] = slot.end.split(':').map(Number);
+  return eh * 60 + em <= nowMins;
+}
+
 /* ─── Slot button ─────────────────────────────────────────────────── */
-function SlotButton({ slot, selected, registered, conflict, onClick }) {
+function SlotButton({ slot, selected, registered, conflict, past, onClick }) {
   const baseClass = 'relative w-full border rounded-xl px-4 py-3 text-left transition-all';
+
+  if (past) {
+    return (
+      <div className={`${baseClass} bg-gray-50 border-gray-200 cursor-not-allowed opacity-50`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold text-gray-400">{slot.label}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{slot.start} – {slot.end}</p>
+          </div>
+        </div>
+        <span className="absolute -top-2 right-3 text-[10px] bg-gray-400 text-white px-1.5 py-0.5 rounded-full font-medium">
+          Đã qua
+        </span>
+      </div>
+    );
+  }
 
   if (registered) {
     return (
@@ -177,7 +202,8 @@ function ShiftRow({ shift, onCancel, cancelling }) {
 
 /* ─── Main Page ───────────────────────────────────────────────────── */
 export default function HelperSchedulePage() {
-  const DAYS = buildNextDays(14);
+  const DAYS    = buildNextDays(14);
+  const todayVN = new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
   const [selectedDate, setSelectedDate] = useState(DAYS[0].value);
   const [selectedSlot, setSelectedSlot] = useState(null);
@@ -312,6 +338,7 @@ export default function HelperSchedulePage() {
             {SLOTS.map((slot) => {
               const regShift = registeredOnDate.find(s => s.startTime === slot.start);
               const conflict = !regShift && isConflict(slot, registeredOnDate);
+              const past     = !regShift && !conflict && isPastSlot(slot, selectedDate, todayVN);
               return (
                 <SlotButton
                   key={slot.start}
@@ -319,7 +346,8 @@ export default function HelperSchedulePage() {
                   selected={selectedSlot?.start === slot.start}
                   registered={regShift}
                   conflict={conflict}
-                  onClick={conflict ? undefined : () => setSelectedSlot(selectedSlot?.start === slot.start ? null : slot)}
+                  past={past}
+                  onClick={(conflict || past) ? undefined : () => setSelectedSlot(selectedSlot?.start === slot.start ? null : slot)}
                 />
               );
             })}
