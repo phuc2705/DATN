@@ -126,8 +126,8 @@ app.use(errorHandler);
 const startServer = async () => {
   try {
     await testConnection();
-    await initDatabase();
 
+    // Listen ngay để Render health check không timeout (migrations chạy nền)
     httpServer.listen(PORT, '0.0.0.0', () => {
       console.log(`\n🚀 Server: http://localhost:${PORT}`);
       console.log(`📋 Môi trường: ${process.env.NODE_ENV || 'development'}`);
@@ -137,6 +137,9 @@ const startServer = async () => {
       }
       startBookingTimeoutJob();
     });
+
+    // Migrations chạy nền — không block server startup
+    initDatabase().catch(err => console.error('❌ initDatabase error:', err.message));
   } catch (err) {
     console.error('❌ Khởi động thất bại:', err.message);
     process.exit(1);
