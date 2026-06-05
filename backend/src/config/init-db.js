@@ -298,6 +298,29 @@ async function runMigrations(connection) {
     await connection.query('ALTER TABLE bookings ADD COLUMN is_helper_reviewed TINYINT NOT NULL DEFAULT 0');
   } catch (err) { /* ignore — cột đã tồn tại */ }
 
+  // Cập nhật giá dịch vụ về giá/giờ hợp lý — các dịch vụ cũ dùng đơn vị m², bộ, lần
+  // đã gây ra tính tiền sai khi nhân với số giờ
+  try {
+    await connection.query(`
+      UPDATE services SET base_price = 90000,  price_unit = 'giờ' WHERE slug = 'tong-ve-sinh-deep-clean'   AND base_price < 50000
+    `);
+    await connection.query(`
+      UPDATE services SET base_price = 90000,  price_unit = 'giờ' WHERE slug = 've-sinh-sofa-nem-rem'      AND price_unit != 'giờ'
+    `);
+    await connection.query(`
+      UPDATE services SET base_price = 100000, price_unit = 'giờ' WHERE slug = 've-sinh-dieu-hoa'          AND price_unit != 'giờ'
+    `);
+    await connection.query(`
+      UPDATE services SET base_price = 100000, price_unit = 'giờ' WHERE slug = 've-sinh-may-giat-thiet-bi-bep' AND price_unit != 'giờ'
+    `);
+    await connection.query(`
+      UPDATE services SET base_price = 70000,  price_unit = 'giờ' WHERE slug = 've-sinh-van-phong-shop'    AND price_unit != 'giờ'
+    `);
+    await connection.query(`
+      UPDATE services SET base_price = 80000,  price_unit = 'giờ' WHERE slug = 'phun-khu-khuan-con-trung'  AND price_unit != 'giờ'
+    `);
+  } catch (err) { /* ignore */ }
+
   console.log('✅ Migrations hoàn tất.');
 }
 

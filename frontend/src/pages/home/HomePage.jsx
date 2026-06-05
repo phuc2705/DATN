@@ -262,14 +262,10 @@ export default function HomePage() {
   };
 
   const handleHeroSearch = () => {
-    if (selectedServiceIds.length === 1) {
-      navigate(`/services/${selectedServiceIds[0]}`);
-    } else {
-      setActiveServiceFilter([...selectedServiceIds]);
-      setActiveGroup('all');
-      setServiceDropdownOpen(false);
-      document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' });
-    }
+    setActiveServiceFilter([...selectedServiceIds]);
+    setActiveGroup('all');
+    setServiceDropdownOpen(false);
+    document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const clearFilter = () => {

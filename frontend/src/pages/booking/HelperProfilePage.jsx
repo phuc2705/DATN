@@ -84,6 +84,10 @@ export default function HelperProfilePage() {
   const { helperId }     = useParams();
   const [searchParams]   = useSearchParams();
   const serviceId        = searchParams.get('serviceId');
+  /* Nhận lại context lịch nếu user đến từ SearchHelpersPage */
+  const urlDate          = searchParams.get('date')      || '';
+  const urlStartTime     = searchParams.get('startTime') || '';
+  const urlEndTime       = searchParams.get('endTime')   || '';
   const navigate         = useNavigate();
   const { user }         = useAuth();
 
@@ -144,8 +148,14 @@ export default function HelperProfilePage() {
   const displayedServices = showAllServices ? helper.services : helper.services?.slice(0, 4);
 
   const handleBook = () => {
-    if (!user) { navigate('/login'); return; }
-    navigate(`/bookings/new?helperId=${helperId}&serviceId=${serviceId || ''}`);
+    if (!user) { navigate(`/login?redirect=/helpers/${helperId}`); return; }
+    /* Giữ nguyên context ngày/giờ nếu user đến từ SearchHelpersPage */
+    const params = new URLSearchParams({ helperId });
+    if (serviceId)   params.set('serviceId', serviceId);
+    if (urlDate)     params.set('date', urlDate);
+    if (urlStartTime) params.set('startTime', urlStartTime);
+    if (urlEndTime)   params.set('endTime', urlEndTime);
+    navigate(`/bookings/new?${params.toString()}`);
   };
 
   const helperJsonLd = {
@@ -600,7 +610,7 @@ export default function HelperProfilePage() {
               </button>
             ) : (
               <button
-                onClick={() => navigate('/login')}
+                onClick={() => navigate(`/login?redirect=/helpers/${helperId}`)}
                 className="h-12 px-8 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-xl transition-colors flex-shrink-0"
               >
                 Đặt lịch

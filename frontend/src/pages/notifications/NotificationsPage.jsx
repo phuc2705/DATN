@@ -205,7 +205,7 @@ export default function NotificationsPage() {
       );
       setUnread(c => Math.max(0, c - 1));
       setUnreadCount(c => Math.max(0, c - 1));
-    } catch {}
+    } catch { /* ignore */ }
   };
 
   const unreadList = notifications.filter(n => !n.is_read);

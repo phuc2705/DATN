@@ -2,10 +2,29 @@
 const express = require('express');
 const { body } = require('express-validator');
 const router = express.Router();
+const rateLimit = require('express-rate-limit');
 const AuthController = require('../controllers/auth.controller');
 const { authenticate } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const upload = require('../middleware/upload');
+
+// Rate limiter cho OTP: tối đa 3 requests/5 phút per IP
+const otpLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Quá nhiều yêu cầu, vui lòng thử lại sau' },
+});
+
+// Rate limiter cho login: tối đa 10 requests/15 phút per IP
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Quá nhiều yêu cầu, vui lòng thử lại sau' },
+});
 
 // Validation rules cho đăng ký khách hàng
 const registerCustomerRules = [
@@ -29,10 +48,10 @@ const registerHelperRules = [
 ];
 
 // POST /api/auth/register/customer - Bước 1: gửi OTP
-router.post('/register/customer', registerCustomerRules, validate, AuthController.registerCustomer);
+router.post('/register/customer', otpLimiter, registerCustomerRules, validate, AuthController.registerCustomer);
 
 // POST /api/auth/register/helper - Bước 1: gửi OTP (upload.single xử lý multipart trước validation)
-router.post('/register/helper', upload.single('avatar'), registerHelperRules, validate, AuthController.registerHelper);
+router.post('/register/helper', otpLimiter, upload.single('avatar'), registerHelperRules, validate, AuthController.registerHelper);
 
 // POST /api/auth/verify-otp - Bước 2: xác minh OTP và tạo tài khoản
 router.post('/verify-otp', [
@@ -41,7 +60,7 @@ router.post('/verify-otp', [
 ], validate, AuthController.verifyOtp);
 
 // POST /api/auth/resend-otp - Gửi lại OTP
-router.post('/resend-otp', [
+router.post('/resend-otp', otpLimiter, [
   body('email').isEmail().withMessage('Email không hợp lệ').normalizeEmail({ gmail_remove_dots: false, gmail_remove_subaddress: false }),
 ], validate, AuthController.resendOtp);
 
@@ -58,7 +77,7 @@ router.post('/reset-password', [
 ], validate, AuthController.resetPassword);
 
 // POST /api/auth/login
-router.post('/login', [
+router.post('/login', loginLimiter, [
   body('email').isEmail().withMessage('Email không hợp lệ').normalizeEmail({ gmail_remove_dots: false, gmail_remove_subaddress: false }),
   body('password').notEmpty().withMessage('Mật khẩu không được để trống'),
 ], validate, AuthController.login);

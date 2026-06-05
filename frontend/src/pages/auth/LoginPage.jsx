@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
@@ -22,6 +22,7 @@ const FIREBASE_ERROR_MSG = {
 export default function LoginPage() {
   const { login, loginWithFirebase } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [form, setForm] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -45,9 +46,15 @@ export default function LoginPage() {
     try {
       const user = await login(form.email, form.password);
       toast.success('Đăng nhập thành công!');
-      if (user.userType === 'admin') navigate('/admin');
-      else if (user.userType === 'helper') navigate('/helper/jobs');
-      else navigate('/');
+      if (user.userType === 'admin') {
+        navigate('/admin', { replace: true });
+      } else if (user.userType === 'helper') {
+        navigate('/helper/jobs', { replace: true });
+      } else {
+        const params = new URLSearchParams(location.search);
+        const redirectTo = params.get('redirect') || '/';
+        navigate(redirectTo, { replace: true });
+      }
     } catch (err) {
       const msg = err.response?.data?.message || '';
       if (msg.toLowerCase().includes('email') || msg.toLowerCase().includes('không tồn tại')) {
@@ -69,9 +76,15 @@ export default function LoginPage() {
       const idToken = await result.user.getIdToken();
       const user = await loginWithFirebase(idToken);
       toast.success('Đăng nhập thành công!');
-      if (user.userType === 'admin') navigate('/admin');
-      else if (user.userType === 'helper') navigate('/helper/jobs');
-      else navigate('/');
+      if (user.userType === 'admin') {
+        navigate('/admin', { replace: true });
+      } else if (user.userType === 'helper') {
+        navigate('/helper/jobs', { replace: true });
+      } else {
+        const params = new URLSearchParams(location.search);
+        const redirectTo = params.get('redirect') || '/';
+        navigate(redirectTo, { replace: true });
+      }
     } catch (err) {
       const msg = FIREBASE_ERROR_MSG[err.code];
       if (msg === null) return; // im lặng khi user tự huỷ

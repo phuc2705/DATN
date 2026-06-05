@@ -1,5 +1,6 @@
 // Cấu hình axios instance trung tâm cho toàn bộ frontend
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const api = axios.create({
   baseURL: import.meta.env.DEV ? (import.meta.env.VITE_API_URL || '') : '',
@@ -46,6 +47,7 @@ api.interceptors.response.use(
       const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) {
         localStorage.clear();
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
         window.location.href = '/login';
         return Promise.reject(error);
       }
@@ -63,6 +65,7 @@ api.interceptors.response.use(
       } catch (err) {
         processQueue(err, null);
         localStorage.clear();
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
         window.location.href = '/login';
         return Promise.reject(err);
       } finally {

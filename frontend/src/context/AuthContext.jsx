@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 // Quản lý trạng thái xác thực toàn cục (user, token, socket)
 import { createContext, useState, useEffect, useCallback } from 'react';
 import { loginApi, getMeApi, firebaseLoginApi } from '../api/auth.api';
@@ -14,7 +15,7 @@ const NOTIF_ICONS = {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !!localStorage.getItem('accessToken'));
   const [unreadCount, setUnreadCount] = useState(0);
 
   // Lấy số thông báo chưa đọc ban đầu
@@ -46,14 +47,11 @@ export function AuthProvider({ children }) {
   // Khôi phục session từ localStorage khi load trang
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
-    if (token) {
-      getMeApi()
-        .then(({ data }) => setUser(data.data))
-        .catch(() => localStorage.clear())
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+    if (!token) return;
+    getMeApi()
+      .then(({ data }) => setUser(data.data))
+      .catch(() => localStorage.clear())
+      .finally(() => setLoading(false));
   }, []);
 
   const login = useCallback(async (email, password) => {

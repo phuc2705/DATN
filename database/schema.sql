@@ -107,6 +107,20 @@ CREATE TABLE schedules (
     INDEX idx_helper_schedule (helper_id, day_of_week)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Ca làm đăng ký theo ngày cụ thể (helper tự đăng ký, được ưu tiên nhận đơn)
+CREATE TABLE IF NOT EXISTS helper_shift_registrations (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    helper_id   INT NOT NULL,
+    shift_date  DATE NOT NULL,
+    start_time  TIME NOT NULL,
+    end_time    TIME NOT NULL,
+    status      ENUM('active','cancelled') NOT NULL DEFAULT 'active',
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY  uniq_shift (helper_id, shift_date, start_time),
+    FOREIGN KEY (helper_id) REFERENCES helpers(helper_id) ON DELETE CASCADE,
+    INDEX idx_helper_date (helper_id, shift_date, status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE bookings (
     booking_id     INT AUTO_INCREMENT PRIMARY KEY,
     customer_id    INT NOT NULL,
@@ -921,15 +935,37 @@ INSERT INTO services (service_name, slug, description, base_price, price_unit, i
 ('Nấu ăn gia đình',      'nau-an-gia-dinh',      'Thưởng thức bữa cơm nhà nóng hổi, chuẩn vị mà không tốn thời gian vào bếp.',   70000.00, 'giờ', TRUE),
 ('Trông trẻ tại nhà',    'trong-tre-tai-nha',    'Giải pháp giữ trẻ theo giờ an toàn, tin cậy cho các bậc phụ huynh bận rộn.',   70000.00, 'giờ', TRUE),
 ('Chăm sóc người cao tuổi','cham-soc-nguoi-cao-tuoi','San sẻ gánh nặng chăm sóc cha mẹ, ông bà khi bạn bận rộn với công việc.',   75000.00, 'giờ', TRUE),
-('Tổng vệ sinh (Deep Clean)','tong-ve-sinh-deep-clean','Dịch vụ làm sạch sâu toàn diện bằng máy móc công nghiệp.',   15000.00, 'm²', TRUE),
-('Vệ sinh Sofa, Nệm & Rèm','ve-sinh-sofa-nem-rem','Đánh bay bụi mịn, vết ố bẩn và mùi hôi bằng công nghệ phun hút áp lực. Sofa/nệm 250.000/bộ, rèm từ 150.000/bộ.',   150000.00, 'bộ', TRUE),
-('Vệ sinh Điều hòa',     've-sinh-dieu-hoa',     'Đảm bảo nguồn không khí trong lành, tăng hiệu suất làm lạnh và tiết kiệm điện năng.',   150000.00, 'lần', TRUE),
-('Vệ sinh Máy giặt & Thiết bị bếp','ve-sinh-may-giat-thiet-bi-bep','Loại bỏ cặn xà phòng, nấm mốc, dầu mỡ đóng tảng trong thiết bị.',   250000.00, 'lần', TRUE),
+('Tổng vệ sinh (Deep Clean)','tong-ve-sinh-deep-clean','Dịch vụ làm sạch sâu toàn diện bằng máy móc công nghiệp. Thường 3-5 tiếng cho căn hộ 50-80m².',   90000.00, 'giờ', TRUE),
+('Vệ sinh Sofa, Nệm & Rèm','ve-sinh-sofa-nem-rem','Đánh bay bụi mịn, vết ố bẩn và mùi hôi bằng công nghệ phun hút áp lực.',   90000.00, 'giờ', TRUE),
+('Vệ sinh Điều hòa',     've-sinh-dieu-hoa',     'Đảm bảo nguồn không khí trong lành, tăng hiệu suất làm lạnh và tiết kiệm điện năng. Thường 1-2 tiếng/cụm.',   100000.00, 'giờ', TRUE),
+('Vệ sinh Máy giặt & Thiết bị bếp','ve-sinh-may-giat-thiet-bi-bep','Loại bỏ cặn xà phòng, nấm mốc, dầu mỡ đóng tảng trong thiết bị. Thường 2-3 tiếng.',   100000.00, 'giờ', TRUE),
 ('Chăm sóc Thú cưng',    'cham-soc-thu-cung',    'Dịch vụ Pet Sitting tại nhà khi bạn đi du lịch hoặc bận rộn.',   65000.00, 'giờ', TRUE),
-('Vệ sinh Văn phòng & Shop','ve-sinh-van-phong-shop','Duy trì không gian làm việc sạch sẽ, chuyên nghiệp.',   20000.00, 'm²', TRUE),
-('Phun khử khuẩn & Kiểm soát côn trùng','phun-khu-khuan-con-trung','Bảo vệ gia đình khỏi mầm bệnh và côn trùng bằng hóa chất sinh học an toàn.',   10000.00, 'm²', TRUE);
+('Vệ sinh Văn phòng & Shop','ve-sinh-van-phong-shop','Duy trì không gian làm việc sạch sẽ, chuyên nghiệp.',   70000.00, 'giờ', TRUE),
+('Phun khử khuẩn & Kiểm soát côn trùng','phun-khu-khuan-con-trung','Bảo vệ gia đình khỏi mầm bệnh và côn trùng bằng hóa chất sinh học an toàn.',   80000.00, 'giờ', TRUE);
 
 INSERT INTO blog_categories (name, slug, description, is_active) VALUES
 ('Mẹo vặt gia đình',   'meo-vat-gia-dinh',  'Các mẹo hữu ích cho công việc nhà',   TRUE),
 ('Tin tức',            'tin-tuc',            'Cập nhật tin tức mới nhất',            TRUE),
 ('Hướng dẫn',          'huong-dan',          'Hướng dẫn sử dụng dịch vụ',           TRUE);
+
+-- ============================================================
+-- INDEXES BỔ SUNG
+-- ============================================================
+
+ALTER TABLE payments ADD INDEX IF NOT EXISTS idx_paid_at (paid_at);
+ALTER TABLE payments ADD INDEX IF NOT EXISTS idx_booking_payment (booking_id, payment_status);
+ALTER TABLE conversations ADD INDEX IF NOT EXISTS idx_last_message (last_message_at);
+ALTER TABLE wallets ADD INDEX IF NOT EXISTS idx_balance (balance);
+
+-- ============================================================
+-- CHECK CONSTRAINTS (MySQL 8.0+)
+-- ============================================================
+
+ALTER TABLE services ADD CONSTRAINT IF NOT EXISTS chk_base_price CHECK (base_price > 0);
+ALTER TABLE promotions ADD CONSTRAINT IF NOT EXISTS chk_max_uses CHECK (max_uses_per_user > 0);
+
+-- ============================================================
+-- UNIQUE CONSTRAINT CHO SỐ CCCD
+-- ============================================================
+
+ALTER TABLE helpers ADD UNIQUE INDEX IF NOT EXISTS idx_unique_cccd (id_card_number);

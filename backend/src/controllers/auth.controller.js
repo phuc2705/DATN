@@ -10,6 +10,9 @@ const { pool } = require('../config/database');
 
 // Decode Firebase ID token mà không verify chữ ký — chỉ dùng làm fallback khi Firebase Admin chưa cấu hình
 const decodeFirebaseTokenFallback = (idToken) => {
+  if (process.env.NODE_ENV === 'production') {
+    throw Object.assign(new Error('Firebase chưa được cấu hình đúng'), { code: 'auth/configuration-error' });
+  }
   const parts = idToken.split('.');
   if (parts.length !== 3) throw Object.assign(new Error('Token không hợp lệ'), { code: 'auth/invalid-argument' });
   let payload;
@@ -124,6 +127,14 @@ const AuthController = {
 
       const passwordHash = await bcrypt.hash(password, 12);
 
+      // Kiểm tra CCCD đã tồn tại chưa
+      const [existingCCCD] = await pool.query(
+        'SELECT helper_id FROM helpers WHERE id_card_number = ?', [idCardNumber]
+      );
+      if (existingCCCD.length > 0) {
+        return res.status(400).json({ success: false, message: 'Số CCCD đã được đăng ký bởi tài khoản khác' });
+      }
+
       try {
         await UserModel.createHelper({
           email, passwordHash, fullName, phone, dateOfBirth, gender,
@@ -132,6 +143,9 @@ const AuthController = {
       } catch (dbErr) {
         if (dbErr.code === 'ER_DUP_ENTRY' && dbErr.message.includes('phone')) {
           return sendError(res, 'Số điện thoại đã được sử dụng bởi tài khoản khác.', 409);
+        }
+        if (dbErr.code === 'ER_DUP_ENTRY' && dbErr.message.includes('id_card_number')) {
+          return sendError(res, 'Số CCCD đã được đăng ký bởi tài khoản khác.', 409);
         }
         throw dbErr;
       }

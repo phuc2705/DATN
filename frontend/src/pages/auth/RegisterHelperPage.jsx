@@ -307,7 +307,7 @@ export default function RegisterHelperPage() {
                       type="tel" required
                       value={form.phone}
                       onChange={set('phone')}
-                      placeholder="0901234567"
+                      placeholder="VD: 0912 345 678"
                       className="input-field"
                       autoComplete="tel"
                     />
@@ -376,7 +376,7 @@ export default function RegisterHelperPage() {
                     type="text" required
                     value={form.idCardNumber}
                     onChange={set('idCardNumber')}
-                    placeholder="012345678901"
+                    placeholder="VD: 001099012345 (12 số)"
                     className="input-field"
                   />
                 </div>
@@ -388,7 +388,7 @@ export default function RegisterHelperPage() {
                     type="text" required
                     value={form.address}
                     onChange={set('address')}
-                    placeholder="123 Đường ABC, Quận 1, TP.HCM"
+                    placeholder="VD: 15 Phố Huế, P.Nguyễn Du, Q.Hai Bà Trưng, Hà Nội"
                     className="input-field"
                   />
                 </div>
@@ -432,7 +432,7 @@ export default function RegisterHelperPage() {
                     rows={3}
                     value={form.bio}
                     onChange={set('bio')}
-                    placeholder="Ví dụ: Tôi có 3 năm kinh nghiệm dọn dẹp nhà cửa, từng làm việc cho các hộ gia đình tại TP.HCM..."
+                    placeholder="VD: Tôi có 3 năm kinh nghiệm dọn dẹp nhà cửa, từng phục vụ nhiều hộ gia đình tại Hà Nội..."
                     className="input-field resize-none"
                   />
                 </div>

@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getAllServicesApi } from '../../api/service.api';
-import { createBookingApi, validatePromoCodeApi, pricePreviewApi } from '../../api/booking.api';
+import { createBookingApi, validatePromoCodeApi, pricePreviewApi, checkAvailabilityApi } from '../../api/booking.api';
 import { createVNPayUrlApi } from '../../api/payment.api';
 import { formatPrice } from '../../utils/format';
 import toast from 'react-hot-toast';
 import {
   ArrowLeft, CheckCircle2, Calendar, MapPin,
   CreditCard, Banknote, ChevronRight, Info, Loader2, Check, Tag, X, AlertTriangle,
+  Clock, Users, Lightbulb,
 } from 'lucide-react';
+import TimePicker24h from '../../components/common/TimePicker24h';
 
 // ─── Steps ───────────────────────────────────────────────────────────
 const STEPS = [
@@ -102,6 +104,7 @@ export default function CreateBookingPage() {
   const [services, setServices] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [timeError, setTimeError]   = useState('');
 
   const [form, setForm] = useState({
     serviceId:   paramServiceId,
@@ -119,6 +122,8 @@ export default function CreateBookingPage() {
   const [priceData, setPriceData]         = useState(null);
   const [priceLoading, setPriceLoading]   = useState(false);
   const [conflictError, setConflictError] = useState(null);
+  const [availability, setAvailability]   = useState(null); // { available, availableCount, suggestions }
+  const [availChecking, setAvailChecking] = useState(false);
 
   useEffect(() => {
     getAllServicesApi()
@@ -126,6 +131,24 @@ export default function CreateBookingPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  // Hiển thị lỗi giờ quá khứ ngay real-time khi user nhập
+  useEffect(() => {
+    if (!form.bookingDate || !form.startTime) { setTimeError(''); return; }
+    const vnNow    = getVNNow();
+    const todayStr = vnNow.toISOString().slice(0, 10);
+    if (form.bookingDate !== todayStr) { setTimeError(''); return; }
+    const [sh, sm] = form.startTime.split(':').map(Number);
+    const startMins = sh * 60 + sm;
+    const nowMins   = vnNow.getUTCHours() * 60 + vnNow.getUTCMinutes();
+    if (startMins < nowMins) {
+      const nowH = String(vnNow.getUTCHours()).padStart(2, '0');
+      const nowM = String(vnNow.getUTCMinutes()).padStart(2, '0');
+      setTimeError(`Giờ đã qua (hiện tại ${nowH}:${nowM})`);
+    } else {
+      setTimeError('');
+    }
+  }, [form.bookingDate, form.startTime]);
 
   // Tính giá từ backend (bao gồm promo nếu đã áp dụng)
   useEffect(() => {
@@ -152,6 +175,32 @@ export default function CreateBookingPage() {
     return () => clearTimeout(t);
   }, [form.serviceId, form.startTime, form.endTime, promoApplied]);
 
+  // Kiểm tra helper rảnh khi đủ 4 trường: dịch vụ + ngày + giờ bắt đầu + giờ kết thúc
+  useEffect(() => {
+    if (!form.serviceId || !form.bookingDate || !form.startTime || !form.endTime) {
+      setAvailability(null);
+      return;
+    }
+    if (form.startTime >= form.endTime) { setAvailability(null); return; }
+    const t = setTimeout(async () => {
+      setAvailChecking(true);
+      try {
+        const { data } = await checkAvailabilityApi({
+          serviceId:   form.serviceId,
+          bookingDate: form.bookingDate,
+          startTime:   form.startTime,
+          endTime:     form.endTime,
+        });
+        setAvailability(data.data);
+      } catch {
+        setAvailability(null);
+      } finally {
+        setAvailChecking(false);
+      }
+    }, 600);
+    return () => clearTimeout(t);
+  }, [form.serviceId, form.bookingDate, form.startTime, form.endTime]);
+
   const handleApplyPromo = async () => {
     if (!promoCode.trim()) return toast.error('Vui lòng nhập mã khuyến mãi trước khi áp dụng.');
     if (!priceData || priceData.basePrice <= 0)
@@ -169,9 +218,10 @@ export default function CreateBookingPage() {
     }
   };
 
-  // Xóa lỗi trùng lịch khi user thay đổi giờ/ngày
+  // Xóa lỗi trùng lịch và reset availability khi user thay đổi form
   const set = (field) => (e) => {
     setConflictError(null);
+    setAvailability(null);
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
   };
 
@@ -190,11 +240,11 @@ export default function CreateBookingPage() {
     if (bookingDate === todayStr) {
       const [sh, sm] = startTime.split(':').map(Number);
       const startMins = sh * 60 + sm;
-      const nowMins   = vnNow.getUTCHours() * 60 + vnNow.getUTCMinutes() + 30; // buffer 30 phút
+      const nowMins   = vnNow.getUTCHours() * 60 + vnNow.getUTCMinutes();
       if (startMins < nowMins) {
-        const minH = String(Math.floor(nowMins / 60) % 24).padStart(2, '0');
-        const minM = String(nowMins % 60).padStart(2, '0');
-        return `Giờ bắt đầu phải sau ${minH}:${minM} (ít nhất 30 phút từ bây giờ).`;
+        const nowH = String(vnNow.getUTCHours()).padStart(2, '0');
+        const nowM = String(vnNow.getUTCMinutes()).padStart(2, '0');
+        return `Giờ bắt đầu đã qua (hiện tại ${nowH}:${nowM}). Vui lòng chọn khung giờ khác.`;
       }
     }
     return null;
@@ -280,7 +330,7 @@ export default function CreateBookingPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className="max-w-5xl mx-auto px-4 py-6">
 
       {/* Back button */}
       <button
@@ -302,7 +352,7 @@ export default function CreateBookingPage() {
 
       {/* ─── STEP 1: Dịch vụ & Thời gian ─────────────────────────────── */}
       {step === 1 && (
-        <div className="space-y-4 animate-[fadeIn_0.2s_ease]">
+        <div className="max-w-2xl mx-auto space-y-4 animate-[fadeIn_0.2s_ease]">
 
           {/* Chọn dịch vụ — ẩn grid khi đã có serviceId từ URL */}
           {hasServiceParam ? (
@@ -360,27 +410,30 @@ export default function CreateBookingPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label required>Giờ bắt đầu</Label>
-                  <input
-                    type="time"
+                  <TimePicker24h
                     value={form.startTime}
                     onChange={set('startTime')}
                     min={(() => {
                       const vnNow    = getVNNow();
                       const todayStr = vnNow.toISOString().slice(0, 10);
-                      if (form.bookingDate !== todayStr) return undefined;
-                      const minMins = vnNow.getUTCHours() * 60 + vnNow.getUTCMinutes() + 30;
-                      return `${String(Math.floor(minMins / 60) % 24).padStart(2, '0')}:${String(minMins % 60).padStart(2, '0')}`;
+                      if (form.bookingDate !== todayStr) return '';
+                      return `${String(vnNow.getUTCHours()).padStart(2, '0')}:${String(vnNow.getUTCMinutes()).padStart(2, '0')}`;
                     })()}
-                    className={INPUT_CLS}
+                    className={`${INPUT_CLS} ${timeError ? 'border-red-400 focus:border-red-500' : ''}`}
                   />
+                  {timeError && (
+                    <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3 shrink-0" />{timeError}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label required>Giờ kết thúc</Label>
-                  <input
-                    type="time"
+                  <TimePicker24h
                     value={form.endTime}
                     onChange={set('endTime')}
-                    min={form.startTime || undefined}
+                    min={form.startTime || ''}
+                    strict
                     className={INPUT_CLS}
                   />
                 </div>
@@ -403,222 +456,285 @@ export default function CreateBookingPage() {
                   </div>
                 </div>
               )}
+
+              {/* Kiểm tra helper rảnh — hiển thị sau khi chọn đủ giờ */}
+              {availChecking && form.startTime && form.endTime && form.startTime < form.endTime && (
+                <div className="flex items-center gap-2 text-sm text-[#6a6a6a] bg-gray-50 rounded-xl px-4 py-3">
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-400" /> Đang kiểm tra lịch nhân viên...
+                </div>
+              )}
+              {!availChecking && availability && !availability.available && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
+                  <div className="flex items-start gap-2">
+                    <Lightbulb className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-amber-800">Tất cả nhân viên đang bận trong khung giờ này</p>
+                      <p className="text-xs text-amber-600 mt-0.5">Bạn vẫn có thể đặt — chúng tôi sẽ thông báo khi có người rảnh. Hoặc chọn một khung giờ khác bên dưới:</p>
+                    </div>
+                  </div>
+                  {availability.suggestions.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-2">
+                      {availability.suggestions.map((s, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => {
+                            setAvailability(null);
+                            setConflictError(null);
+                            setForm(prev => ({
+                              ...prev,
+                              bookingDate: s.bookingDate,
+                              startTime:   s.startTime,
+                              endTime:     s.endTime,
+                            }));
+                          }}
+                          className="flex items-center justify-between bg-white border border-amber-200 hover:border-orange-400 hover:bg-orange-50 rounded-lg px-3 py-2.5 text-left transition-all group"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                            <span className="text-sm font-medium text-[#222222]">
+                              {s.bookingDate} · {s.startTime} – {s.endTime}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
+                            <Users className="w-3 h-3" />
+                            {s.availableHelpers} nhân viên rảnh
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-amber-600">Hiện chưa tìm được khung giờ thay thế phù hợp trong 7 ngày tới.</p>
+                  )}
+                </div>
+              )}
             </div>
           </SectionCard>
         </div>
       )}
 
-      {/* ─── STEP 2: Địa chỉ + Thanh toán + Xác nhận ─────────────────── */}
+      {/* ─── STEP 2: 2-column layout ──────────────────────────────────── */}
       {step === 2 && (
-        <div className="space-y-4 animate-[fadeIn_0.2s_ease]">
+        <div className="animate-[fadeIn_0.2s_ease] lg:grid lg:grid-cols-[1fr_380px] lg:gap-8 lg:items-start">
 
-          {/* Tóm tắt đơn */}
-          <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5">
-            <h3 className="text-sm font-semibold text-[#222222] mb-3">Tóm tắt đặt lịch</h3>
-            <dl className="space-y-2.5 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-[#6a6a6a]">Dịch vụ</dt>
-                <dd className="font-medium text-[#222222]">{selectedService?.serviceName || '—'}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-[#6a6a6a]">Ngày</dt>
-                <dd className="font-medium text-[#222222]">{form.bookingDate || '—'}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-[#6a6a6a]">Giờ</dt>
-                <dd className="font-medium text-[#222222]">{form.startTime} – {form.endTime}</dd>
-              </div>
-              {priceLoading ? (
-                <div className="flex items-center gap-2 text-xs text-[#6a6a6a] pt-1">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-orange-400" /> Đang tính giá...
+          {/* ─ Right sidebar: tóm tắt + promo + ghi chú (hiện trước trên mobile) ─ */}
+          <div className="lg:col-start-2 lg:row-start-1 space-y-4 mb-6 lg:mb-0 lg:sticky lg:top-6">
+
+            {/* Tóm tắt đơn */}
+            <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5">
+              <h3 className="text-sm font-semibold text-[#222222] mb-3">Tóm tắt đặt lịch</h3>
+              <dl className="space-y-2.5 text-sm">
+                <div className="flex justify-between">
+                  <dt className="text-[#6a6a6a]">Dịch vụ</dt>
+                  <dd className="font-medium text-[#222222]">{selectedService?.serviceName || '—'}</dd>
                 </div>
-              ) : priceData ? (
-                <>
-                  <div className="flex justify-between text-sm border-t border-orange-200 pt-2.5 mt-1">
-                    <dt className="text-[#6a6a6a]">{priceData.hours}h × {formatPrice(priceData.effectiveRate)}/giờ</dt>
-                    <dd className="text-[#222222]">{formatPrice(priceData.basePrice)}</dd>
+                <div className="flex justify-between">
+                  <dt className="text-[#6a6a6a]">Ngày</dt>
+                  <dd className="font-medium text-[#222222]">{form.bookingDate || '—'}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-[#6a6a6a]">Giờ</dt>
+                  <dd className="font-medium text-[#222222]">{form.startTime} – {form.endTime}</dd>
+                </div>
+                {priceLoading ? (
+                  <div className="flex items-center gap-2 text-xs text-[#6a6a6a] pt-1">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-orange-400" /> Đang tính giá...
                   </div>
-                  {priceData.discountAmount > 0 && (
-                    <div className="flex justify-between text-sm text-green-600">
-                      <dt>Giảm giá ({promoApplied?.discountLabel})</dt>
-                      <dd>−{formatPrice(priceData.discountAmount)}</dd>
+                ) : priceData ? (
+                  <>
+                    <div className="flex justify-between text-sm border-t border-orange-200 pt-2.5 mt-1">
+                      <dt className="text-[#6a6a6a]">{priceData.hours}h × {formatPrice(priceData.effectiveRate)}/giờ</dt>
+                      <dd className="text-[#222222]">{formatPrice(priceData.basePrice)}</dd>
                     </div>
-                  )}
-                  <div className="flex justify-between font-bold text-base border-t border-orange-200 pt-2">
-                    <dt className="text-[#222222]">Tổng dự kiến</dt>
-                    <dd className="text-orange-500">{formatPrice(priceData.totalPrice)}</dd>
-                  </div>
-                </>
-              ) : null}
-            </dl>
-          </div>
+                    {priceData.discountAmount > 0 && (
+                      <div className="flex justify-between text-sm text-green-600">
+                        <dt>Giảm giá ({promoApplied?.discountLabel})</dt>
+                        <dd>−{formatPrice(priceData.discountAmount)}</dd>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-bold text-base border-t border-orange-200 pt-2">
+                      <dt className="text-[#222222]">Tổng dự kiến</dt>
+                      <dd className="text-orange-500">{formatPrice(priceData.totalPrice)}</dd>
+                    </div>
+                  </>
+                ) : null}
+              </dl>
+            </div>
 
-          {/* Mã khuyến mãi */}
-          <SectionCard title="Mã khuyến mãi" icon={Tag}>
-            {promoApplied ? (
-              <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-green-600" />
-                  <span className="text-sm font-semibold text-green-700">{promoCode.toUpperCase()}</span>
-                  <span className="text-sm text-green-600">— {promoApplied.discountLabel}</span>
+            {/* Mã khuyến mãi */}
+            <SectionCard title="Mã khuyến mãi" icon={Tag}>
+              {promoApplied ? (
+                <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-600" />
+                    <span className="text-sm font-semibold text-green-700">{promoCode.toUpperCase()}</span>
+                    <span className="text-sm text-green-600">— {promoApplied.discountLabel}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setPromoApplied(null); setPromoCode(''); }}
+                    className="text-[#6a6a6a] hover:text-red-500 transition-colors p-1 rounded"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleApplyPromo())}
+                    placeholder="Nhập mã giảm giá..."
+                    className={`${INPUT_CLS} flex-1 uppercase placeholder:normal-case`}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyPromo}
+                    disabled={promoLoading || !promoCode.trim()}
+                    className="px-4 h-[42px] bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-600 disabled:opacity-50 whitespace-nowrap transition-colors flex items-center gap-1.5"
+                  >
+                    {promoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Áp dụng'}
+                  </button>
+                </div>
+              )}
+            </SectionCard>
+
+            {/* Lưu ý phân công */}
+            <div className="flex gap-3 bg-blue-50 border border-blue-100 rounded-xl p-4">
+              <Info className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-blue-700">
+                <span className="font-semibold">Phân công tự động:</span> Đơn sẽ được gửi đến người giúp việc phù hợp gần nhất.
+              </p>
+            </div>
+
+            {/* Banner lỗi trùng lịch */}
+            {conflictError && (
+              <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4">
+                <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-red-700">Lịch bị trùng — không thể đặt</p>
+                  <p className="text-sm text-red-600 mt-0.5">{conflictError}</p>
+                  <p className="text-xs text-red-500 mt-1">Vui lòng quay lại và chọn ngày/giờ khác.</p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => { setPromoApplied(null); setPromoCode(''); }}
-                  className="text-[#6a6a6a] hover:text-red-500 transition-colors p-1 rounded"
+                  onClick={() => setConflictError(null)}
+                  className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
-            ) : (
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleApplyPromo())}
-                  placeholder="Nhập mã giảm giá..."
-                  className={`${INPUT_CLS} flex-1 uppercase placeholder:normal-case`}
-                />
-                <button
-                  type="button"
-                  onClick={handleApplyPromo}
-                  disabled={promoLoading || !promoCode.trim()}
-                  className="px-4 h-[42px] bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-600 disabled:opacity-50 whitespace-nowrap transition-colors flex items-center gap-1.5"
-                >
-                  {promoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Áp dụng'}
-                </button>
-              </div>
             )}
-          </SectionCard>
-
-          {/* Địa chỉ */}
-          <SectionCard title="Địa chỉ làm việc" icon={MapPin}>
-            <div className="space-y-4">
-              <div>
-                <Label required>Địa chỉ đầy đủ</Label>
-                <input
-                  type="text"
-                  value={form.address}
-                  onChange={set('address')}
-                  placeholder="VD: 123 Nguyễn Huệ, P.Bến Nghé, Q.1, TP.HCM"
-                  className={INPUT_CLS}
-                />
-                <p className="flex items-center gap-1.5 text-xs text-[#6a6a6a] mt-1.5">
-                  <Info className="w-3.5 h-3.5 shrink-0" />
-                  Nhập địa chỉ chi tiết để người giúp việc dễ tìm đến
-                </p>
-              </div>
-              <div>
-                <Label>Ghi chú (tùy chọn)</Label>
-                <textarea
-                  rows={3}
-                  value={form.note}
-                  onChange={set('note')}
-                  placeholder="VD: Tập trung vệ sinh nhà bếp, tránh làm ồn buổi sáng..."
-                  className={`${INPUT_CLS} resize-none`}
-                />
-              </div>
-            </div>
-          </SectionCard>
-
-          {/* Phương thức thanh toán */}
-          <SectionCard title="Phương thức thanh toán" icon={CreditCard}>
-            <div className="space-y-2.5">
-              {PAYMENT_METHODS.map(({ key, icon: Icon, label, sub }) => {
-                const active = paymentMethod === key;
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setPaymentMethod(key)}
-                    className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all
-                      ${active ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-white hover:border-orange-200'}`}
-                  >
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0
-                      ${active ? 'bg-orange-100' : 'bg-gray-100'}`}>
-                      <Icon className={`w-5 h-5 ${active ? 'text-orange-500' : 'text-[#6a6a6a]'}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`font-semibold text-sm ${active ? 'text-orange-600' : 'text-[#222222]'}`}>{label}</p>
-                      <p className="text-xs text-[#6a6a6a] mt-0.5">{sub}</p>
-                    </div>
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors
-                      ${active ? 'border-orange-500' : 'border-gray-300'}`}>
-                      {active && <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </SectionCard>
-
-          {/* Lưu ý phân công */}
-          <div className="flex gap-3 bg-blue-50 border border-blue-100 rounded-xl p-4">
-            <Info className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-blue-700">
-              <span className="font-semibold">Phân công tự động:</span> Đơn sẽ được gửi đến người giúp việc phù hợp gần nhất.
-            </p>
           </div>
 
-          {/* Banner lỗi trùng lịch */}
-          {conflictError && (
-            <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4">
-              <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-red-700">Lịch bị trùng — không thể đặt</p>
-                <p className="text-sm text-red-600 mt-0.5">{conflictError}</p>
-                <p className="text-xs text-red-500 mt-1">Vui lòng quay lại và chọn ngày/giờ khác.</p>
+          {/* ─ Left column: địa chỉ + thanh toán + nút xác nhận ─ */}
+          <div className="lg:col-start-1 lg:row-start-1 space-y-4">
+
+            {/* Địa chỉ */}
+            <SectionCard title="Địa chỉ làm việc" icon={MapPin}>
+              <div className="space-y-4">
+                <div>
+                  <Label required>Địa chỉ đầy đủ</Label>
+                  <input
+                    type="text"
+                    value={form.address}
+                    onChange={set('address')}
+                    placeholder="VD: 15 Phố Huế, P.Nguyễn Du, Q.Hai Bà Trưng, Hà Nội"
+                    className={INPUT_CLS}
+                  />
+                  <p className="flex items-center gap-1.5 text-xs text-[#6a6a6a] mt-1.5">
+                    <Info className="w-3.5 h-3.5 shrink-0" />
+                    Nhập địa chỉ chi tiết để người giúp việc dễ tìm đến
+                  </p>
+                </div>
+                <div>
+                  <Label>Ghi chú (tùy chọn)</Label>
+                  <textarea
+                    rows={3}
+                    value={form.note}
+                    onChange={set('note')}
+                    placeholder="VD: Tập trung vệ sinh nhà bếp, tránh làm ồn buổi sáng..."
+                    className={`${INPUT_CLS} resize-none`}
+                  />
+                </div>
               </div>
+            </SectionCard>
+
+            {/* Phương thức thanh toán */}
+            <SectionCard title="Phương thức thanh toán" icon={CreditCard}>
+              <div className="space-y-2.5">
+                {PAYMENT_METHODS.map(({ key, icon: Icon, label, sub }) => {
+                  const active = paymentMethod === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setPaymentMethod(key)}
+                      className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all
+                        ${active ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-white hover:border-orange-200'}`}
+                    >
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0
+                        ${active ? 'bg-orange-100' : 'bg-gray-100'}`}>
+                        <Icon className={`w-5 h-5 ${active ? 'text-orange-500' : 'text-[#6a6a6a]'}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-semibold text-sm ${active ? 'text-orange-600' : 'text-[#222222]'}`}>{label}</p>
+                        <p className="text-xs text-[#6a6a6a] mt-0.5">{sub}</p>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors
+                        ${active ? 'border-orange-500' : 'border-gray-300'}`}>
+                        {active && <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </SectionCard>
+
+            {/* Navigation buttons */}
+            <div className="flex gap-3 mt-2 pb-8">
+              {!fromServicePage && (
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="flex-1 flex items-center justify-center gap-2 h-12 border-2 border-gray-200 text-[#222222] rounded-lg font-medium text-sm hover:border-gray-300 transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Quay lại
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => setConflictError(null)}
-                className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0"
+                onClick={handleSubmit}
+                disabled={submitting || !!conflictError}
+                className="flex-1 flex items-center justify-center gap-2 h-12 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium text-base transition-colors"
               >
-                <X className="w-4 h-4" />
+                {submitting ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Đang đặt lịch...</>
+                ) : (
+                  <><CheckCircle2 className="w-4 h-4" /> Xác nhận đặt lịch</>
+                )}
               </button>
             </div>
-          )}
+          </div>
         </div>
       )}
 
-      {/* ─── Navigation ─────────────────────────────────────────────── */}
-      <div className="flex gap-3 mt-6 pb-8">
-        {step === 2 && !fromServicePage && (
-          <button
-            type="button"
-            onClick={() => setStep(1)}
-            className="flex-1 flex items-center justify-center gap-2 h-12 border-2 border-gray-200 text-[#222222] rounded-lg font-medium text-sm hover:border-gray-300 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Quay lại
-          </button>
-        )}
-
-        {step === 1 ? (
+      {/* ─── Navigation (Step 1) ─────────────────────────────────────── */}
+      {step === 1 && (
+        <div className="max-w-2xl mx-auto flex gap-3 mt-6 pb-8">
           <button
             type="button"
             onClick={goNext}
-            className="flex-1 flex items-center justify-center gap-2 h-12 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium text-base transition-colors"
+            disabled={!!timeError}
+            className="flex-1 flex items-center justify-center gap-2 h-12 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium text-base transition-colors"
           >
             Tiếp tục
             <ChevronRight className="w-4 h-4" />
           </button>
-        ) : (
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={submitting || !!conflictError}
-            className="flex-1 flex items-center justify-center gap-2 h-12 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium text-base transition-colors"
-          >
-            {submitting ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Đang đặt lịch...</>
-            ) : (
-              <><CheckCircle2 className="w-4 h-4" /> Xác nhận đặt lịch</>
-            )}
-          </button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

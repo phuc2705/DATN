@@ -106,8 +106,13 @@ const PaymentController = {
     try {
       const query = req.query;
       const isValid = verifyVNPayReturn(query);
-      const isSuccess = isValid && query.vnp_ResponseCode === '00';
+
+      if (!isValid) {
+        return res.redirect(`${process.env.CLIENT_URL}/payment/result?status=failed&reason=invalid_signature`);
+      }
+
       const bookingId = query.vnp_TxnRef?.split('_')[0];
+      const isSuccess = query.vnp_ResponseCode === '00';
 
       if (isSuccess && bookingId) {
         const payment = await PaymentModel.findByBooking(bookingId);

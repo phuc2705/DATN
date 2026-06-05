@@ -28,6 +28,9 @@ router.get('/price-preview', BookingController.pricePreview);
 // GET /api/bookings/suggest-helpers - Gợi ý helper xếp hạng theo thuật toán matching
 router.get('/suggest-helpers', BookingController.suggestHelpers);
 
+// GET /api/bookings/check-availability - Kiểm tra helper rảnh + gợi ý khung giờ thay thế
+router.get('/check-availability', BookingController.checkAvailability);
+
 // GET /api/bookings/my - Lịch sử đặt lịch của khách hàng
 router.get('/my', authorize('customer'), BookingController.getMyBookingsAsCustomer);
 

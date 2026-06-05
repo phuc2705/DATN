@@ -1,7 +1,7 @@
 // Logic tính giá được tập trung tại Backend để đảm bảo tính minh bạch
 // KHÔNG để Frontend tự tính giá vì dễ bị giả mạo
 
-// Hệ số nhân theo cấp độ kinh nghiệm của helper
+// Hệ số kinh nghiệm — chỉ dùng để chấm điểm matching, KHÔNG dùng để tính giá khách hàng
 const EXPERIENCE_MULTIPLIER = { beginner: 1.0, intermediate: 1.2, expert: 1.5 };
 
 /**
@@ -12,10 +12,11 @@ const EXPERIENCE_MULTIPLIER = { beginner: 1.0, intermediate: 1.2, expert: 1.5 };
  */
 const calculateHours = (startTime, endTime) => {
   const [startH, startM] = startTime.split(':').map(Number);
-  const [endH, endM] = endTime.split(':').map(Number);
+  const [endH, endM]     = endTime.split(':').map(Number);
   const totalMinutes = (endH * 60 + endM) - (startH * 60 + startM);
   if (totalMinutes <= 0) throw new Error('Giờ kết thúc phải sau giờ bắt đầu');
-  return Math.round((totalMinutes / 60) * 100) / 100; // Làm tròn 2 chữ số
+  // Làm tròn về bội số 0.25h (15 phút) để tránh hiển thị số lẻ như 1.02h
+  return Math.round(totalMinutes / 15) * 0.25;
 };
 
 /**
@@ -71,12 +72,12 @@ const calculateBookingPrice = (startTime, endTime, helperHourlyRate, promo = nul
 
 /**
  * Lấy giá hiệu dụng của helper cho một dịch vụ
- * Ưu tiên: custom_price → base_price × experience_multiplier
+ * Ưu tiên: custom_price → base_price (không nhân hệ số kinh nghiệm vào giá khách hàng)
+ * Experience level chỉ ảnh hưởng điểm matching, không ảnh hưởng giá thanh toán
  */
-const getEffectiveRate = (basePrice, customPrice, experienceLevel) => {
+const getEffectiveRate = (basePrice, customPrice) => {
   if (customPrice && parseFloat(customPrice) > 0) return parseFloat(customPrice);
-  const mult = EXPERIENCE_MULTIPLIER[experienceLevel] || 1.0;
-  return Math.round(basePrice * mult * 100) / 100;
+  return basePrice;
 };
 
 module.exports = { calculateHours, calculateBasePrice, calculateDiscount, calculateBookingPrice, getEffectiveRate, EXPERIENCE_MULTIPLIER };

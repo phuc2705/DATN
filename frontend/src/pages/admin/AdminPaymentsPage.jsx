@@ -4,22 +4,57 @@ import { confirmPaymentApi } from '../../api/payment.api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { formatPrice, formatDateTime, PAYMENT_STATUS_LABEL } from '../../utils/format';
 import toast from 'react-hot-toast';
+import { RefreshCw, Banknote, Clock, CheckCircle, RotateCcw } from 'lucide-react';
+
+// Tabs lọc trạng thái thanh toán
+const TABS = [
+  { key: '',          label: 'Tất cả' },
+  { key: 'unpaid',    label: 'Chờ thanh toán' },
+  { key: 'paid',      label: 'Đã thanh toán' },
+];
+
+// Phương thức thanh toán
+const PAYMENT_METHODS = [
+  { value: '',              label: 'Tất cả phương thức' },
+  { value: 'cash',          label: 'Tiền mặt' },
+  { value: 'bank_transfer', label: 'Chuyển khoản' },
+  { value: 'vnpay',         label: 'VNPay' },
+];
+
+// Badge màu theo trạng thái
+const getStatusBadgeClass = (status) => {
+  if (status === 'paid')   return 'bg-emerald-400/10 text-emerald-400 border border-emerald-400/20';
+  if (status === 'unpaid') return 'bg-yellow-400/10 text-yellow-300 border border-yellow-400/20';
+  return 'bg-blue-400/10 text-blue-300 border border-blue-400/20';
+};
+
+// Nhãn phương thức thanh toán
+const getMethodLabel = (method) => {
+  const map = { cash: 'Tiền mặt', bank_transfer: 'Chuyển khoản', vnpay: 'VNPay' };
+  return map[method] || method || 'Tiền mặt';
+};
 
 export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [platformRevenue, setPlatformRevenue] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState({ status: '', startDate: '', endDate: '' });
+  const [activeTab, setActiveTab] = useState('');
+  const [methodFilter, setMethodFilter] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [confirming, setConfirming] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null); // { bookingId, method }
 
+  // Tải danh sách thanh toán với các bộ lọc
   const refresh = () => {
     setLoading(true);
     const params = {};
-    if (filter.status) params.status = filter.status;
-    if (filter.startDate) params.startDate = filter.startDate;
-    if (filter.endDate) params.endDate = filter.endDate;
+    if (activeTab)     params.status = activeTab;
+    if (methodFilter)  params.paymentMethod = methodFilter;
+    if (startDate)     params.startDate = startDate;
+    if (endDate)       params.endDate = endDate;
+
     getAdminPaymentsApi(params)
       .then(({ data }) => {
         setPayments(data.data?.payments || []);
@@ -30,8 +65,9 @@ export default function AdminPaymentsPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => { refresh(); }, [activeTab, methodFilter, startDate, endDate]);
 
+  // Xác nhận thanh toán thủ công
   const handleConfirm = async () => {
     if (!confirmModal) return;
     const { bookingId, method } = confirmModal;
@@ -48,81 +84,121 @@ export default function AdminPaymentsPage() {
     }
   };
 
-  const paidCount = payments.filter((p) => p.paymentStatus === 'paid').length;
-  const unpaidCount = payments.length - paidCount;
-
-  // Hàm trả về class badge dựa theo PAYMENT_STATUS_LABEL
-  const getStatusBadgeClass = (status) => {
-    if (status === 'paid') return 'bg-emerald-400/10 text-emerald-400 border border-emerald-400/20';
-    if (status === 'unpaid') return 'bg-yellow-400/10 text-yellow-300 border border-yellow-400/20';
-    return 'bg-blue-400/10 text-blue-300 border border-blue-400/20';
+  const clearFilters = () => {
+    setMethodFilter('');
+    setStartDate('');
+    setEndDate('');
   };
+
+  // Thống kê
+  const paidCount   = payments.filter((p) => p.paymentStatus === 'paid').length;
+  const unpaidCount = payments.filter((p) => p.paymentStatus === 'unpaid').length;
 
   return (
     <div className="animate-fadeIn">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Quản lý thanh toán</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          {payments.length} giao dịch
-          {unpaidCount > 0 && (
-            <span className="ml-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-yellow-400/10 text-yellow-300 border border-yellow-400/20">
-              {unpaidCount} chờ xác nhận
-            </span>
-          )}
-        </p>
+      {/* Header */}
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Quản lý thanh toán</h1>
+          <p className="text-gray-500 text-sm mt-1">
+            {payments.length} giao dịch
+            {unpaidCount > 0 && (
+              <span className="ml-2 inline-flex items-center gap-1 bg-yellow-400/10 text-yellow-300 border border-yellow-400/20 text-xs font-bold px-2 py-0.5 rounded">
+                {unpaidCount} chờ xác nhận
+              </span>
+            )}
+          </p>
+        </div>
+        <button
+          onClick={refresh}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md text-sm transition-colors"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Làm mới
+        </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      {/* Stats summary cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-lg p-5 border border-gray-200">
+          <div className="w-9 h-9 bg-emerald-400/10 rounded-md flex items-center justify-center mb-3">
+            <Banknote className="w-5 h-5 text-emerald-400" />
+          </div>
           <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">Tổng doanh thu</p>
-          <p className="text-2xl font-extrabold text-emerald-400">{formatPrice(totalRevenue)}</p>
+          <p className="text-xl font-extrabold text-gray-900">{formatPrice(totalRevenue)}</p>
         </div>
         <div className="bg-white rounded-lg p-5 border border-gray-200">
+          <div className="w-9 h-9 bg-[#5e6ad2]/10 rounded-md flex items-center justify-center mb-3">
+            <Banknote className="w-5 h-5 text-[#828fff]" />
+          </div>
           <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">Hoa hồng nền tảng</p>
-          <p className="text-2xl font-extrabold text-[#828fff]">{formatPrice(platformRevenue)}</p>
+          <p className="text-xl font-extrabold text-gray-900">{formatPrice(platformRevenue)}</p>
         </div>
         <div className="bg-white rounded-lg p-5 border border-gray-200">
+          <div className="w-9 h-9 bg-emerald-400/10 rounded-md flex items-center justify-center mb-3">
+            <CheckCircle className="w-5 h-5 text-emerald-400" />
+          </div>
           <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">Đã thanh toán</p>
-          <p className="text-2xl font-extrabold text-gray-900">{paidCount}</p>
+          <p className="text-xl font-extrabold text-gray-900">{paidCount}</p>
         </div>
         <div className="bg-white rounded-lg p-5 border border-gray-200">
+          <div className="w-9 h-9 bg-yellow-400/10 rounded-md flex items-center justify-center mb-3">
+            <Clock className="w-5 h-5 text-yellow-300" />
+          </div>
           <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">Chưa thanh toán</p>
-          <p className="text-2xl font-extrabold text-yellow-300">{unpaidCount}</p>
+          <p className="text-xl font-extrabold text-gray-900">{unpaidCount}</p>
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Tabs */}
+      <div className="flex items-center gap-1 mb-5 bg-gray-100 rounded-lg p-1 w-fit">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+              activeTab === tab.key
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-400 hover:text-gray-700'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Filters: phương thức + ngày */}
       <div className="bg-white rounded-lg p-4 border border-gray-200 mb-5">
         <div className="flex flex-wrap gap-3">
           <select
-            value={filter.status}
-            onChange={(e) => setFilter({ ...filter, status: e.target.value })}
-            className="bg-gray-100 border border-gray-200 text-gray-700 focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm min-w-[150px]"
+            value={methodFilter}
+            onChange={(e) => setMethodFilter(e.target.value)}
+            className="bg-gray-100 border border-gray-200 text-gray-700 focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm min-w-[180px]"
           >
-            <option value="">Tất cả trạng thái</option>
-            {Object.entries(PAYMENT_STATUS_LABEL).map(([k, v]) => (
-              <option key={k} value={k}>{v.text}</option>
+            {PAYMENT_METHODS.map((m) => (
+              <option key={m.value} value={m.value}>{m.label}</option>
             ))}
           </select>
           <input
             type="date"
-            value={filter.startDate}
-            onChange={(e) => setFilter({ ...filter, startDate: e.target.value })}
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
             className="bg-gray-100 border border-gray-200 text-gray-700 focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm"
           />
           <input
             type="date"
-            value={filter.endDate}
-            onChange={(e) => setFilter({ ...filter, endDate: e.target.value })}
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
             className="bg-gray-100 border border-gray-200 text-gray-700 focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm"
           />
-          <button
-            onClick={refresh}
-            className="bg-[#5e6ad2] hover:bg-[#828fff] text-white text-sm font-medium rounded-md px-4 py-2 transition-colors"
-          >
-            Lọc
-          </button>
+          {(methodFilter || startDate || endDate) && (
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 rounded-md text-sm transition-colors"
+            >
+              Xóa bộ lọc
+            </button>
+          )}
         </div>
       </div>
 
@@ -130,8 +206,11 @@ export default function AdminPaymentsPage() {
         <div className="flex justify-center py-16"><LoadingSpinner /></div>
       ) : payments.length === 0 ? (
         <div className="bg-white rounded-lg p-12 text-center border border-gray-200">
-          <div className="text-4xl mb-3">💳</div>
-          <p className="text-gray-500">Không có giao dịch nào.</p>
+          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+            <Banknote className="w-6 h-6 text-gray-400" />
+          </div>
+          <p className="text-gray-700 font-medium">Không có giao dịch nào</p>
+          <p className="text-gray-400 text-sm mt-1">Thử thay đổi bộ lọc hoặc khoảng ngày</p>
         </div>
       ) : (
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -149,48 +228,52 @@ export default function AdminPaymentsPage() {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {payments.map((p) => {
-                  const sl = { ...(PAYMENT_STATUS_LABEL[p.paymentStatus] || { text: p.paymentStatus }) };
                   const isUnpaid = p.paymentStatus === 'unpaid';
                   const isConfirming = confirming === p.bookingId;
+                  const sl = PAYMENT_STATUS_LABEL[p.paymentStatus] || { text: p.paymentStatus };
+
                   return (
-                    <tr key={p.paymentId} className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${isUnpaid ? 'bg-yellow-400/5' : ''}`}>
-                      <td className="px-4 py-4 font-medium text-gray-400 text-xs">{p.bookingId}</td>
+                    <tr
+                      key={p.paymentId}
+                      className={`hover:bg-gray-50 transition-colors ${isUnpaid ? 'bg-yellow-400/5' : ''}`}
+                    >
+                      <td className="px-4 py-4 font-mono text-gray-400 text-xs">#{p.bookingId}</td>
                       <td className="px-4 py-4 font-semibold text-gray-900">{p.customerName || '—'}</td>
-                      <td className="px-4 py-4 text-gray-500 text-xs">{p.serviceName || '—'}</td>
+                      <td className="px-4 py-4 text-gray-500 text-xs max-w-[140px] truncate">{p.serviceName || '—'}</td>
                       <td className="px-4 py-4 font-semibold text-gray-900 whitespace-nowrap">{formatPrice(p.amount)}</td>
                       <td className="px-4 py-4 whitespace-nowrap">
                         {p.platformFeeAmount != null ? (
                           <div>
                             <span className="text-[#828fff] font-semibold text-xs">{formatPrice(p.platformFeeAmount)}</span>
-                            <span className="text-gray-400 text-[11px] ml-1">
-                              ({p.commissionRate != null ? `${(p.commissionRate * 100).toFixed(0)}%` : '—'})
-                            </span>
+                            {p.commissionRate != null && (
+                              <span className="text-gray-400 text-[11px] ml-1">({(p.commissionRate * 100).toFixed(0)}%)</span>
+                            )}
                           </div>
                         ) : (
                           <span className="text-gray-400 text-xs">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-4 text-gray-500 capitalize">{p.paymentMethod || 'Tiền mặt'}</td>
+                      <td className="px-4 py-4 text-gray-500 text-xs capitalize">{getMethodLabel(p.paymentMethod)}</td>
                       <td className="px-4 py-4">
                         <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium ${getStatusBadgeClass(p.paymentStatus)}`}>
                           {sl.text}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-gray-500 text-xs whitespace-nowrap">{p.paidAt ? formatDateTime(p.paidAt) : '—'}</td>
+                      <td className="px-4 py-4 text-gray-400 text-xs whitespace-nowrap">{p.paidAt ? formatDateTime(p.paidAt) : '—'}</td>
                       <td className="px-4 py-4">
                         {isUnpaid && !isConfirming && (
                           <div className="flex gap-1.5">
                             <button
                               onClick={() => setConfirmModal({ bookingId: p.bookingId, method: 'cash' })}
-                              className="text-emerald-400 border border-emerald-400/20 hover:bg-emerald-400/10 text-sm font-medium rounded-md px-3 py-1.5 transition-colors whitespace-nowrap"
+                              className="text-emerald-400 border border-emerald-400/20 hover:bg-emerald-400/10 text-xs font-semibold rounded-md px-2.5 py-1.5 transition-colors whitespace-nowrap"
                             >
-                              💵 Tiền mặt
+                              Tiền mặt
                             </button>
                             <button
                               onClick={() => setConfirmModal({ bookingId: p.bookingId, method: 'bank_transfer' })}
-                              className="text-blue-300 border border-blue-400/20 hover:bg-blue-400/10 text-sm font-medium rounded-md px-3 py-1.5 transition-colors whitespace-nowrap"
+                              className="text-blue-300 border border-blue-400/20 hover:bg-blue-400/10 text-xs font-semibold rounded-md px-2.5 py-1.5 transition-colors whitespace-nowrap"
                             >
-                              🏦 Chuyển khoản
+                              Chuyển khoản
                             </button>
                           </div>
                         )}
@@ -214,26 +297,27 @@ export default function AdminPaymentsPage() {
           {/* Mobile cards */}
           <div className="md:hidden divide-y divide-gray-200">
             {payments.map((p) => {
-              const sl = { ...(PAYMENT_STATUS_LABEL[p.paymentStatus] || { text: p.paymentStatus }) };
               const isUnpaid = p.paymentStatus === 'unpaid';
               const isConfirming = confirming === p.bookingId;
+              const sl = PAYMENT_STATUS_LABEL[p.paymentStatus] || { text: p.paymentStatus };
+
               return (
                 <div key={p.paymentId} className={`px-4 py-4 ${isUnpaid ? 'bg-yellow-400/5' : ''}`}>
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <p className="font-semibold text-gray-900">Đơn {p.bookingId}</p>
+                      <p className="font-semibold text-gray-900 text-sm">Đơn #{p.bookingId}</p>
                       <p className="text-xs text-gray-500">{p.customerName} · {p.serviceName}</p>
                       <p className="text-xs text-gray-400 mt-0.5">{p.paidAt ? formatDateTime(p.paidAt) : 'Chưa thanh toán'}</p>
+                      <p className="text-xs text-gray-400">{getMethodLabel(p.paymentMethod)}</p>
                       {p.platformFeeAmount != null && (
                         <p className="text-xs text-[#828fff] mt-0.5">
                           Hoa hồng: {formatPrice(p.platformFeeAmount)}
-                          {p.commissionRate != null && ` (${(p.commissionRate * 100).toFixed(0)}%)`}
                         </p>
                       )}
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-gray-900">{formatPrice(p.amount)}</p>
-                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium mt-1 ${getStatusBadgeClass(p.paymentStatus)}`}>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium mt-1 ${getStatusBadgeClass(p.paymentStatus)}`}>
                         {sl.text}
                       </span>
                     </div>
@@ -243,16 +327,16 @@ export default function AdminPaymentsPage() {
                       <button
                         onClick={() => setConfirmModal({ bookingId: p.bookingId, method: 'cash' })}
                         disabled={isConfirming}
-                        className="flex-1 py-2 rounded-md border border-emerald-400/20 text-emerald-400 text-sm font-medium hover:bg-emerald-400/10 disabled:opacity-50 transition-colors"
+                        className="flex-1 py-2 rounded-md border border-emerald-400/20 text-emerald-400 text-sm font-semibold hover:bg-emerald-400/10 disabled:opacity-50 transition-colors"
                       >
-                        💵 Tiền mặt
+                        Tiền mặt
                       </button>
                       <button
                         onClick={() => setConfirmModal({ bookingId: p.bookingId, method: 'bank_transfer' })}
                         disabled={isConfirming}
-                        className="flex-1 py-2 rounded-md border border-blue-400/20 text-blue-300 text-sm font-medium hover:bg-blue-400/10 disabled:opacity-50 transition-colors"
+                        className="flex-1 py-2 rounded-md border border-blue-400/20 text-blue-300 text-sm font-semibold hover:bg-blue-400/10 disabled:opacity-50 transition-colors"
                       >
-                        🏦 Chuyển khoản
+                        Chuyển khoản
                       </button>
                     </div>
                   )}
@@ -265,13 +349,19 @@ export default function AdminPaymentsPage() {
 
       {/* Modal xác nhận phương thức thanh toán */}
       {confirmModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.6)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setConfirmModal(null); }}
+        >
           <div className="bg-white border border-gray-200 rounded-lg p-6 w-full max-w-sm">
             <div className="text-center mb-5">
-              <div className="text-4xl mb-3">{confirmModal.method === 'cash' ? '💵' : '🏦'}</div>
+              <div className={`w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-3 ${confirmModal.method === 'cash' ? 'bg-emerald-400/10' : 'bg-blue-400/10'}`}>
+                <Banknote className={`w-6 h-6 ${confirmModal.method === 'cash' ? 'text-emerald-400' : 'text-blue-300'}`} />
+              </div>
               <h3 className="font-bold text-gray-900 text-lg">Xác nhận thanh toán</h3>
               <p className="text-sm text-gray-500 mt-1">
-                Đơn {confirmModal.bookingId} đã được thanh toán bằng{' '}
+                Đơn #{confirmModal.bookingId} đã được thanh toán bằng{' '}
                 <span className="font-semibold text-gray-700">
                   {confirmModal.method === 'cash' ? 'tiền mặt' : 'chuyển khoản ngân hàng'}
                 </span>?
@@ -280,15 +370,15 @@ export default function AdminPaymentsPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmModal(null)}
-                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 text-sm font-medium rounded-md px-4 py-2 transition-colors"
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 text-sm font-semibold rounded-md px-4 py-2 transition-colors"
               >
                 Hủy
               </button>
               <button
                 onClick={handleConfirm}
-                className="flex-1 bg-[#5e6ad2] hover:bg-[#828fff] text-white text-sm font-medium rounded-md px-4 py-2 transition-colors"
+                className="flex-1 bg-[#5e6ad2] hover:bg-[#828fff] text-white text-sm font-semibold rounded-md px-4 py-2 transition-colors"
               >
-                ✓ Xác nhận
+                Xác nhận
               </button>
             </div>
           </div>

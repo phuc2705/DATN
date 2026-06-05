@@ -275,7 +275,7 @@ export default function UserProfilePage() {
                   <TextInput name="fullName" value={form.fullName} onChange={set} placeholder="Nguyễn Văn A" required />
                 </FormField>
                 <FormField label="Số điện thoại">
-                  <TextInput name="phone" value={form.phone} onChange={set} type="tel" placeholder="0912345678" />
+                  <TextInput name="phone" value={form.phone} onChange={set} type="tel" placeholder="VD: 0912 345 678" />
                 </FormField>
               </div>
             </div>
@@ -291,14 +291,14 @@ export default function UserProfilePage() {
 
               <div className="space-y-4">
                 <FormField label="Địa chỉ">
-                  <TextInput name="address" value={form.address} onChange={set} placeholder="123 Đường ABC" />
+                  <TextInput name="address" value={form.address} onChange={set} placeholder="VD: 15 Phố Huế" />
                 </FormField>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField label="Quận / Huyện">
-                    <TextInput name="district" value={form.district} onChange={set} placeholder="Quận 1" />
+                    <TextInput name="district" value={form.district} onChange={set} placeholder="VD: Hoàn Kiếm" />
                   </FormField>
                   <FormField label="Thành phố">
-                    <TextInput name="city" value={form.city} onChange={set} placeholder="TP.HCM" />
+                    <TextInput name="city" value={form.city} onChange={set} placeholder="VD: Hà Nội" />
                   </FormField>
                 </div>
               </div>

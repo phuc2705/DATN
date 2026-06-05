@@ -61,13 +61,8 @@ export default function AdminSettingsPage() {
     }
   };
 
-  // Tính ví dụ phân chia với đơn 100,000đ
-  const exampleAmount = 100000;
-  const currentRate = parseFloat(commissionPct) / 100 || 0.20;
-  const examplePlatform = Math.round(exampleAmount * currentRate).toLocaleString('vi-VN');
-  const exampleHelper = Math.round(exampleAmount * (1 - currentRate)).toLocaleString('vi-VN');
-
   // Tính ví dụ với giá trị đang nhập (preview realtime)
+  const exampleAmount = 100000;
   const previewRate = parseFloat(inputPct) / 100;
   const previewValid = !isNaN(previewRate) && previewRate >= 0 && previewRate <= 1;
   const previewPlatform = previewValid ? Math.round(exampleAmount * previewRate).toLocaleString('vi-VN') : '—';

@@ -1,199 +1,475 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
-  CalendarDays, Clock, CheckCircle, XCircle, Plus, AlertCircle,
+  ChevronLeft, ChevronRight, Calendar, Clock, MapPin,
+  User, X, Banknote, RefreshCw, Plus, Trash2, CheckCircle,
+  Info,
 } from 'lucide-react';
-import {
-  getHelperShiftsApi, registerShiftApi, cancelShiftApi,
-} from '../../api/user.api';
+import { getHelperBookingsApi } from '../../api/booking.api';
+import { getHelperShiftsApi, registerShiftApi, cancelShiftApi } from '../../api/user.api';
+import { formatPrice, BOOKING_STATUS_LABEL } from '../../utils/format';
+import TimePicker24h from '../../components/common/TimePicker24h';
 
-/* ─── Hằng số ca làm ────────────────────────────────────────────── */
-const SLOTS = [
-  { label: 'Ca sáng sớm', start: '06:00', end: '09:00', color: 'bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100' },
-  { label: 'Ca sáng',     start: '09:00', end: '12:00', color: 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100' },
-  { label: 'Ca trưa',     start: '12:00', end: '15:00', color: 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'     },
-  { label: 'Ca chiều',    start: '15:00', end: '18:00', color: 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100'         },
-  { label: 'Ca tối',      start: '18:00', end: '21:00', color: 'bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100' },
-  { label: 'Ca đêm',      start: '21:00', end: '23:00', color: 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200'        },
-];
+/* ─── Hằng số ─────────────────────────────────────────────────────── */
+const DAY_LABELS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 
-const RATE = 75_000;
+const STATUS_BLOCK = {
+  pending:     { bg: 'bg-yellow-50 border-yellow-300', text: 'text-yellow-800', dot: 'bg-yellow-400' },
+  confirmed:   { bg: 'bg-blue-50 border-blue-300',    text: 'text-blue-800',   dot: 'bg-blue-500'   },
+  in_progress: { bg: 'bg-orange-50 border-orange-300',text: 'text-orange-800', dot: 'bg-orange-500' },
+  completed:   { bg: 'bg-green-50 border-green-300',  text: 'text-green-800',  dot: 'bg-green-500'  },
+  cancelled:   { bg: 'bg-gray-100 border-gray-300',   text: 'text-gray-500',   dot: 'bg-gray-400'   },
+};
 
-/* ─── Helpers ────────────────────────────────────────────────────── */
-function buildNextDays(n = 14) {
-  const days = [];
-  const DAY_VI = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
-  for (let i = 0; i < n; i++) {
-    const d = new Date();
-    d.setDate(d.getDate() + i);
-    const yyyy = d.getFullYear();
-    const mm   = String(d.getMonth() + 1).padStart(2, '0');
-    const dd   = String(d.getDate()).padStart(2, '0');
-    days.push({
-      value: `${yyyy}-${mm}-${dd}`,
-      label: `${DAY_VI[d.getDay()]} ${dd}/${mm}`,
-      isToday: i === 0,
-    });
-  }
-  return days;
+/* ─── Tiện ích ngày tháng ─────────────────────────────────────────── */
+function getMonday(d) {
+  const date = new Date(d);
+  const diff = (date.getDay() + 6) % 7;
+  date.setDate(date.getDate() - diff);
+  date.setHours(0, 0, 0, 0);
+  return date;
 }
 
-function slotHours(slot) {
-  const [sh, sm] = slot.start.split(':').map(Number);
-  const [eh, em] = slot.end.split(':').map(Number);
-  return (eh * 60 + em - sh * 60 - sm) / 60;
-}
-
-function dateKey(shiftDate) {
-  if (!shiftDate) return '';
-  if (typeof shiftDate === 'string') return shiftDate.slice(0, 10);
-  return new Date(shiftDate).toISOString().slice(0, 10);
-}
-
-function formatShiftDate(shiftDate) {
-  const dateStr = dateKey(shiftDate);
-  if (!dateStr) return '';
-  const d = new Date(dateStr + 'T00:00:00');
-  const DAY_VI = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
-  return `${DAY_VI[d.getDay()]}, ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-}
-
-function canCancel(shiftDate, startTime) {
-  if (!shiftDate || !startTime) return false;
-  const shiftStart = new Date(`${dateKey(shiftDate)}T${startTime}`);
-  return (shiftStart - Date.now()) / 36e5 >= 12;
-}
-
-// Kiểm tra slot có bị trùng giờ với ca đã đăng ký không (nhưng không phải chính ca đó)
-function isConflict(slot, registeredOnDate) {
-  return registeredOnDate.some(s => {
-    if (s.startTime === slot.start) return false; // chính ca này rồi
-    const sStart = s.startTime, sEnd = s.endTime;
-    return !(sEnd <= slot.start || sStart >= slot.end);
+function buildWeekDays(monday) {
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d;
   });
 }
 
-// Kiểm tra ca đã qua (chỉ khi selectedDate là hôm nay theo giờ Việt Nam)
-function isPastSlot(slot, selectedDate, todayVN) {
-  if (selectedDate !== todayVN) return false;
-  const nowVN  = new Date(Date.now() + 7 * 60 * 60 * 1000);
-  const nowMins = nowVN.getUTCHours() * 60 + nowVN.getUTCMinutes();
-  const [eh, em] = slot.end.split(':').map(Number);
-  return eh * 60 + em <= nowMins;
+function fmtDayMonth(d) {
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
-/* ─── Slot button ─────────────────────────────────────────────────── */
-function SlotButton({ slot, selected, registered, conflict, past, onClick }) {
-  const baseClass = 'relative w-full border rounded-xl px-4 py-3 text-left transition-all';
+function fmtFull(d) {
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+}
 
-  if (past) {
-    return (
-      <div className={`${baseClass} bg-gray-50 border-gray-200 cursor-not-allowed opacity-50`}>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold text-gray-400">{slot.label}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{slot.start} – {slot.end}</p>
-          </div>
-        </div>
-        <span className="absolute -top-2 right-3 text-[10px] bg-gray-400 text-white px-1.5 py-0.5 rounded-full font-medium">
-          Đã qua
-        </span>
-      </div>
-    );
-  }
+function toISODate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
-  if (registered) {
-    return (
-      <div className={`${baseClass} bg-green-50 border-green-300 cursor-default`}>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold text-green-700">{slot.label}</p>
-            <p className="text-xs text-green-500 mt-0.5">{slot.start} – {slot.end}</p>
-          </div>
-          <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-        </div>
-        <span className="absolute -top-2 right-3 text-[10px] bg-green-500 text-white px-1.5 py-0.5 rounded-full font-medium">
-          Đã đăng ký
-        </span>
-      </div>
-    );
-  }
+function getISOWeek(d) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
+}
 
-  if (conflict) {
-    return (
-      <div className={`${baseClass} bg-red-50 border-red-200 cursor-not-allowed opacity-70`}>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold text-red-500">{slot.label}</p>
-            <p className="text-xs text-red-400 mt-0.5">{slot.start} – {slot.end}</p>
-          </div>
-          <XCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-        </div>
-        <span className="absolute -top-2 right-3 text-[10px] bg-red-400 text-white px-1.5 py-0.5 rounded-full font-medium">
-          Trùng giờ
-        </span>
-      </div>
-    );
-  }
+// Giờ VN hiện tại (UTC+7)
+function getVNNow() {
+  return new Date(Date.now() + 7 * 60 * 60 * 1000);
+}
+
+/* ─── Modal chi tiết booking ─────────────────────────────────────── */
+function BookingModal({ booking, onClose }) {
+  const navigate = useNavigate();
+  if (!booking) return null;
+  const sl    = BOOKING_STATUS_LABEL[booking.status] || { text: booking.status, color: 'bg-gray-100 text-gray-700' };
+  const block = STATUS_BLOCK[booking.status] || STATUS_BLOCK.cancelled;
+  const dateObj = new Date(booking.bookingDate + 'T00:00:00');
 
   return (
-    <button
-      onClick={onClick}
-      className={`${baseClass} ${slot.color} ${selected ? 'ring-2 ring-orange-400 ring-offset-1' : ''}`}
-    >
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-semibold">{slot.label}</p>
-          <p className="text-xs mt-0.5 opacity-70">{slot.start} – {slot.end} · ~{slotHours(slot)}h</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className={`px-5 py-4 border-b-2 flex items-center justify-between ${block.bg}`}>
+          <div className="flex items-center gap-2">
+            <span className={`w-2.5 h-2.5 rounded-full ${block.dot}`} />
+            <span className={`text-sm font-semibold ${block.text}`}>{sl.text}</span>
+          </div>
+          <button onClick={onClose} className="w-7 h-7 rounded-full bg-white/60 hover:bg-white flex items-center justify-center transition-colors">
+            <X className="w-4 h-4 text-gray-600" />
+          </button>
         </div>
-        <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 transition-all flex items-center justify-center ${
-          selected ? 'bg-orange-500 border-orange-500' : 'border-gray-300'
-        }`}>
-          {selected && <span className="text-white text-[10px] leading-none">✓</span>}
+        <div className="p-5 space-y-3">
+          <p className="font-semibold text-gray-900 text-base">{booking.serviceName || `Đơn #${booking.bookingId}`}</p>
+          <div className="space-y-2">
+            <InfoRow icon={Calendar} label={fmtFull(dateObj)} />
+            <InfoRow icon={Clock} label={`${booking.startTime} – ${booking.endTime} (${booking.hours}h)`} />
+            {booking.address && <InfoRow icon={MapPin} label={booking.address} />}
+            {booking.customerName && <InfoRow icon={User} label={booking.customerName} />}
+            <InfoRow icon={Banknote} label={formatPrice(booking.totalPrice)} highlight />
+          </div>
+        </div>
+        <div className="px-5 pb-5 flex gap-2">
+          <button onClick={onClose} className="flex-1 h-10 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors">Đóng</button>
+          <button onClick={() => navigate(`/bookings/${booking.bookingId}`)} className="flex-1 h-10 rounded-xl bg-[#ff385c] hover:bg-[#e00b41] text-white text-sm font-medium transition-colors">Xem chi tiết</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function InfoRow({ icon: Icon, label, highlight }) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <Icon className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+      <span className={`text-sm ${highlight ? 'font-bold text-[#ff385c]' : 'text-gray-700'}`}>{label}</span>
+    </div>
+  );
+}
+
+/* ─── Modal đăng ký ca làm ───────────────────────────────────────── */
+function RegisterShiftModal({ onClose, onSuccess, todayISO }) {
+  const vnNow    = getVNNow();
+  const maxDate  = (() => { const d = getVNNow(); d.setUTCDate(d.getUTCDate() + 30); return d.toISOString().slice(0, 10); })();
+
+  const [shiftDate,  setShiftDate]  = useState(todayISO);
+  const [startTime,  setStartTime]  = useState('');
+  const [endTime,    setEndTime]    = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  // Giờ bắt đầu tối thiểu (nếu đặt hôm nay: sau 30 phút)
+  const minStart = useMemo(() => {
+    if (shiftDate !== todayISO) return '';
+    const mins = vnNow.getUTCHours() * 60 + vnNow.getUTCMinutes() + 30;
+    return `${String(Math.floor(mins / 60) % 24).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
+  }, [shiftDate, todayISO]);
+
+  const handleDateChange = (e) => {
+    setShiftDate(e.target.value);
+    setStartTime('');
+    setEndTime('');
+  };
+
+  const handleSubmit = async () => {
+    if (!shiftDate || !startTime || !endTime) return toast.error('Vui lòng chọn đầy đủ ngày và giờ.');
+    if (startTime >= endTime) return toast.error('Giờ kết thúc phải sau giờ bắt đầu.');
+    setSubmitting(true);
+    try {
+      await registerShiftApi({ shiftDate, startTime, endTime });
+      toast.success('Đăng ký ca làm thành công!');
+      onSuccess();
+      onClose();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Không thể đăng ký ca.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div>
+            <h3 className="font-semibold text-gray-900">Đăng ký ca làm</h3>
+            <p className="text-xs text-gray-400 mt-0.5">Ưu tiên nhận đơn trong khung giờ này</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors">
+            <X className="w-4 h-4 text-gray-500" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <div className="p-5 space-y-4">
+          {/* Ngày */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Ngày làm việc</label>
+            <input
+              type="date"
+              min={todayISO}
+              max={maxDate}
+              value={shiftDate}
+              onChange={handleDateChange}
+              className="w-full h-11 px-3 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:border-[#ff385c] transition-colors"
+            />
+          </div>
+
+          {/* Giờ */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Giờ bắt đầu</label>
+              <TimePicker24h
+                value={startTime}
+                min={minStart}
+                onChange={(e) => { setStartTime(e.target.value); setEndTime(''); }}
+                className="w-full h-11 px-3 border border-gray-200 rounded-xl text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Giờ kết thúc</label>
+              <TimePicker24h
+                value={endTime}
+                min={startTime}
+                strict
+                onChange={(e) => setEndTime(e.target.value)}
+                className="w-full h-11 px-3 border border-gray-200 rounded-xl text-sm"
+              />
+            </div>
+          </div>
+
+          {/* Ghi chú */}
+          <div className="flex items-start gap-2 bg-green-50 border border-green-100 rounded-xl p-3">
+            <Info className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+            <p className="text-xs text-green-700">Bạn sẽ được <strong>ưu tiên +15 điểm</strong> khi hệ thống phân đơn vào khung giờ đăng ký.</p>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="px-5 pb-5 flex gap-2">
+          <button onClick={onClose} className="flex-1 h-11 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors">Hủy</button>
+          <button
+            onClick={handleSubmit}
+            disabled={submitting || !startTime || !endTime || startTime >= endTime}
+            className="flex-1 h-11 rounded-xl bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors"
+          >
+            {submitting ? 'Đang đăng ký...' : 'Đăng ký ca'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Block booking trong ô ngày ─────────────────────────────────── */
+function BookingBlock({ booking, onClick }) {
+  const block = STATUS_BLOCK[booking.status] || STATUS_BLOCK.cancelled;
+  return (
+    <button
+      onClick={() => onClick(booking)}
+      className={`w-full text-left border rounded-lg px-2 py-1.5 mb-1 transition-shadow hover:shadow-md ${block.bg} ${block.text}`}
+    >
+      <p className="text-[11px] font-semibold leading-tight truncate">{booking.serviceName || `Đơn #${booking.bookingId}`}</p>
+      <p className="text-[10px] mt-0.5 opacity-80">{booking.startTime}–{booking.endTime}</p>
     </button>
   );
 }
 
-/* ─── Shift row in registered list ───────────────────────────────── */
-function ShiftRow({ shift, onCancel, cancelling }) {
-  const cancellable = canCancel(shift.shiftDate, shift.startTime);
-  const slotInfo    = SLOTS.find(s => s.start === shift.startTime);
-  const label       = slotInfo?.label || `${shift.startTime} – ${shift.endTime}`;
+/* ─── Block ca đăng ký trong ô ngày ─────────────────────────────── */
+function ShiftBlock({ shift, onCancel }) {
+  return (
+    <div className="w-full border border-green-300 bg-green-50 rounded-lg px-2 py-1.5 mb-1 flex items-center justify-between gap-1 group">
+      <div className="min-w-0">
+        <p className="text-[11px] font-semibold text-green-800 leading-tight">Ca đăng ký</p>
+        <p className="text-[10px] text-green-600 mt-0.5">{String(shift.startTime).slice(0, 5)}–{String(shift.endTime).slice(0, 5)}</p>
+      </div>
+      <button
+        onClick={() => onCancel(shift)}
+        className="w-5 h-5 rounded-full hover:bg-green-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+        title="Hủy ca"
+      >
+        <X className="w-3 h-3 text-green-700" />
+      </button>
+    </div>
+  );
+}
+
+/* ─── Chú thích legend ───────────────────────────────────────────── */
+function Legend() {
+  return (
+    <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+      {[
+        { status: 'pending',     label: 'Chờ xác nhận',  dot: 'bg-yellow-400' },
+        { status: 'confirmed',   label: 'Đã xác nhận',   dot: 'bg-blue-500'   },
+        { status: 'in_progress', label: 'Đang làm',      dot: 'bg-orange-500' },
+        { status: 'completed',   label: 'Hoàn thành',    dot: 'bg-green-500'  },
+      ].map(({ status, label, dot }) => (
+        <div key={status} className="flex items-center gap-1.5">
+          <span className={`w-2.5 h-2.5 rounded-sm ${dot}`} />
+          <span className="text-xs text-gray-500">{label}</span>
+        </div>
+      ))}
+      <div className="flex items-center gap-1.5">
+        <span className="w-2.5 h-2.5 rounded-sm bg-green-300 border border-green-400" />
+        <span className="text-xs text-gray-500">Ca đăng ký</span>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Grid lịch tuần (desktop: 7 cột) ───────────────────────────── */
+function WeekGrid({ days, bookingsByDate, shiftsByDate, today, onClickBooking, onCancelShift }) {
+  return (
+    <div className="grid grid-cols-7 gap-1.5">
+      {days.map((d, i) => {
+        const isToday = toISODate(d) === today;
+        return (
+          <div key={i} className="text-center pb-1.5">
+            <p className={`text-[11px] font-medium ${isToday ? 'text-[#ff385c]' : 'text-gray-400'}`}>{DAY_LABELS[i]}</p>
+            <p className={`text-sm font-bold mt-0.5 w-8 h-8 rounded-full flex items-center justify-center mx-auto ${isToday ? 'bg-[#ff385c] text-white' : 'text-gray-800'}`}>
+              {d.getDate()}
+            </p>
+          </div>
+        );
+      })}
+
+      {days.map((d, i) => {
+        const key  = toISODate(d);
+        const bks  = bookingsByDate[key] || [];
+        const shfs = shiftsByDate[key]   || [];
+        const isToday = key === today;
+
+        return (
+          <div key={i} className={`min-h-[120px] rounded-xl p-1.5 ${isToday ? 'bg-rose-50 border border-rose-200' : 'bg-white border border-gray-100'}`}>
+            {/* Ca đăng ký (xanh lá) */}
+            {shfs.map((s) => (
+              <ShiftBlock key={s.id} shift={s} onCancel={onCancelShift} />
+            ))}
+            {/* Đơn hàng */}
+            {bks.map((b) => (
+              <BookingBlock key={b.bookingId} booking={b} onClick={onClickBooking} />
+            ))}
+            {shfs.length === 0 && bks.length === 0 && (
+              <p className="text-[10px] text-gray-300 text-center mt-6 select-none">Trống</p>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ─── Grid lịch tuần (mobile: 1 cột list) ───────────────────────── */
+function WeekList({ days, bookingsByDate, shiftsByDate, today, onClickBooking, onCancelShift }) {
+  return (
+    <div className="space-y-3">
+      {days.map((d, i) => {
+        const key  = toISODate(d);
+        const bks  = bookingsByDate[key] || [];
+        const shfs = shiftsByDate[key]   || [];
+        const isToday = key === today;
+        const total = bks.length + shfs.length;
+
+        return (
+          <div key={i} className={`rounded-2xl border ${isToday ? 'border-rose-200 bg-rose-50' : 'border-gray-200 bg-white'} overflow-hidden`}>
+            <div className={`flex items-center gap-3 px-4 py-3 border-b ${isToday ? 'border-rose-200' : 'border-gray-100'}`}>
+              <div className={`w-9 h-9 rounded-full flex flex-col items-center justify-center flex-shrink-0 ${isToday ? 'bg-[#ff385c] text-white' : 'bg-gray-100 text-gray-700'}`}>
+                <span className="text-[9px] font-medium leading-none">{DAY_LABELS[i]}</span>
+                <span className="text-sm font-bold leading-tight">{d.getDate()}</span>
+              </div>
+              <div>
+                <p className={`text-sm font-semibold ${isToday ? 'text-[#ff385c]' : 'text-gray-800'}`}>
+                  {DAY_LABELS[i]}, {fmtDayMonth(d)}
+                  {isToday && <span className="ml-2 text-xs font-normal">Hôm nay</span>}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {bks.length > 0 && `${bks.length} đơn`}
+                  {bks.length > 0 && shfs.length > 0 && ' · '}
+                  {shfs.length > 0 && <span className="text-green-600">{shfs.length} ca đăng ký</span>}
+                  {total === 0 && 'Trống'}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3 space-y-2">
+              {/* Ca đăng ký */}
+              {shfs.map((s) => (
+                <div key={s.id} className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-3 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-green-800">Ca đăng ký</p>
+                      <p className="text-xs text-green-600">{String(s.startTime).slice(0, 5)} – {String(s.endTime).slice(0, 5)}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => onCancelShift(s)}
+                    className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 border border-red-200 hover:border-red-400 px-2 py-1 rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-3 h-3" /> Hủy
+                  </button>
+                </div>
+              ))}
+
+              {/* Đơn hàng */}
+              {bks.map((b) => {
+                const block = STATUS_BLOCK[b.status] || STATUS_BLOCK.cancelled;
+                const sl    = BOOKING_STATUS_LABEL[b.status] || { text: b.status, color: '' };
+                return (
+                  <button
+                    key={b.bookingId}
+                    onClick={() => onClickBooking(b)}
+                    className={`w-full text-left border rounded-xl p-3 transition-shadow hover:shadow-md ${block.bg}`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className={`text-sm font-semibold truncate ${block.text}`}>{b.serviceName || `Đơn #${b.bookingId}`}</p>
+                        <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> {b.startTime} – {b.endTime}
+                        </p>
+                        {b.address && (
+                          <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1 truncate">
+                            <MapPin className="w-3 h-3 shrink-0" /><span className="truncate">{b.address}</span>
+                          </p>
+                        )}
+                      </div>
+                      <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium shrink-0 ${sl.color}`}>{sl.text}</span>
+                    </div>
+                    <div className="mt-2 text-right">
+                      <span className="text-sm font-bold text-[#ff385c]">{formatPrice(b.totalPrice)}</span>
+                    </div>
+                  </button>
+                );
+              })}
+
+              {total === 0 && <p className="text-xs text-gray-300 text-center py-2">Không có lịch</p>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ─── Panel ca đăng ký (sidebar) ────────────────────────────────── */
+function ShiftsPanel({ shifts, loading, onCancel, onRegister }) {
+  const upcoming = shifts.filter(s => s.status === 'active');
 
   return (
-    <div className="flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
-      <div className="flex items-center gap-4 min-w-0">
-        <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
-          <CalendarDays className="w-5 h-5 text-orange-500" />
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900">Ca làm đã đăng ký</h3>
+          <p className="text-xs text-gray-400 mt-0.5">Được ưu tiên nhận đơn</p>
         </div>
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-900">{formatShiftDate(shift.shiftDate)}</p>
-          <p className="text-xs text-gray-500 mt-0.5">
-            {label} · {shift.startTime} – {shift.endTime}
-          </p>
-        </div>
+        <button
+          onClick={onRegister}
+          className="flex items-center gap-1.5 text-xs font-semibold bg-[#ff385c] hover:bg-[#e00b41] text-white px-3 h-8 rounded-xl transition-colors"
+        >
+          <Plus className="w-3.5 h-3.5" /> Thêm ca
+        </button>
       </div>
 
-      <div className="flex items-center gap-2 flex-shrink-0">
-        {shift.status === 'cancelled' ? (
-          <span className="text-xs bg-red-50 text-red-500 border border-red-100 px-2 py-0.5 rounded-full font-medium">
-            Đã hủy
-          </span>
-        ) : cancellable ? (
-          <button
-            onClick={() => onCancel(shift.id)}
-            disabled={cancelling === shift.id}
-            className="flex items-center gap-1 text-xs bg-red-50 text-red-500 border border-red-100 px-3 py-1.5 rounded-lg font-medium hover:bg-red-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            <XCircle className="w-3.5 h-3.5" />
-            {cancelling === shift.id ? 'Đang hủy...' : 'Hủy ca'}
-          </button>
+      {/* Danh sách ca */}
+      <div className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <span className="w-5 h-5 border-2 border-rose-200 border-t-[#ff385c] rounded-full animate-spin" />
+          </div>
+        ) : upcoming.length === 0 ? (
+          <div className="text-center py-8 px-4">
+            <CheckCircle className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+            <p className="text-sm text-gray-400">Chưa có ca nào</p>
+            <p className="text-xs text-gray-300 mt-1">Đăng ký ca để ưu tiên nhận đơn</p>
+          </div>
         ) : (
-          <span className="text-xs text-gray-400 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded-full">
-            Trong vòng 12h
-          </span>
+          upcoming.map((s) => {
+            const dateObj = new Date(s.shiftDate + 'T00:00:00');
+            return (
+              <div key={s.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group">
+                <div className="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800">{fmtFull(dateObj)}</p>
+                  <p className="text-xs text-green-600 font-semibold">{String(s.startTime).slice(0, 5)} – {String(s.endTime).slice(0, 5)}</p>
+                </div>
+                <button
+                  onClick={() => onCancel(s)}
+                  className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center transition-all"
+                  title="Hủy ca"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                </button>
+              </div>
+            );
+          })
         )}
       </div>
     </div>
@@ -202,234 +478,227 @@ function ShiftRow({ shift, onCancel, cancelling }) {
 
 /* ─── Main Page ───────────────────────────────────────────────────── */
 export default function HelperSchedulePage() {
-  const DAYS    = buildNextDays(14);
-  const todayVN = new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const [monday,   setMonday]   = useState(() => getMonday(new Date()));
+  const [bookings, setBookings] = useState([]);
+  const [shifts,   setShifts]   = useState([]);
+  const [loading,  setLoading]  = useState(true);
+  const [shiftLoading, setShiftLoading] = useState(true);
+  const [selected, setSelected] = useState(null);
+  const [showRegModal, setShowRegModal] = useState(false);
 
-  const [selectedDate, setSelectedDate] = useState(DAYS[0].value);
-  const [selectedSlot, setSelectedSlot] = useState(null);
-  const [shifts,       setShifts]       = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [registering,  setRegistering]  = useState(false);
-  const [cancelling,   setCancelling]   = useState(null);
+  const todayISO = useMemo(() => toISODate(new Date()), []);
+  const weekDays = useMemo(() => buildWeekDays(monday), [monday]);
 
-  const fetchShifts = useCallback(() => {
+  // Tải đơn hàng
+  const fetchBookings = useCallback(() => {
     setLoading(true);
-    getHelperShiftsApi()
-      .then(({ data: res }) => setShifts(res.data?.shifts || []))
-      .catch(() => toast.error('Không thể tải danh sách ca làm. Vui lòng tải lại trang.'))
+    getHelperBookingsApi()
+      .then(({ data: res }) => setBookings(res.data || []))
+      .catch(() => toast.error('Không thể tải lịch làm việc'))
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => { fetchShifts(); }, [fetchShifts]);
+  // Tải ca đăng ký
+  const fetchShifts = useCallback(() => {
+    setShiftLoading(true);
+    getHelperShiftsApi()
+      .then(({ data: res }) => setShifts(res.data?.shifts || []))
+      .catch(() => {})
+      .finally(() => setShiftLoading(false));
+  }, []);
 
-  const registeredOnDate = shifts.filter(
-    s => s.status === 'active' && dateKey(s.shiftDate) === selectedDate
-  );
+  useEffect(() => { fetchBookings(); fetchShifts(); }, [fetchBookings, fetchShifts]);
 
-  const handleRegister = async () => {
-    if (!selectedSlot) return toast.error('Vui lòng chọn một ca làm.');
-    setRegistering(true);
+  // Nhóm booking theo ngày (tuần hiện tại)
+  const bookingsByDate = useMemo(() => {
+    const map = {};
+    const weekStart = toISODate(weekDays[0]);
+    const weekEnd   = toISODate(weekDays[6]);
+    bookings.forEach((b) => {
+      if (!b.bookingDate) return;
+      const key = b.bookingDate.slice(0, 10);
+      if (key < weekStart || key > weekEnd) return;
+      if (!map[key]) map[key] = [];
+      map[key].push(b);
+    });
+    Object.keys(map).forEach((k) => map[k].sort((a, b) => (a.startTime || '').localeCompare(b.startTime || '')));
+    return map;
+  }, [bookings, weekDays]);
+
+  // Nhóm ca theo ngày (tuần hiện tại)
+  const shiftsByDate = useMemo(() => {
+    const map = {};
+    const weekStart = toISODate(weekDays[0]);
+    const weekEnd   = toISODate(weekDays[6]);
+    shifts.forEach((s) => {
+      if (!s.shiftDate) return;
+      const key = s.shiftDate.slice(0, 10);
+      if (key < weekStart || key > weekEnd) return;
+      if (s.status !== 'active') return;
+      if (!map[key]) map[key] = [];
+      map[key].push(s);
+    });
+    Object.keys(map).forEach((k) => map[k].sort((a, b) => (a.startTime || '').localeCompare(b.startTime || '')));
+    return map;
+  }, [shifts, weekDays]);
+
+  const weekTotal    = useMemo(() => weekDays.reduce((s, d) => s + (bookingsByDate[toISODate(d)]?.length || 0), 0), [weekDays, bookingsByDate]);
+  const weekShifts   = useMemo(() => weekDays.reduce((s, d) => s + (shiftsByDate[toISODate(d)]?.length || 0), 0), [weekDays, shiftsByDate]);
+  const weekEarnings = useMemo(() => weekDays.reduce((sum, d) => {
+    return sum + (bookingsByDate[toISODate(d)] || [])
+      .filter(b => b.status === 'completed')
+      .reduce((s, b) => s + Number(b.totalPrice || 0) * 0.8, 0);
+  }, 0), [weekDays, bookingsByDate]);
+
+  const handleCancelShift = async (shift) => {
+    if (!window.confirm(`Hủy ca ${String(shift.startTime).slice(0,5)}–${String(shift.endTime).slice(0,5)} vào ${shift.shiftDate?.slice(0,10) || ''}?`)) return;
     try {
-      await registerShiftApi({
-        shiftDate: selectedDate,
-        startTime: selectedSlot.start,
-        endTime:   selectedSlot.end,
-      });
-      toast.success('Đăng ký ca làm thành công!');
-      setSelectedSlot(null);
-      fetchShifts();
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Đăng ký ca làm thất bại. Vui lòng thử lại.');
-    } finally {
-      setRegistering(false);
-    }
-  };
-
-  const handleCancel = async (shiftId) => {
-    setCancelling(shiftId);
-    try {
-      await cancelShiftApi(shiftId);
+      await cancelShiftApi(shift.id);
       toast.success('Đã hủy ca làm.');
       fetchShifts();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Hủy ca thất bại. Vui lòng thử lại.');
-    } finally {
-      setCancelling(null);
+      toast.error(err.response?.data?.message || 'Không thể hủy ca này.');
     }
   };
 
-  const activeShifts = shifts.filter(s => s.status === 'active');
-  const totalHours   = activeShifts.reduce((sum, s) => {
-    const slot = SLOTS.find(sl => sl.start === s.startTime);
-    return sum + (slot ? slotHours(slot) : 0);
-  }, 0);
-  const estEarnings  = totalHours * RATE;
+  const goPrevWeek = () => { const prev = new Date(monday); prev.setDate(monday.getDate() - 7); setMonday(prev); };
+  const goNextWeek = () => { const next = new Date(monday); next.setDate(monday.getDate() + 7); setMonday(next); };
+  const goToday    = () => setMonday(getMonday(new Date()));
+
+  const weekNum     = getISOWeek(monday);
+  const weekEndDate = weekDays[6];
+  const weekLabel   = `Tuần ${weekNum} · ${fmtDayMonth(monday)} – ${fmtFull(weekEndDate)}`;
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 py-8">
 
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Đăng ký ca làm việc</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Chọn ngày và ca muốn làm, có thể hủy trước 12 tiếng</p>
+        {/* Tiêu đề */}
+        <div className="flex items-center justify-between mb-6 gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Lịch làm việc</h1>
+            <p className="text-sm text-gray-500 mt-0.5">Quản lý đơn hàng và ca đăng ký của bạn</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowRegModal(true)}
+              className="flex items-center gap-2 text-sm font-semibold bg-[#ff385c] hover:bg-[#e00b41] text-white h-9 px-4 rounded-xl transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:block">Đăng ký ca</span>
+            </button>
+            <button
+              onClick={() => { fetchBookings(); fetchShifts(); }}
+              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 bg-white h-9 px-3 rounded-xl hover:bg-gray-50 transition-colors"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:block">Làm mới</span>
+            </button>
+          </div>
         </div>
 
         {/* Stat chips */}
-        <div className="flex gap-3 mb-6 flex-wrap">
+        <div className="flex flex-wrap gap-3 mb-5">
           <div className="bg-white border border-gray-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-orange-500" />
-            <span className="text-sm font-semibold text-gray-800">{activeShifts.length} ca sắp tới</span>
+            <Calendar className="w-4 h-4 text-[#ff385c]" />
+            <span className="text-sm font-semibold text-gray-800">{weekTotal} đơn tuần này</span>
           </div>
-          <div className="bg-white border border-gray-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-blue-500" />
-            <span className="text-sm font-semibold text-gray-800">{totalHours}h tổng</span>
+          <div className="bg-white border border-green-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-green-500" />
+            <span className="text-sm font-semibold text-gray-800">{weekShifts} ca đăng ký</span>
           </div>
-          <div className="bg-white border border-gray-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
-            <span className="text-sm font-semibold text-green-600">
-              ~{(estEarnings / 1_000_000).toFixed(1)}M ước tính
-            </span>
-          </div>
-        </div>
-
-        {/* Step 1: Date picker */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-5 mb-4">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
-            <h2 className="font-semibold text-gray-900">Chọn ngày</h2>
-          </div>
-
-          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-            {DAYS.map((day) => (
-              <button
-                key={day.value}
-                onClick={() => { setSelectedDate(day.value); setSelectedSlot(null); }}
-                className={`flex-shrink-0 flex flex-col items-center gap-0.5 px-3 py-2.5 rounded-xl border text-xs font-medium transition-all ${
-                  selectedDate === day.value
-                    ? 'bg-orange-500 border-orange-500 text-white shadow-sm'
-                    : 'bg-white border-gray-200 text-gray-700 hover:border-orange-300 hover:text-orange-600'
-                }`}
-              >
-                <span>{day.label.split(' ')[0]}</span>
-                <span className={`text-[11px] ${selectedDate === day.value ? 'text-orange-100' : 'text-gray-400'}`}>
-                  {day.label.split(' ')[1]}
-                </span>
-                {day.isToday && (
-                  <span className={`text-[9px] font-bold ${selectedDate === day.value ? 'text-orange-100' : 'text-orange-500'}`}>
-                    HÔM NAY
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Step 2: Slot picker */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-5 mb-4">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
-            <h2 className="font-semibold text-gray-900">Chọn ca làm</h2>
-            <span className="ml-auto text-xs text-gray-400">
-              {DAYS.find(d => d.value === selectedDate)?.label}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {SLOTS.map((slot) => {
-              const regShift = registeredOnDate.find(s => s.startTime === slot.start);
-              const conflict = !regShift && isConflict(slot, registeredOnDate);
-              const past     = !regShift && !conflict && isPastSlot(slot, selectedDate, todayVN);
-              return (
-                <SlotButton
-                  key={slot.start}
-                  slot={slot}
-                  selected={selectedSlot?.start === slot.start}
-                  registered={regShift}
-                  conflict={conflict}
-                  past={past}
-                  onClick={(conflict || past) ? undefined : () => setSelectedSlot(selectedSlot?.start === slot.start ? null : slot)}
-                />
-              );
-            })}
-          </div>
-
-          <button
-            onClick={handleRegister}
-            disabled={!selectedSlot || registering}
-            className="mt-4 w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold rounded-xl py-3 transition-all"
-          >
-            {registering ? (
-              <>
-                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                Đang đăng ký...
-              </>
-            ) : (
-              <>
-                <Plus className="w-4 h-4" />
-                {selectedSlot
-                  ? `Đăng ký ca ${selectedSlot.start}–${selectedSlot.end}`
-                  : 'Chọn một ca để đăng ký'}
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Step 3: Registered shifts */}
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">3</div>
-              <h2 className="font-semibold text-gray-900">Ca đã đăng ký</h2>
-            </div>
-            <span className="text-xs text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full">
-              {activeShifts.length} ca sắp tới
-            </span>
-          </div>
-
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <span className="w-6 h-6 border-2 border-orange-200 border-t-orange-500 rounded-full animate-spin" />
-            </div>
-          ) : shifts.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                <CalendarDays className="w-6 h-6 text-gray-300" />
-              </div>
-              <p className="text-sm font-medium text-gray-600">Chưa có ca nào được đăng ký</p>
-              <p className="text-xs text-gray-400 mt-1">Chọn ngày và ca ở trên để bắt đầu</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-50">
-              {shifts.map((shift) => (
-                <ShiftRow
-                  key={shift.id}
-                  shift={shift}
-                  onCancel={handleCancel}
-                  cancelling={cancelling}
-                />
-              ))}
+          {weekEarnings > 0 && (
+            <div className="bg-white border border-gray-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
+              <Banknote className="w-4 h-4 text-green-500" />
+              <span className="text-sm font-semibold text-gray-800">~{formatPrice(Math.round(weekEarnings))}</span>
             </div>
           )}
         </div>
 
-        {/* Info notes */}
-        <div className="mt-4 space-y-3">
-          <div className="flex items-start gap-3 p-4 bg-orange-50 border border-orange-100 rounded-xl">
-            <AlertCircle className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-orange-700 space-y-1">
-              <p><strong>Ưu tiên matching:</strong> Đơn hàng trong khung giờ ca đã đăng ký sẽ ưu tiên giao cho bạn trước.</p>
-              <p><strong>Quy tắc 30 phút:</strong> Giữa hai ca liên tiếp cần nghỉ ít nhất 30 phút. Đơn vi phạm khoảng cách này sẽ không được hiển thị.</p>
+        {/* Layout: calendar + sidebar */}
+        <div className="flex flex-col lg:flex-row gap-5">
+
+          {/* Cột chính: Calendar */}
+          <div className="flex-1 min-w-0 space-y-4">
+            {/* Điều hướng tuần */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <button onClick={goPrevWeek} className="w-9 h-9 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors flex-shrink-0">
+                  <ChevronLeft className="w-5 h-5 text-gray-600" />
+                </button>
+                <div className="flex-1 text-center">
+                  <p className="text-sm font-semibold text-gray-900">{weekLabel}</p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button onClick={goToday} className="hidden sm:block text-xs text-[#ff385c] border border-rose-200 px-3 h-8 rounded-lg hover:bg-rose-50 transition-colors font-medium">Hôm nay</button>
+                  <button onClick={goNextWeek} className="w-9 h-9 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors">
+                    <ChevronRight className="w-5 h-5 text-gray-600" />
+                  </button>
+                </div>
+              </div>
             </div>
+
+            {/* Grid / List */}
+            {loading ? (
+              <div className="bg-white rounded-2xl border border-gray-200 flex items-center justify-center py-20">
+                <span className="w-8 h-8 border-2 border-rose-200 border-t-[#ff385c] rounded-full animate-spin" />
+              </div>
+            ) : (
+              <>
+                <div className="hidden md:block bg-white rounded-2xl border border-gray-200 p-4">
+                  <WeekGrid
+                    days={weekDays}
+                    bookingsByDate={bookingsByDate}
+                    shiftsByDate={shiftsByDate}
+                    today={todayISO}
+                    onClickBooking={setSelected}
+                    onCancelShift={handleCancelShift}
+                  />
+                </div>
+                <div className="md:hidden">
+                  <WeekList
+                    days={weekDays}
+                    bookingsByDate={bookingsByDate}
+                    shiftsByDate={shiftsByDate}
+                    today={todayISO}
+                    onClickBooking={setSelected}
+                    onCancelShift={handleCancelShift}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Legend */}
+            {!loading && (
+              <div className="bg-white border border-gray-200 rounded-xl px-4 py-3">
+                <Legend />
+              </div>
+            )}
           </div>
-          <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-100 rounded-xl">
-            <AlertCircle className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-blue-600">
-              Ca làm chỉ có thể hủy trước giờ bắt đầu ít nhất <strong>12 tiếng</strong>.
-              Thu nhập ước tính ~<strong>75.000đ/giờ</strong> (bạn nhận 80% sau phí nền tảng 20%).
-            </p>
+
+          {/* Sidebar: danh sách ca đăng ký */}
+          <div className="lg:w-72 xl:w-80 flex-shrink-0">
+            <ShiftsPanel
+              shifts={shifts}
+              loading={shiftLoading}
+              onCancel={handleCancelShift}
+              onRegister={() => setShowRegModal(true)}
+            />
           </div>
         </div>
       </div>
+
+      {/* Modal chi tiết đơn */}
+      {selected && <BookingModal booking={selected} onClose={() => setSelected(null)} />}
+
+      {/* Modal đăng ký ca */}
+      {showRegModal && (
+        <RegisterShiftModal
+          todayISO={todayISO}
+          onClose={() => setShowRegModal(false)}
+          onSuccess={fetchShifts}
+        />
+      )}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { pricePreviewApi } from '../../api/booking.api';
 import { formatPrice } from '../../utils/format';
 import { useAuth } from '../../hooks/useAuth';
 import SEO from '../../components/common/SEO';
+import TimePicker24h from '../../components/common/TimePicker24h';
 import {
   Star, MapPin, Clock, Check, X, Shield, CreditCard,
   Users, ArrowLeft, Sparkles, ChevronDown, ChevronUp,
@@ -428,6 +429,16 @@ function BookingWidget({ service, sharedDate, setSharedDate, sharedStart, setSha
       setDateError('Chỉ có thể đặt lịch trước tối đa 30 ngày.');
       return;
     }
+    // Validate giờ bắt đầu không được là quá khứ (khi chọn ngày hôm nay)
+    if (date === todayVN && startTime) {
+      const vnNow = getVNNow();
+      const nowMins = vnNow.getUTCHours() * 60 + vnNow.getUTCMinutes();
+      const [sh, sm] = startTime.split(':').map(Number);
+      if (sh * 60 + sm < nowMins) {
+        setDateError(`Giờ bắt đầu đã qua. Vui lòng chọn khung giờ khác.`);
+        return;
+      }
+    }
     const params = new URLSearchParams({ serviceId: service.serviceId });
     if (date)      params.set('date', date);
     if (startTime) params.set('startTime', startTime);
@@ -472,23 +483,23 @@ function BookingWidget({ service, sharedDate, setSharedDate, sharedStart, setSha
             <label className="block px-4 pt-3 pb-0.5 text-[11px] font-semibold text-gray-900 uppercase tracking-wider">
               Giờ bắt đầu
             </label>
-            <input
-              type="time"
+            <TimePicker24h
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
-              className="block w-full px-4 pb-3 text-sm text-gray-700 bg-transparent focus:outline-none"
+              min={date === todayVN ? `${String(getVNNow().getUTCHours()).padStart(2, '0')}:${String(getVNNow().getUTCMinutes()).padStart(2, '0')}` : ''}
+              className="block w-full px-4 pb-3 text-sm text-gray-700 bg-transparent"
             />
           </div>
           <div>
             <label className="block px-4 pt-3 pb-0.5 text-[11px] font-semibold text-gray-900 uppercase tracking-wider">
               Giờ kết thúc
             </label>
-            <input
-              type="time"
+            <TimePicker24h
               value={endTime}
               min={startTime}
+              strict
               onChange={(e) => setEndTime(e.target.value)}
-              className="block w-full px-4 pb-3 text-sm text-gray-700 bg-transparent focus:outline-none"
+              className="block w-full px-4 pb-3 text-sm text-gray-700 bg-transparent"
             />
           </div>
         </div>
@@ -573,6 +584,7 @@ export default function ServiceDetailPage() {
   const [service, setService] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [descExpanded, setDescExpanded] = useState(false);
   const [showAllReviews, setShowAllReviews] = useState(false);
 
@@ -583,21 +595,26 @@ export default function ServiceDetailPage() {
 
   useEffect(() => {
     setLoading(true);
-    // Thử load từ API; nếu lỗi thì dùng mock data
+    setError(null);
+    // Load dịch vụ từ API; nếu lỗi thì hiển thị thông báo lỗi
     getServiceByIdApi(serviceId)
       .then(({ data }) => {
-        setService(data.data || MOCK_SERVICE);
+        setService(data.data || null);
+        if (!data.data) {
+          setError('Không thể tải thông tin dịch vụ. Vui lòng thử lại.');
+        }
       })
       .catch(() => {
-        setService(MOCK_SERVICE);
+        setError('Không thể tải thông tin dịch vụ. Vui lòng thử lại.');
+        setService(null);
       });
 
     getServiceReviewsApi(serviceId)
       .then(({ data }) => {
-        setReviews(data.data?.reviews || MOCK_REVIEWS);
+        setReviews(data.data?.reviews || []);
       })
       .catch(() => {
-        setReviews(MOCK_REVIEWS);
+        setReviews([]);
       })
       .finally(() => setLoading(false));
   }, [serviceId]);
@@ -618,6 +635,35 @@ export default function ServiceDetailPage() {
             </div>
           </div>
           <div className="h-64 bg-gray-100 rounded-2xl" />
+        </div>
+      </div>
+    );
+  }
+
+  // Hiển thị thông báo lỗi khi không tải được dịch vụ
+  if (error && !service) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center max-w-sm px-6">
+          <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <X className="w-8 h-8 text-red-400" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Không tìm thấy dịch vụ</h2>
+          <p className="text-gray-500 text-sm mb-6">{error}</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={() => navigate(-1)}
+              className="px-5 py-2.5 border border-gray-300 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors"
+            >
+              Quay lại
+            </button>
+            <Link
+              to="/"
+              className="px-5 py-2.5 bg-orange-500 text-white text-sm font-medium rounded-xl hover:bg-orange-600 transition-colors text-center"
+            >
+              Về trang chủ
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -899,6 +945,19 @@ function MobileStickyBar({ service, bookingDate, bookingStart, bookingEnd }) {
       document.getElementById('booking-widget-inline')
         ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
+    }
+    // Validate giờ bắt đầu không được là quá khứ (khi chọn ngày hôm nay)
+    const getVNNow = () => new Date(Date.now() + 7 * 60 * 60 * 1000);
+    const todayVN = getVNNow().toISOString().slice(0, 10);
+    if (bookingDate === todayVN && bookingStart) {
+      const vnNow = getVNNow();
+      const nowMins = vnNow.getUTCHours() * 60 + vnNow.getUTCMinutes();
+      const [sh, sm] = bookingStart.split(':').map(Number);
+      if (sh * 60 + sm < nowMins) {
+        document.getElementById('booking-widget-inline')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
     }
     const params = new URLSearchParams({ serviceId: service.serviceId });
     params.set('date', bookingDate);

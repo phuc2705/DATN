@@ -99,11 +99,11 @@ const BookingController = {
       if (bookingDate === todayVN) {
         const [sh, sm]   = startTime.split(':').map(Number);
         const startMins  = sh * 60 + sm;
-        const nowMins    = nowVNHour * 60 + nowVNMin + 30; // buffer 30 phút
+        const nowMins    = nowVNHour * 60 + nowVNMin;
         if (startMins < nowMins) {
-          const minH = String(Math.floor(nowMins / 60) % 24).padStart(2, '0');
-          const minM = String(nowMins % 60).padStart(2, '0');
-          return sendError(res, `Giờ bắt đầu phải sau ${minH}:${minM} (ít nhất 30 phút kể từ bây giờ).`, 400);
+          const nowH = String(nowVNHour).padStart(2, '0');
+          const nowM = String(nowVNMin).padStart(2, '0');
+          return sendError(res, `Giờ bắt đầu đã qua (hiện tại ${nowH}:${nowM}). Vui lòng chọn khung giờ khác.`, 400);
         }
       }
 
@@ -144,10 +144,8 @@ const BookingController = {
         if (!helper.is_verified) return sendError(res, 'Người giúp việc chưa được xác minh tài khoản.', 400);
         if (!helper.is_available) return sendError(res, 'Người giúp việc hiện không nhận việc.', 400);
 
-        // Dùng giá hiệu dụng nếu helper có cài custom_price cho dịch vụ này
-        if (helper.custom_price !== null || helper.experience_level) {
-          helperRate = getEffectiveRate(helperRate, helper.custom_price, helper.experience_level);
-        }
+        // Dùng custom_price nếu helper đã cài (không nhân hệ số kinh nghiệm)
+        helperRate = getEffectiveRate(helperRate, helper.custom_price);
 
         // Kiểm tra xung đột lịch làm việc của helper
         const hasConflict = await BookingModel.checkHelperConflict(helperId, bookingDate, startTime, endTime);
@@ -526,7 +524,45 @@ const BookingController = {
       }
 
       assertValidTransition(booking.status, 'cancelled');
-      await BookingModel.updateStatus(bookingId, 'cancelled', user_id, reason || 'Khách hàng hủy đơn');
+
+      const conn = await pool.getConnection();
+      try {
+        await conn.beginTransaction();
+
+        await conn.query(
+          `UPDATE bookings SET status = 'cancelled', updated_at = NOW() WHERE booking_id = ?`,
+          [bookingId]
+        );
+        await conn.query(
+          `INSERT INTO booking_logs (booking_id, changed_by, old_status, new_status, note)
+           VALUES (?, ?, ?, 'cancelled', ?)`,
+          [bookingId, user_id, booking.status, reason || 'Khách hàng hủy đơn']
+        );
+
+        // Nếu đơn đã thanh toán → khởi tạo hoàn tiền
+        const [[paymentRow]] = await conn.query(
+          'SELECT payment_status FROM payments WHERE booking_id = ?',
+          [bookingId]
+        );
+        if (paymentRow && paymentRow.payment_status === 'paid') {
+          await conn.query(
+            `UPDATE payments SET payment_status = 'refund_pending' WHERE booking_id = ?`,
+            [bookingId]
+          );
+          await conn.query(
+            `INSERT INTO booking_logs (booking_id, changed_by, old_status, new_status, note)
+             VALUES (?, ?, 'cancelled', 'cancelled', ?)`,
+            [bookingId, user_id, 'Hoàn tiền tự động khi hủy đơn']
+          );
+        }
+
+        await conn.commit();
+      } catch (txErr) {
+        await conn.rollback();
+        throw txErr;
+      } finally {
+        conn.release();
+      }
 
       // Thông báo cho bên còn lại
       const notifyUserId = user_type === 'customer' ? booking.helper_user_id : booking.customer_user_id;
@@ -749,7 +785,7 @@ const pricePreview = async (req, res, next) => {
       );
       if (hsRows[0]) {
         experienceLevel = hsRows[0].experience_level || 'beginner';
-        effectiveRate = getEffectiveRate(effectiveRate, hsRows[0].custom_price, experienceLevel);
+        effectiveRate = getEffectiveRate(effectiveRate, hsRows[0].custom_price);
       }
     }
 
@@ -769,6 +805,91 @@ const pricePreview = async (req, res, next) => {
     );
 
     return sendSuccess(res, { hours, basePrice, discountAmount, totalPrice, effectiveRate, experienceLevel });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Kiểm tra xem có helper rảnh không trong khung giờ yêu cầu
+// Nếu không có → tìm tối đa 3 khung giờ thay thế trong 7 ngày tới (cùng độ dài)
+const checkAvailability = async (req, res, next) => {
+  try {
+    const { serviceId, bookingDate, startTime, endTime } = req.query;
+    if (!serviceId || !bookingDate || !startTime || !endTime)
+      return sendError(res, 'Thiếu thông tin kiểm tra.', 400);
+
+    // Đếm helpers đủ điều kiện và rảnh trong khung giờ yêu cầu
+    const [[{ cnt }]] = await pool.query(
+      `SELECT COUNT(DISTINCT h.helper_id) AS cnt
+       FROM helpers h
+       JOIN helper_services hs ON h.helper_id = hs.helper_id
+       WHERE h.is_available = TRUE AND h.is_verified = TRUE AND hs.service_id = ?
+         AND h.helper_id NOT IN (
+           SELECT DISTINCT helper_id FROM bookings
+           WHERE booking_date = ? AND status NOT IN ('cancelled') AND helper_id IS NOT NULL
+             AND start_time < ? AND end_time > ?
+         )`,
+      [serviceId, bookingDate, endTime, startTime]
+    );
+
+    const availableCount = Number(cnt);
+    if (availableCount > 0)
+      return sendSuccess(res, { available: true, availableCount, suggestions: [] });
+
+    // Tính số phút của khung giờ gốc để giữ nguyên độ dài khi gợi ý
+    const [sh, sm] = startTime.split(':').map(Number);
+    const [eh, em] = endTime.split(':').map(Number);
+    const durationMins = (eh * 60 + em) - (sh * 60 + sm);
+
+    // Các khung giờ phổ biến để thử (mỗi bước 1 tiếng)
+    const CANDIDATE_STARTS = ['07:00','08:00','09:00','10:00','11:00','13:00','14:00','15:00','16:00','17:00'];
+    const suggestions = [];
+    const baseDate = new Date(bookingDate + 'T00:00:00Z');
+
+    for (let dayOffset = 0; dayOffset <= 6 && suggestions.length < 3; dayOffset++) {
+      const d = new Date(baseDate);
+      d.setUTCDate(d.getUTCDate() + dayOffset);
+      const dateStr = d.toISOString().slice(0, 10);
+
+      for (const slotStart of CANDIDATE_STARTS) {
+        if (suggestions.length >= 3) break;
+
+        // Bỏ qua đúng khung giờ khách vừa chọn
+        if (dateStr === bookingDate && slotStart === startTime) continue;
+
+        const [hh, mm] = slotStart.split(':').map(Number);
+        const endTotalMins = hh * 60 + mm + durationMins;
+        const endH = Math.floor(endTotalMins / 60);
+        const endM = endTotalMins % 60;
+        if (endH >= 22) continue; // không kết thúc sau 22:00
+
+        const slotEnd = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+
+        const [[{ cnt: slotCnt }]] = await pool.query(
+          `SELECT COUNT(DISTINCT h.helper_id) AS cnt
+           FROM helpers h
+           JOIN helper_services hs ON h.helper_id = hs.helper_id
+           WHERE h.is_available = TRUE AND h.is_verified = TRUE AND hs.service_id = ?
+             AND h.helper_id NOT IN (
+               SELECT DISTINCT helper_id FROM bookings
+               WHERE booking_date = ? AND status NOT IN ('cancelled') AND helper_id IS NOT NULL
+                 AND start_time < ? AND end_time > ?
+             )`,
+          [serviceId, dateStr, slotEnd, slotStart]
+        );
+
+        if (Number(slotCnt) > 0) {
+          suggestions.push({
+            bookingDate: dateStr,
+            startTime:   slotStart,
+            endTime:     slotEnd,
+            availableHelpers: Number(slotCnt),
+          });
+        }
+      }
+    }
+
+    return sendSuccess(res, { available: false, availableCount: 0, suggestions });
   } catch (error) {
     next(error);
   }
@@ -796,7 +917,7 @@ const suggestHelpers = async (req, res, next) => {
       experienceLevel: h.experience_level,
       isAvailable:    h.is_available,
       isVerified:     h.is_verified,
-      effectivePrice: getEffectiveRate(basePrice, h.custom_price, h.experience_level),
+      effectivePrice: getEffectiveRate(basePrice, h.custom_price),
       score:          h.score,
       bio:            h.bio,
     }));
@@ -875,4 +996,4 @@ const getBookingSuggestions = async (req, res, next) => {
   }
 };
 
-module.exports = { ...BookingController, assertValidTransition, VALID_TRANSITIONS, validatePromoCode, pricePreview, suggestHelpers, getBookingSuggestions };
+module.exports = { ...BookingController, assertValidTransition, VALID_TRANSITIONS, validatePromoCode, pricePreview, suggestHelpers, getBookingSuggestions, checkAvailability };

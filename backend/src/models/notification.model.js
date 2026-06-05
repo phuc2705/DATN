@@ -12,11 +12,14 @@ const NotificationModel = {
     return result.insertId;
   },
 
-  // Lấy danh sách thông báo của user (phân trang)
-  findByUser: async (userId, limit = 20, offset = 0) => {
+  // Lấy danh sách thông báo của user (phân trang, tuỳ chọn lọc chưa đọc)
+  findByUser: async (userId, limit = 20, offset = 0, onlyUnread = false) => {
+    const whereClause = onlyUnread
+      ? 'WHERE user_id = ? AND is_read = FALSE'
+      : 'WHERE user_id = ?';
     const [rows] = await pool.query(
       `SELECT * FROM notifications
-       WHERE user_id = ?
+       ${whereClause}
        ORDER BY created_at DESC
        LIMIT ? OFFSET ?`,
       [userId, limit, offset]

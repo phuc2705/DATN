@@ -253,7 +253,7 @@ export default function RegisterCustomerPage() {
                       type="tel"
                       value={form.phone}
                       onChange={set('phone')}
-                      placeholder="0901234567"
+                      placeholder="VD: 0912 345 678"
                       className={inputClass('phone')}
                       autoComplete="tel"
                       maxLength={10}
@@ -293,7 +293,7 @@ export default function RegisterCustomerPage() {
                       type="text"
                       value={form.address}
                       onChange={set('address')}
-                      placeholder="123 Đường ABC"
+                      placeholder="VD: 15 Phố Huế"
                       className={inputClass('address')}
                     />
                     <FieldError msg={errors.address} />

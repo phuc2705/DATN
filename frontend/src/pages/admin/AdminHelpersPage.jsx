@@ -1,33 +1,55 @@
 import { useEffect, useState } from 'react';
-import { getAdminUsersApi, verifyHelperApi, toggleUserStatusApi, deleteUserApi, getHelperDetailApi } from '../../api/admin.api';
+import {
+  getAdminUsersApi,
+  verifyHelperApi,
+  toggleUserStatusApi,
+  deleteUserApi,
+  getHelperDetailApi,
+} from '../../api/admin.api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import Avatar from '../../components/common/Avatar';
-import { formatDate, formatPrice } from '../../utils/format';
+import { formatDate } from '../../utils/format';
 import { useDebounce } from '../../hooks/useDebounce';
 import toast from 'react-hot-toast';
+import { Search, X, RefreshCw, Star } from 'lucide-react';
 
+// Tabs lọc trạng thái helpers
+const TABS = [
+  { key: '',      label: 'Tất cả' },
+  { key: 'false', label: 'Chờ duyệt', verified: 'false' },
+  { key: 'true',  label: 'Đã xác minh', verified: 'true' },
+  { key: 'lock',  label: 'Đã khóa', active: 'false' },
+];
+
+// Hiển thị sao đánh giá
 function Stars({ rating }) {
+  const r = Math.round(Number(rating) || 0);
   return (
-    <span className="flex gap-0.5">
+    <span className="flex gap-px">
       {[1,2,3,4,5].map((s) => (
-        <span key={s} className={s <= rating ? 'text-yellow-400' : 'text-gray-200'} style={{ fontSize: 14 }}>★</span>
+        <Star
+          key={s}
+          className={`w-3 h-3 ${s <= r ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
+        />
       ))}
     </span>
   );
 }
 
-const STATUS_COLORS = {
-  completed: 'bg-green-50 text-green-700',
-  confirmed: 'bg-blue-50 text-blue-700',
-  pending: 'bg-yellow-50 text-yellow-700',
-  in_progress: 'bg-orange-50 text-orange-700',
-  cancelled: 'bg-red-50 text-red-600',
+// Các màu badge trạng thái booking trong modal detail
+const BOOKING_STATUS_COLORS = {
+  completed:   'bg-emerald-400/10 text-emerald-400 border border-emerald-400/20',
+  confirmed:   'bg-blue-400/10 text-blue-300 border border-blue-400/20',
+  pending:     'bg-yellow-400/10 text-yellow-300 border border-yellow-400/20',
+  in_progress: 'bg-[#5e6ad2]/10 text-[#828fff] border border-[#5e6ad2]/20',
+  cancelled:   'bg-red-400/10 text-red-400 border border-red-400/20',
 };
-const STATUS_LABELS = {
+const BOOKING_STATUS_LABELS = {
   completed: 'Hoàn thành', confirmed: 'Đã xác nhận', pending: 'Chờ xác nhận',
   in_progress: 'Đang làm', cancelled: 'Đã hủy',
 };
 
+// Modal xem chi tiết hồ sơ helper
 function HelperDetailModal({ helperId, onClose, onVerify, onToggle }) {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -40,15 +62,20 @@ function HelperDetailModal({ helperId, onClose, onVerify, onToggle }) {
   }, [helperId]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-gray-200">
+        {/* Header modal */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 sticky top-0 bg-white z-10">
           <h2 className="text-lg font-bold text-gray-900">Hồ sơ người giúp việc</h2>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-md hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-700"
+          >
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -65,48 +92,53 @@ function HelperDetailModal({ helperId, onClose, onVerify, onToggle }) {
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="text-xl font-bold text-gray-900">{detail.full_name}</h3>
                   {detail.is_verified ? (
-                    <span className="flex items-center gap-1 text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                      <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                      Đã xác minh
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-emerald-400/10 text-emerald-400 border border-emerald-400/20 px-2 py-0.5 rounded">
+                      ✓ Đã xác minh
                     </span>
                   ) : (
-                    <span className="text-xs font-semibold text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded-full">Chờ duyệt</span>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-yellow-400/10 text-yellow-300 border border-yellow-400/20 px-2 py-0.5 rounded">
+                      Chờ duyệt
+                    </span>
                   )}
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${detail.is_active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
+                  <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded ${detail.is_active ? 'bg-emerald-400/10 text-emerald-400 border border-emerald-400/20' : 'bg-red-400/10 text-red-400 border border-red-400/20'}`}>
                     {detail.is_active ? '● Hoạt động' : '● Đã khóa'}
                   </span>
                 </div>
                 <p className="text-sm text-gray-500 mt-1">{detail.email} · {detail.phone || 'Chưa cập nhật'}</p>
-                <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-                  <span className="flex items-center gap-1">
-                    <Stars rating={Math.round(detail.rating_average || 0)} />
+                <div className="flex items-center gap-3 mt-2 text-sm">
+                  <span className="flex items-center gap-1.5">
+                    <Stars rating={detail.rating_average} />
                     <span className="font-semibold text-gray-800">{Number(detail.rating_average || 0).toFixed(1)}</span>
                     <span className="text-gray-400">({detail.total_reviews} đánh giá)</span>
                   </span>
-                  <span className="text-orange-600 font-semibold">{detail.hourly_rate ? `${Number(detail.hourly_rate).toLocaleString()}đ/h` : '—'}</span>
+                  {detail.hourly_rate && (
+                    <span className="text-[#828fff] font-semibold text-xs">
+                      {Number(detail.hourly_rate).toLocaleString('vi-VN')}đ/h
+                    </span>
+                  )}
                 </div>
-                {detail.bio && <p className="text-sm text-gray-500 mt-2 italic">"{detail.bio}"</p>}
+                {detail.bio && <p className="text-sm text-gray-400 mt-2 italic">"{detail.bio}"</p>}
               </div>
             </div>
 
-            {/* Stats */}
+            {/* Stats grid */}
             <div className="grid grid-cols-3 gap-3">
               {[
-                { label: 'Đơn hoàn thành', value: detail.completed_bookings, color: 'text-green-600' },
-                { label: 'Đơn đã hủy', value: detail.cancelled_bookings, color: 'text-red-500' },
-                { label: 'Tổng thu nhập', value: `${Number(detail.total_earned || 0).toLocaleString()}đ`, color: 'text-orange-600' },
+                { label: 'Đơn hoàn thành', value: detail.completed_bookings ?? 0, color: 'text-emerald-400' },
+                { label: 'Đơn đã hủy', value: detail.cancelled_bookings ?? 0, color: 'text-red-400' },
+                { label: 'Tổng thu nhập', value: `${Number(detail.total_earned || 0).toLocaleString('vi-VN')}đ`, color: 'text-[#828fff]' },
               ].map(({ label, value, color }) => (
-                <div key={label} className="bg-gray-50 rounded-xl p-3 text-center">
+                <div key={label} className="bg-gray-100 rounded-lg p-3 text-center">
                   <p className={`text-lg font-bold ${color}`}>{value}</p>
                   <p className="text-xs text-gray-400 mt-0.5">{label}</p>
                 </div>
               ))}
             </div>
 
-            {/* Personal info */}
+            {/* Thông tin cá nhân */}
             <div>
-              <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Thông tin cá nhân</h4>
-              <div className="grid grid-cols-2 gap-3 text-sm">
+              <h4 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-3">Thông tin cá nhân</h4>
+              <div className="grid grid-cols-2 gap-3">
                 {[
                   { label: 'CMND/CCCD', value: detail.id_card_number || '—' },
                   { label: 'Ngày sinh', value: detail.date_of_birth ? new Date(detail.date_of_birth).toLocaleDateString('vi-VN') : '—' },
@@ -114,46 +146,45 @@ function HelperDetailModal({ helperId, onClose, onVerify, onToggle }) {
                   { label: 'Ngày tham gia', value: formatDate(detail.joined_at) },
                 ].map(({ label, value }) => (
                   <div key={label}>
-                    <p className="text-xs text-gray-400">{label}</p>
-                    <p className="font-medium text-gray-700">{value}</p>
+                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">{label}</p>
+                    <p className="text-sm font-semibold text-gray-700 mt-0.5">{value}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Services */}
+            {/* Dịch vụ cung cấp */}
             {detail.services?.length > 0 && (
               <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Dịch vụ cung cấp</h4>
+                <h4 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-3">Dịch vụ cung cấp</h4>
                 <div className="flex flex-wrap gap-2">
                   {detail.services.map((s) => (
-                    <span key={s.service_id} className="flex items-center gap-1.5 bg-orange-50 text-orange-700 text-sm px-3 py-1.5 rounded-full">
+                    <span key={s.service_id} className="flex items-center gap-1.5 bg-[#5e6ad2]/10 text-[#828fff] border border-[#5e6ad2]/20 text-xs px-3 py-1.5 rounded-md">
                       {s.service_name}
-                      {s.custom_price && <span className="text-xs text-orange-500">· {Number(s.custom_price).toLocaleString()}đ/h</span>}
-                      {s.experience_level && <span className="text-xs text-orange-400">· {s.experience_level}</span>}
+                      {s.custom_price && <span className="text-[#828fff]/70">· {Number(s.custom_price).toLocaleString('vi-VN')}đ/h</span>}
                     </span>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Recent bookings */}
+            {/* Đơn hàng gần đây */}
             {detail.recentBookings?.length > 0 && (
               <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Đơn hàng gần đây</h4>
+                <h4 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-3">Đơn hàng gần đây</h4>
                 <div className="space-y-2">
                   {detail.recentBookings.map((b) => (
-                    <div key={b.booking_id} className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3 text-sm">
+                    <div key={b.booking_id} className="flex items-center justify-between bg-gray-100 rounded-md px-4 py-3 text-sm">
                       <div>
-                        <span className="font-medium text-gray-700">{b.service_name}</span>
-                        <span className="text-gray-400 ml-2">· {b.customer_name}</span>
+                        <span className="font-semibold text-gray-700">{b.service_name}</span>
+                        <span className="text-gray-400 ml-2 text-xs">· {b.customer_name}</span>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-gray-400">{new Date(b.booking_date).toLocaleDateString('vi-VN')}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[b.status] || 'bg-gray-100 text-gray-600'}`}>
-                          {STATUS_LABELS[b.status] || b.status}
+                        <span className="text-gray-400 text-xs">{new Date(b.booking_date).toLocaleDateString('vi-VN')}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${BOOKING_STATUS_COLORS[b.status] || 'bg-gray-100 text-gray-500'}`}>
+                          {BOOKING_STATUS_LABELS[b.status] || b.status}
                         </span>
-                        <span className="text-orange-600 font-semibold">{Number(b.total_price).toLocaleString()}đ</span>
+                        <span className="text-[#828fff] font-semibold text-xs">{Number(b.total_price).toLocaleString('vi-VN')}đ</span>
                       </div>
                     </div>
                   ))}
@@ -161,15 +192,15 @@ function HelperDetailModal({ helperId, onClose, onVerify, onToggle }) {
               </div>
             )}
 
-            {/* Recent reviews */}
+            {/* Đánh giá gần đây */}
             {detail.recentReviews?.length > 0 && (
               <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Đánh giá gần đây</h4>
+                <h4 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-3">Đánh giá gần đây</h4>
                 <div className="space-y-3">
                   {detail.recentReviews.map((r, i) => (
-                    <div key={i} className="bg-gray-50 rounded-xl px-4 py-3">
+                    <div key={i} className="bg-gray-100 rounded-md px-4 py-3">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-gray-700">{r.customer_name}</span>
+                        <span className="text-sm font-semibold text-gray-700">{r.customer_name}</span>
                         <div className="flex items-center gap-2">
                           <Stars rating={r.rating} />
                           <span className="text-xs text-gray-400">{new Date(r.created_at).toLocaleDateString('vi-VN')}</span>
@@ -182,27 +213,30 @@ function HelperDetailModal({ helperId, onClose, onVerify, onToggle }) {
               </div>
             )}
 
-            {/* Actions */}
-            <div className="flex gap-3 pt-2 border-t border-gray-100">
+            {/* Hành động */}
+            <div className="flex gap-3 pt-2 border-t border-gray-200">
               {!detail.is_verified && (
                 <button
                   onClick={() => { onVerify(detail.helper_id); onClose(); }}
-                  className="flex-1 py-2.5 rounded-xl bg-green-500 hover:bg-green-600 text-white text-sm font-semibold transition-colors"
+                  className="flex-1 py-2.5 rounded-md bg-[#5e6ad2] hover:bg-[#828fff] text-white text-sm font-semibold transition-colors"
                 >
                   Xác minh tài khoản
                 </button>
               )}
               <button
                 onClick={() => { onToggle(detail.user_id, detail.is_active); onClose(); }}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors border ${
+                className={`flex-1 py-2.5 rounded-md text-sm font-semibold border transition-colors ${
                   detail.is_active
-                    ? 'border-red-200 text-red-500 hover:bg-red-50'
-                    : 'border-green-200 text-green-600 hover:bg-green-50'
+                    ? 'border-red-400/20 text-red-400 hover:bg-red-400/10'
+                    : 'border-emerald-400/20 text-emerald-400 hover:bg-emerald-400/10'
                 }`}
               >
                 {detail.is_active ? 'Khóa tài khoản' : 'Mở khóa'}
               </button>
-              <button onClick={onClose} className="px-6 py-2.5 rounded-xl border border-gray-200 text-gray-500 text-sm hover:bg-gray-50 transition-colors">
+              <button
+                onClick={onClose}
+                className="px-6 py-2.5 rounded-md border border-gray-200 text-gray-500 text-sm hover:bg-gray-100 transition-colors"
+              >
                 Đóng
               </button>
             </div>
@@ -213,6 +247,7 @@ function HelperDetailModal({ helperId, onClose, onVerify, onToggle }) {
   );
 }
 
+// Kiểm tra helper mới đăng ký trong 7 ngày
 function isNew(createdAt) {
   return createdAt && (Date.now() - new Date(createdAt).getTime()) < 7 * 24 * 60 * 60 * 1000;
 }
@@ -221,25 +256,27 @@ export default function AdminHelpersPage() {
   const [helpers, setHelpers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [verifiedFilter, setVerifiedFilter] = useState(''); // '' | 'true' | 'false'
-  const [statusFilter, setStatusFilter] = useState('');
+  const [activeTab, setActiveTab] = useState(''); // '', 'false' (chờ duyệt), 'true' (đã xác minh), 'lock'
   const [selectedHelperId, setSelectedHelperId] = useState(null);
 
   const debouncedSearch = useDebounce(search, 400);
 
+  // Tải danh sách helper với các filter tương ứng tab
   const refresh = () => {
     setLoading(true);
     const params = { userType: 'helper' };
     if (debouncedSearch) params.search = debouncedSearch;
-    if (verifiedFilter !== '') params.isVerified = verifiedFilter;
-    if (statusFilter !== '') params.isActive = statusFilter;
+    if (activeTab === 'false') params.isVerified = 'false';
+    if (activeTab === 'true') params.isVerified = 'true';
+    if (activeTab === 'lock') params.isActive = 'false';
+
     getAdminUsersApi(params)
       .then(({ data }) => setHelpers(data.data?.users || []))
       .catch(() => toast.error('Không thể tải danh sách'))
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { refresh(); }, [debouncedSearch, verifiedFilter, statusFilter]);
+  useEffect(() => { refresh(); }, [debouncedSearch, activeTab]);
 
   const handleVerify = async (helperId) => {
     try {
@@ -272,11 +309,11 @@ export default function AdminHelpersPage() {
     }
   };
 
-  const pendingCount = helpers.filter((h) => !h.isVerified).length;
-  const newCount = helpers.filter((h) => isNew(h.createdAt)).length;
+  const pendingCount = helpers.filter((h) => !h.isVerified && h.isActive).length;
 
   return (
     <div className="animate-fadeIn">
+      {/* Modal chi tiết */}
       {selectedHelperId && (
         <HelperDetailModal
           helperId={selectedHelperId}
@@ -285,126 +322,113 @@ export default function AdminHelpersPage() {
           onToggle={handleToggle}
         />
       )}
+
+      {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Quản lý người giúp việc</h1>
           <p className="text-gray-500 text-sm mt-1 flex items-center gap-2">
             {helpers.length} người giúp việc
             {pendingCount > 0 && (
-              <span className="bg-yellow-100 text-yellow-700 text-xs font-bold px-2 py-0.5 rounded-full">
+              <span className="inline-flex items-center bg-yellow-400/10 text-yellow-300 border border-yellow-400/20 text-xs font-bold px-2 py-0.5 rounded">
                 {pendingCount} chờ duyệt
-              </span>
-            )}
-            {newCount > 0 && (
-              <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">
-                +{newCount} mới
               </span>
             )}
           </p>
         </div>
+        <button
+          onClick={refresh}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md text-sm transition-colors"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Làm mới
+        </button>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-5">
+      {/* Tabs lọc */}
+      <div className="flex items-center gap-1 mb-5 bg-gray-100 rounded-lg p-1 w-fit">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+              activeTab === tab.key
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-400 hover:text-gray-700'
+            }`}
+          >
+            {tab.label}
+            {tab.key === 'false' && pendingCount > 0 && (
+              <span className="ml-1.5 bg-yellow-400/20 text-yellow-300 text-[10px] font-bold px-1.5 py-0.5 rounded">
+                {pendingCount}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Search bar */}
+      <div className="bg-white rounded-lg p-4 border border-gray-200 mb-5">
         <div className="flex flex-col sm:flex-row gap-3">
-          {/* Search */}
           <div className="flex-1 relative">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
               placeholder="Tìm theo tên, email, số điện thoại..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50 focus:bg-white transition-all"
+              className="w-full pl-10 pr-10 py-2.5 bg-gray-100 border border-gray-200 text-gray-700 placeholder-gray-400 rounded-md text-sm focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 transition-all"
               autoComplete="off"
             />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+              >
+                <X className="w-4 h-4" />
               </button>
             )}
           </div>
-
-          {/* Verification filter */}
-          <select
-            value={verifiedFilter}
-            onChange={(e) => setVerifiedFilter(e.target.value)}
-            className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50 min-w-[170px]"
-          >
-            <option value="">Tất cả xác minh</option>
-            <option value="false">Chờ xét duyệt</option>
-            <option value="true">Đã xác minh</option>
-          </select>
-
-          {/* Status filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50 min-w-[150px]"
-          >
-            <option value="">Tất cả trạng thái</option>
-            <option value="true">Đang hoạt động</option>
-            <option value="false">Đã khóa</option>
-          </select>
-
-          {(search || verifiedFilter || statusFilter) && (
-            <button
-              onClick={() => { setSearch(''); setVerifiedFilter(''); setStatusFilter(''); }}
-              className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-500 hover:bg-gray-50 whitespace-nowrap"
-            >
-              Xóa bộ lọc
-            </button>
+          {search && (
+            <span className="flex items-center gap-1 self-center bg-[#5e6ad2]/10 text-[#828fff] border border-[#5e6ad2]/20 text-xs px-2.5 py-1 rounded">
+              Tìm: "{search}"
+              <button onClick={() => setSearch('')} className="ml-0.5 hover:text-gray-900">×</button>
+            </span>
           )}
         </div>
-
-        {/* Active chips */}
-        {(search || verifiedFilter || statusFilter) && (
-          <div className="flex flex-wrap gap-2 mt-3">
-            {search && (
-              <span className="flex items-center gap-1 bg-orange-50 text-orange-700 text-xs px-2.5 py-1 rounded-full">
-                Tìm: "{search}" <button onClick={() => setSearch('')}>×</button>
-              </span>
-            )}
-            {verifiedFilter && (
-              <span className="flex items-center gap-1 bg-yellow-50 text-yellow-700 text-xs px-2.5 py-1 rounded-full">
-                {verifiedFilter === 'false' ? 'Chờ duyệt' : 'Đã xác minh'} <button onClick={() => setVerifiedFilter('')}>×</button>
-              </span>
-            )}
-            {statusFilter && (
-              <span className="flex items-center gap-1 bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-full">
-                {statusFilter === 'true' ? 'Đang hoạt động' : 'Đã khóa'} <button onClick={() => setStatusFilter('')}>×</button>
-              </span>
-            )}
-          </div>
-        )}
       </div>
 
       {loading ? (
         <div className="flex justify-center py-16"><LoadingSpinner /></div>
       ) : helpers.length === 0 ? (
-        <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
-          <div className="text-4xl mb-3">🧹</div>
-          <p className="text-gray-600 font-medium">Không tìm thấy người giúp việc nào</p>
-          <p className="text-gray-400 text-sm mt-1">Thử thay đổi bộ lọc hoặc từ khóa</p>
+        <div className="bg-white rounded-lg p-12 text-center border border-gray-200">
+          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+            <Search className="w-6 h-6 text-gray-400" />
+          </div>
+          <p className="text-gray-700 font-medium">Không tìm thấy người giúp việc nào</p>
+          <p className="text-gray-400 text-sm mt-1">Thử thay đổi tab hoặc từ khóa tìm kiếm</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          {/* Desktop table */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  {['Người giúp việc', 'Liên hệ', 'Mức giá', 'Ngày đăng ký', 'Xác minh', 'Trạng thái', 'Hành động'].map((h) => (
-                    <th key={h} className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                <tr className="bg-gray-100 border-b border-gray-200">
+                  {['Người giúp việc', 'Mức giá', 'Đánh giá', 'Ngày đăng ký', 'Xác minh', 'Trạng thái', 'Hành động'].map((h) => (
+                    <th key={h} className="text-left px-5 py-3.5 text-[10px] font-medium text-gray-400 uppercase tracking-widest whitespace-nowrap">
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-200">
                 {helpers.map((h) => (
-                  <tr key={h.userId} className="hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={h.userId}
+                    className={`hover:bg-gray-50 transition-colors ${!h.isVerified && h.isActive ? 'bg-yellow-400/5' : ''}`}
+                  >
+                    {/* Avatar + tên */}
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <Avatar name={h.fullName} avatarUrl={h.avatarUrl} size="md" />
@@ -412,69 +436,86 @@ export default function AdminHelpersPage() {
                           <div className="flex items-center gap-2">
                             <p className="font-semibold text-gray-900">{h.fullName}</p>
                             {isNew(h.createdAt) && (
-                              <span className="bg-green-100 text-green-700 text-xs font-bold px-1.5 py-0.5 rounded-full">Mới</span>
+                              <span className="bg-emerald-400/10 text-emerald-400 border border-emerald-400/20 text-[10px] font-bold px-1.5 py-0.5 rounded">Mới</span>
                             )}
                           </div>
                           <p className="text-xs text-gray-400">{h.email}</p>
+                          {h.phone && <p className="text-xs text-gray-400">{h.phone}</p>}
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-4 text-gray-600 text-xs">{h.phone || '—'}</td>
-                    <td className="px-5 py-4 text-orange-600 font-semibold text-xs whitespace-nowrap">
-                      {h.hourlyRate ? `${Number(h.hourlyRate).toLocaleString()}đ/h` : '—'}
+
+                    {/* Giá */}
+                    <td className="px-5 py-4 text-[#828fff] font-semibold text-xs whitespace-nowrap">
+                      {h.hourlyRate ? `${Number(h.hourlyRate).toLocaleString('vi-VN')}đ/h` : '—'}
                     </td>
-                    <td className="px-5 py-4 text-gray-500 text-xs whitespace-nowrap">{formatDate(h.createdAt)}</td>
+
+                    {/* Rating */}
+                    <td className="px-5 py-4">
+                      {h.ratingAverage ? (
+                        <div className="flex items-center gap-1.5">
+                          <Stars rating={h.ratingAverage} />
+                          <span className="text-xs font-semibold text-gray-700">{Number(h.ratingAverage).toFixed(1)}</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
+                    </td>
+
+                    {/* Ngày đăng ký */}
+                    <td className="px-5 py-4 text-gray-400 text-xs whitespace-nowrap">{formatDate(h.createdAt)}</td>
+
+                    {/* Xác minh */}
                     <td className="px-5 py-4">
                       {h.isVerified ? (
-                        <span className="flex items-center gap-1 text-green-600 text-xs font-semibold">
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                          Đã xác minh
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-emerald-400/10 text-emerald-400 border border-emerald-400/20 px-2 py-0.5 rounded">
+                          ✓ Đã xác minh
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1 text-yellow-600 text-xs font-semibold">
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                          </svg>
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-yellow-400/10 text-yellow-300 border border-yellow-400/20 px-2 py-0.5 rounded">
                           Chờ duyệt
                         </span>
                       )}
                     </td>
+
+                    {/* Trạng thái */}
                     <td className="px-5 py-4">
-                      <span className={`badge text-xs ${h.isActive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
-                        {h.isActive ? '● Hoạt động' : '● Đã khóa'}
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium ${h.isActive ? 'bg-emerald-400/10 text-emerald-400 border border-emerald-400/20' : 'bg-red-400/10 text-red-400 border border-red-400/20'}`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                        {h.isActive ? 'Hoạt động' : 'Đã khóa'}
                       </span>
                     </td>
+
+                    {/* Actions */}
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => setSelectedHelperId(h.helperId)}
-                          className="text-xs px-3 py-1.5 rounded-xl border border-blue-200 text-blue-600 hover:bg-blue-50 font-semibold transition-all"
+                          className="text-xs px-3 py-1.5 rounded-md border border-[#5e6ad2]/20 text-[#828fff] hover:bg-[#5e6ad2]/10 font-semibold transition-colors"
                         >
-                          Xem
+                          Xem hồ sơ
                         </button>
                         {!h.isVerified && (
                           <button
                             onClick={() => handleVerify(h.helperId)}
-                            className="text-xs px-3 py-1.5 rounded-xl border border-green-200 text-green-600 hover:bg-green-50 font-semibold transition-all"
+                            className="text-xs px-3 py-1.5 rounded-md border border-emerald-400/20 text-emerald-400 hover:bg-emerald-400/10 font-semibold transition-colors"
                           >
-                            Xác minh
+                            Duyệt
                           </button>
                         )}
                         <button
                           onClick={() => handleToggle(h.userId, h.isActive)}
-                          className={`text-xs px-3 py-1.5 rounded-xl border font-semibold transition-all ${
+                          className={`text-xs px-3 py-1.5 rounded-md border font-semibold transition-colors ${
                             h.isActive
-                              ? 'border-red-200 text-red-500 hover:bg-red-50'
-                              : 'border-green-200 text-green-600 hover:bg-green-50'
+                              ? 'border-red-400/20 text-red-400 hover:bg-red-400/10'
+                              : 'border-emerald-400/20 text-emerald-400 hover:bg-emerald-400/10'
                           }`}
                         >
                           {h.isActive ? 'Khóa' : 'Mở khóa'}
                         </button>
                         <button
                           onClick={() => handleDelete(h.userId, h.fullName)}
-                          className="text-xs px-3 py-1.5 rounded-xl border border-red-300 text-red-600 hover:bg-red-50 font-semibold transition-all"
+                          className="text-xs px-3 py-1.5 rounded-md border font-semibold text-red-500 border-red-500/20 hover:bg-red-500/10 transition-colors"
                         >
                           Xóa
                         </button>
@@ -486,43 +527,58 @@ export default function AdminHelpersPage() {
             </table>
           </div>
 
-          {/* Mobile */}
-          <div className="md:hidden divide-y divide-gray-50">
+          {/* Mobile cards */}
+          <div className="md:hidden divide-y divide-gray-200">
             {helpers.map((h) => (
-              <div key={h.userId} className="px-4 py-4">
+              <div
+                key={h.userId}
+                className={`px-4 py-4 ${!h.isVerified && h.isActive ? 'bg-yellow-400/5' : ''}`}
+              >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <Avatar name={h.fullName} avatarUrl={h.avatarUrl} size="md" />
-                    <div>
+                    <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <p className="font-semibold text-gray-900 text-sm">{h.fullName}</p>
-                        {isNew(h.createdAt) && <span className="bg-green-100 text-green-700 text-xs font-bold px-1.5 py-0.5 rounded-full">Mới</span>}
+                        <p className="font-semibold text-gray-900 text-sm truncate">{h.fullName}</p>
+                        {isNew(h.createdAt) && <span className="bg-emerald-400/10 text-emerald-400 border border-emerald-400/20 text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0">Mới</span>}
                       </div>
-                      <p className="text-xs text-gray-400">{h.phone} · {h.hourlyRate ? `${Number(h.hourlyRate).toLocaleString()}đ/h` : ''}</p>
-                      <div className="flex gap-2 mt-1">
-                        <span className={`badge text-xs ${h.isVerified ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
+                      <p className="text-xs text-gray-400">{h.phone} {h.hourlyRate ? `· ${Number(h.hourlyRate).toLocaleString('vi-VN')}đ/h` : ''}</p>
+                      <div className="flex gap-1.5 mt-1 flex-wrap">
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${h.isVerified ? 'bg-emerald-400/10 text-emerald-400 border border-emerald-400/20' : 'bg-yellow-400/10 text-yellow-300 border border-yellow-400/20'}`}>
                           {h.isVerified ? 'Đã xác minh' : 'Chờ duyệt'}
                         </span>
-                        <span className={`badge text-xs ${h.isActive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${h.isActive ? 'bg-emerald-400/10 text-emerald-400 border border-emerald-400/20' : 'bg-red-400/10 text-red-400 border border-red-400/20'}`}>
                           {h.isActive ? 'Hoạt động' : 'Đã khóa'}
                         </span>
                       </div>
                     </div>
                   </div>
                   <div className="flex flex-col gap-1.5 flex-shrink-0">
-                    <button onClick={() => setSelectedHelperId(h.helperId)} className="text-xs px-2 py-1 rounded-lg border border-blue-200 text-blue-600 font-semibold">Xem</button>
+                    <button
+                      onClick={() => setSelectedHelperId(h.helperId)}
+                      className="text-xs px-2 py-1 rounded-md border border-[#5e6ad2]/20 text-[#828fff] font-semibold"
+                    >
+                      Xem
+                    </button>
                     {!h.isVerified && (
-                      <button onClick={() => handleVerify(h.helperId)} className="text-xs px-2 py-1 rounded-lg border border-green-200 text-green-600 font-semibold">Xác minh</button>
+                      <button
+                        onClick={() => handleVerify(h.helperId)}
+                        className="text-xs px-2 py-1 rounded-md border border-emerald-400/20 text-emerald-400 font-semibold"
+                      >
+                        Duyệt
+                      </button>
                     )}
                     <button
                       onClick={() => handleToggle(h.userId, h.isActive)}
-                      className={`text-xs px-2 py-1 rounded-lg border font-semibold ${h.isActive ? 'border-red-200 text-red-500' : 'border-green-200 text-green-600'}`}
+                      className={`text-xs px-2 py-1 rounded-md border font-semibold ${
+                        h.isActive ? 'border-red-400/20 text-red-400' : 'border-emerald-400/20 text-emerald-400'
+                      }`}
                     >
                       {h.isActive ? 'Khóa' : 'Mở'}
                     </button>
                     <button
                       onClick={() => handleDelete(h.userId, h.fullName)}
-                      className="text-xs px-2 py-1 rounded-lg border border-red-300 text-red-600 font-semibold"
+                      className="text-xs px-2 py-1 rounded-md border border-red-500/20 text-red-500 font-semibold"
                     >
                       Xóa
                     </button>
