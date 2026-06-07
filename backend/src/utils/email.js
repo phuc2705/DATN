@@ -31,51 +31,152 @@ const sendMail = async (toEmail, subject, html) => {
   await gmail.users.messages.send({ userId: 'me', requestBody: { raw } });
 };
 
-// Layout chung cho tất cả email
-const layout = (content) => `
-  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f9fafb; padding: 40px 20px;">
-    <div style="background: white; border-radius: 12px; padding: 40px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-      ${content}
-      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 28px 0 16px;" />
-      <p style="color: #9ca3af; font-size: 12px; margin: 0; text-align: center;">
-        CleanConnect — Dịch vụ giúp việc gia đình theo giờ
-      </p>
-    </div>
-  </div>
-`;
+// ─── HELPERS ────────────────────────────────────────────────────────────────
 
 // Badge trạng thái booking
 const statusBadge = (label, color) =>
-  `<span style="display:inline-block;background:${color}22;color:${color};border:1px solid ${color}44;border-radius:6px;padding:3px 10px;font-size:13px;font-weight:600;">${label}</span>`;
+  `<span style="display:inline-block;background:${color}1a;color:${color};border:1px solid ${color}40;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;letter-spacing:0.3px;">${label}</span>`;
+
+// Nút CTA
+const ctaButton = (text, color = '#ea580c') =>
+  `<div style="text-align:center;margin:28px 0;">
+    <a href="#" style="display:inline-block;background:${color};color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 36px;border-radius:8px;letter-spacing:0.2px;">
+      ${text}
+    </a>
+  </div>`;
 
 // Bảng thông tin booking
 const bookingTable = ({ bookingId, serviceName, bookingDate, startTime, endTime, address, totalPrice }) => `
-  <table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;">
-    <tr style="background:#f9fafb;">
-      <td style="padding:10px 14px;color:#6b7280;width:40%;">Mã đơn</td>
-      <td style="padding:10px 14px;font-weight:600;color:#1f2937;">${bookingId}</td>
-    </tr>
-    <tr>
-      <td style="padding:10px 14px;color:#6b7280;">Dịch vụ</td>
-      <td style="padding:10px 14px;font-weight:600;color:#1f2937;">${serviceName}</td>
-    </tr>
-    <tr style="background:#f9fafb;">
-      <td style="padding:10px 14px;color:#6b7280;">Ngày</td>
-      <td style="padding:10px 14px;color:#1f2937;">${bookingDate}</td>
-    </tr>
-    <tr>
-      <td style="padding:10px 14px;color:#6b7280;">Giờ</td>
-      <td style="padding:10px 14px;color:#1f2937;">${startTime} – ${endTime}</td>
-    </tr>
-    <tr style="background:#f9fafb;">
-      <td style="padding:10px 14px;color:#6b7280;">Địa chỉ</td>
-      <td style="padding:10px 14px;color:#1f2937;">${address || '—'}</td>
-    </tr>
-    ${totalPrice ? `<tr>
-      <td style="padding:10px 14px;color:#6b7280;">Tổng tiền</td>
-      <td style="padding:10px 14px;font-weight:700;color:#ea580c;">${Number(totalPrice).toLocaleString('vi-VN')}đ</td>
-    </tr>` : ''}
+  <table style="width:100%;border-collapse:collapse;margin:24px 0;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+    <thead>
+      <tr style="background:#f9fafb;">
+        <td colspan="2" style="padding:12px 16px;font-size:13px;font-weight:700;color:#374151;letter-spacing:0.5px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">
+          Chi tiết đơn hàng
+        </td>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid #f3f4f6;">
+        <td style="padding:12px 16px;color:#6b7280;width:38%;font-size:13px;">Mã đơn</td>
+        <td style="padding:12px 16px;font-weight:700;color:#111827;font-size:13px;">#${bookingId}</td>
+      </tr>
+      <tr style="background:#fafafa;border-bottom:1px solid #f3f4f6;">
+        <td style="padding:12px 16px;color:#6b7280;font-size:13px;">Dịch vụ</td>
+        <td style="padding:12px 16px;font-weight:600;color:#111827;font-size:13px;">${serviceName}</td>
+      </tr>
+      <tr style="border-bottom:1px solid #f3f4f6;">
+        <td style="padding:12px 16px;color:#6b7280;font-size:13px;">Ngày thực hiện</td>
+        <td style="padding:12px 16px;color:#111827;font-size:13px;">${bookingDate}</td>
+      </tr>
+      <tr style="background:#fafafa;border-bottom:1px solid #f3f4f6;">
+        <td style="padding:12px 16px;color:#6b7280;font-size:13px;">Thời gian</td>
+        <td style="padding:12px 16px;color:#111827;font-size:13px;">${startTime} – ${endTime}</td>
+      </tr>
+      <tr${totalPrice ? ' style="border-bottom:1px solid #f3f4f6;"' : ''}>
+        <td style="padding:12px 16px;color:#6b7280;font-size:13px;">Địa chỉ</td>
+        <td style="padding:12px 16px;color:#111827;font-size:13px;">${address || '—'}</td>
+      </tr>
+      ${totalPrice ? `
+      <tr style="background:#fffbf5;">
+        <td style="padding:14px 16px;color:#6b7280;font-size:13px;font-weight:600;">Tổng tiền</td>
+        <td style="padding:14px 16px;font-weight:800;color:#ea580c;font-size:16px;">${Number(totalPrice).toLocaleString('vi-VN')}đ</td>
+      </tr>` : ''}
+    </tbody>
   </table>
+`;
+
+// Layout chuẩn chuyên nghiệp (header + body + footer)
+const layout = (content, accentColor = '#ea580c') => `
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="margin:0;padding:0;background-color:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+          <!-- ── HEADER ── -->
+          <tr>
+            <td style="background:${accentColor};border-radius:12px 12px 0 0;padding:28px 40px;text-align:center;">
+              <span style="font-size:24px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;text-decoration:none;">
+                Clean<span style="color:${accentColor === '#ea580c' ? '#fed7aa' : '#bbf7d0'}">Connect</span>
+              </span>
+              <p style="margin:6px 0 0;font-size:12px;color:${accentColor === '#ea580c' ? '#fdba74' : '#86efac'};letter-spacing:0.5px;">
+                DỊCH VỤ GIÚP VIỆC GIA ĐÌNH THEO GIỜ
+              </p>
+            </td>
+          </tr>
+
+          <!-- ── BODY ── -->
+          <tr>
+            <td style="background:#ffffff;padding:40px 40px 32px;border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb;">
+              ${content}
+            </td>
+          </tr>
+
+          <!-- ── FOOTER ── -->
+          <tr>
+            <td style="background:#f8fafc;border-radius:0 0 12px 12px;border:1px solid #e5e7eb;border-top:1px solid #e5e7eb;padding:24px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="text-align:center;padding-bottom:12px;">
+                    <span style="font-size:14px;font-weight:700;color:#374151;">Clean<span style="color:${accentColor}">Connect</span></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="text-align:center;padding-bottom:10px;">
+                    <span style="font-size:12px;color:#9ca3af;">Hà Nội, Việt Nam</span>
+                    <span style="font-size:12px;color:#d1d5db;margin:0 8px;">|</span>
+                    <a href="mailto:phuc9cham@gmail.com" style="font-size:12px;color:${accentColor};text-decoration:none;">phuc9cham@gmail.com</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <p style="margin:0 0 6px;font-size:11px;color:#9ca3af;text-align:center;line-height:1.6;">
+                      Đây là email tự động từ hệ thống CleanConnect. Vui lòng không trả lời trực tiếp email này.
+                    </p>
+                    <p style="margin:0;font-size:11px;color:#9ca3af;text-align:center;">
+                      © 2025 CleanConnect. Bảo lưu mọi quyền.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
+// Hero section (icon + tiêu đề lớn + phụ đề)
+const hero = (icon, title, subtitle, accentColor = '#ea580c') => `
+  <div style="text-align:center;padding:8px 0 32px;">
+    <div style="display:inline-block;background:${accentColor}1a;border-radius:50%;width:64px;height:64px;line-height:64px;font-size:30px;margin-bottom:16px;">
+      ${icon}
+    </div>
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:800;color:#111827;line-height:1.3;">${title}</h1>
+    ${subtitle ? `<p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">${subtitle}</p>` : ''}
+  </div>
+  <hr style="border:none;border-top:1px solid #f3f4f6;margin:0 0 28px;" />
+`;
+
+// Lời chào + phần đóng chuẩn
+const greeting = (name) =>
+  `<p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">Kính gửi <strong style="color:#111827;">${name}</strong>,</p>`;
+
+const closing = () => `
+  <p style="margin:28px 0 0;font-size:14px;color:#6b7280;line-height:1.6;">
+    Trân trọng,<br />
+    <strong style="color:#374151;">Đội ngũ CleanConnect</strong>
+  </p>
 `;
 
 // ─── OTP ────────────────────────────────────────────────────────────────────
@@ -83,31 +184,217 @@ const bookingTable = ({ bookingId, serviceName, bookingDate, startTime, endTime,
 const sendOtpEmail = async (toEmail, otpCode, fullName, purpose = 'register') => {
   const isReset = purpose === 'reset';
   const subject = isReset
-    ? '[CleanConnect] Mã đặt lại mật khẩu'
-    : '[CleanConnect] Mã xác nhận đăng ký tài khoản';
-  const description = isReset
-    ? `Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Vui lòng sử dụng mã OTP bên dưới để xác nhận:`
-    : `Cảm ơn bạn đã đăng ký tài khoản tại <strong style="color: #ea580c;">CleanConnect</strong>. Vui lòng sử dụng mã OTP bên dưới để xác nhận đăng ký:`;
-  const cautionText = isReset
-    ? '⚠️ Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này và bảo mật tài khoản.'
-    : '⚠️ Không chia sẻ mã này với bất kỳ ai. CleanConnect sẽ không bao giờ hỏi mã OTP của bạn.';
+    ? '[CleanConnect] Yêu cầu đặt lại mật khẩu'
+    : '[CleanConnect] Xác minh địa chỉ email của bạn';
 
   const html = layout(`
-    <h2 style="color: #1f2937; margin-top: 0;">Xin chào <strong>${fullName}</strong>,</h2>
-    <p style="color: #4b5563; line-height: 1.6;">${description}</p>
-    <div style="text-align: center; margin: 32px 0;">
-      <div style="display: inline-block; background: #fff7ed; border: 2px dashed #ea580c; border-radius: 12px; padding: 20px 40px;">
-        <span style="font-size: 40px; font-weight: bold; letter-spacing: 10px; color: #ea580c;">${otpCode}</span>
-      </div>
-      <p style="color: #6b7280; margin-top: 12px; font-size: 14px;">Mã có hiệu lực trong <strong>5 phút</strong></p>
+    ${hero(
+      isReset ? '🔐' : '✉️',
+      isReset ? 'Đặt lại mật khẩu' : 'Xác minh email của bạn',
+      isReset
+        ? 'Chúng tôi nhận được yêu cầu đặt lại mật khẩu từ tài khoản của bạn'
+        : 'Vui lòng nhập mã xác minh bên dưới để hoàn tất đăng ký'
+    )}
+    ${greeting(fullName)}
+    <p style="margin:0 0 24px;font-size:15px;color:#4b5563;line-height:1.7;">
+      ${isReset
+        ? 'Bạn (hoặc ai đó) vừa yêu cầu đặt lại mật khẩu cho tài khoản CleanConnect liên kết với địa chỉ email này. Sử dụng mã OTP bên dưới để tiếp tục.'
+        : 'Cảm ơn bạn đã đăng ký tài khoản tại <strong>CleanConnect</strong>. Để kích hoạt tài khoản, vui lòng nhập mã xác minh bên dưới vào ứng dụng.'}
+    </p>
+
+    <!-- OTP Box -->
+    <div style="background:#f8fafc;border:2px dashed #e2e8f0;border-radius:12px;padding:32px;text-align:center;margin:24px 0;">
+      <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#9ca3af;letter-spacing:2px;text-transform:uppercase;">Mã xác minh của bạn</p>
+      <div style="font-size:44px;font-weight:900;letter-spacing:14px;color:#ea580c;font-family:'Courier New',monospace;line-height:1.2;">${otpCode}</div>
+      <p style="margin:12px 0 0;font-size:13px;color:#9ca3af;">
+        Mã có hiệu lực trong <strong style="color:#ef4444;">5 phút</strong>
+      </p>
     </div>
-    <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 12px 16px; border-radius: 4px; margin-bottom: 24px;">
-      <p style="margin: 0; color: #991b1b; font-size: 14px;">${cautionText}</p>
-    </div>
-    <p style="color: #6b7280; font-size: 14px;">Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này.</p>
+
+    <!-- Warning -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
+      <tr>
+        <td style="background:#fef2f2;border-left:4px solid #ef4444;border-radius:0 8px 8px 0;padding:14px 18px;">
+          <p style="margin:0;font-size:13px;color:#991b1b;line-height:1.6;">
+            <strong>⚠️ Lưu ý bảo mật:</strong>
+            ${isReset
+              ? ' Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email này và đổi mật khẩu ngay lập tức.'
+              : ' Không chia sẻ mã này với bất kỳ ai. Nhân viên CleanConnect sẽ không bao giờ hỏi mã OTP của bạn.'}
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    ${closing()}
   `);
 
   await sendMail(toEmail, subject, html);
+};
+
+// ─── TÀI KHOẢN ──────────────────────────────────────────────────────────────
+
+// Khách hàng: chào mừng sau khi xác minh OTP thành công
+const sendCustomerWelcomeEmail = async (toEmail, fullName) => {
+  const html = layout(`
+    ${hero('🎉', 'Chào mừng đến với CleanConnect!', 'Tài khoản của bạn đã được kích hoạt thành công')}
+    ${greeting(fullName)}
+    <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
+      Chúng tôi rất vui khi có bạn trong cộng đồng CleanConnect. Tài khoản của bạn đã sẵn sàng — bạn có thể bắt đầu đặt lịch dịch vụ ngay bây giờ.
+    </p>
+
+    <!-- Tính năng nổi bật -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;">
+      <tr style="background:#fff7ed;">
+        <td colspan="2" style="padding:12px 16px;border-bottom:1px solid #fed7aa;">
+          <p style="margin:0;font-size:13px;font-weight:700;color:#92400e;letter-spacing:0.5px;text-transform:uppercase;">Dịch vụ của chúng tôi</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:13px 16px;border-bottom:1px solid #f3f4f6;font-size:14px;color:#374151;width:50%;">🧹 Dọn dẹp nhà cửa</td>
+        <td style="padding:13px 16px;border-bottom:1px solid #f3f4f6;font-size:14px;color:#374151;">👕 Giặt ủi quần áo</td>
+      </tr>
+      <tr style="background:#fafafa;">
+        <td style="padding:13px 16px;border-bottom:1px solid #f3f4f6;font-size:14px;color:#374151;">🍳 Nấu ăn theo yêu cầu</td>
+        <td style="padding:13px 16px;border-bottom:1px solid #f3f4f6;font-size:14px;color:#374151;">👶 Chăm sóc trẻ em</td>
+      </tr>
+      <tr>
+        <td style="padding:13px 16px;font-size:14px;color:#374151;">👴 Chăm sóc người cao tuổi</td>
+        <td style="padding:13px 16px;font-size:14px;color:#374151;">🏢 Vệ sinh công nghiệp</td>
+      </tr>
+    </table>
+
+    <!-- Cam kết -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
+      <tr>
+        <td style="background:#fff7ed;border-left:4px solid #ea580c;border-radius:0 8px 8px 0;padding:16px 18px;">
+          <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#c2410c;">Cam kết của CleanConnect</p>
+          <p style="margin:0;font-size:13px;color:#78350f;line-height:1.7;">
+            ✔ Người giúp việc được xác minh CCCD &nbsp;·&nbsp; ✔ Thanh toán minh bạch &nbsp;·&nbsp; ✔ Đánh giá 2 chiều
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    ${ctaButton('Đặt lịch ngay', '#ea580c')}
+    ${closing()}
+  `);
+  await sendMail(toEmail, '[CleanConnect] Chào mừng bạn – Tài khoản đã được kích hoạt!', html).catch(() => {});
+};
+
+// Helper: đăng ký xong, đang chờ admin duyệt
+const sendHelperPendingEmail = async (toEmail, fullName) => {
+  const html = layout(`
+    ${hero('📋', 'Hồ sơ đang chờ xét duyệt', 'Cảm ơn bạn đã đăng ký làm người giúp việc tại CleanConnect', '#16a34a')}
+    ${greeting(fullName)}
+    <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
+      Chúng tôi đã nhận được hồ sơ đăng ký của bạn và đang tiến hành xem xét. Đội ngũ CleanConnect sẽ kiểm tra thông tin và phản hồi trong thời gian sớm nhất.
+    </p>
+
+    <!-- Quy trình -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;border:1px solid #d1fae5;border-radius:10px;overflow:hidden;">
+      <tr style="background:#ecfdf5;">
+        <td colspan="2" style="padding:12px 16px;border-bottom:1px solid #a7f3d0;">
+          <p style="margin:0;font-size:13px;font-weight:700;color:#065f46;letter-spacing:0.5px;text-transform:uppercase;">Quy trình xét duyệt</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:14px 16px;border-bottom:1px solid #f0fdf4;width:40px;vertical-align:top;">
+          <div style="background:#16a34a;color:#fff;border-radius:50%;width:24px;height:24px;line-height:24px;text-align:center;font-size:12px;font-weight:700;">1</div>
+        </td>
+        <td style="padding:14px 16px 14px 0;border-bottom:1px solid #f0fdf4;font-size:14px;color:#374151;">
+          <strong>Kiểm tra hồ sơ</strong><br />
+          <span style="color:#6b7280;font-size:13px;">Đội ngũ xem xét thông tin cá nhân, CCCD và kinh nghiệm của bạn</span>
+        </td>
+      </tr>
+      <tr style="background:#fafafa;">
+        <td style="padding:14px 16px;border-bottom:1px solid #f0fdf4;vertical-align:top;">
+          <div style="background:#16a34a;color:#fff;border-radius:50%;width:24px;height:24px;line-height:24px;text-align:center;font-size:12px;font-weight:700;">2</div>
+        </td>
+        <td style="padding:14px 16px 14px 0;border-bottom:1px solid #f0fdf4;font-size:14px;color:#374151;">
+          <strong>Thời gian xét duyệt</strong><br />
+          <span style="color:#6b7280;font-size:13px;">Thường mất <strong style="color:#16a34a;">1–2 ngày làm việc</strong> kể từ khi nhận hồ sơ</span>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:14px 16px;vertical-align:top;">
+          <div style="background:#16a34a;color:#fff;border-radius:50%;width:24px;height:24px;line-height:24px;text-align:center;font-size:12px;font-weight:700;">3</div>
+        </td>
+        <td style="padding:14px 16px 14px 0;font-size:14px;color:#374151;">
+          <strong>Thông báo kết quả</strong><br />
+          <span style="color:#6b7280;font-size:13px;">Bạn sẽ nhận được email ngay khi hồ sơ được phê duyệt hoặc cần bổ sung</span>
+        </td>
+      </tr>
+    </table>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
+      <tr>
+        <td style="background:#f0fdf4;border-left:4px solid #16a34a;border-radius:0 8px 8px 0;padding:14px 18px;">
+          <p style="margin:0;font-size:13px;color:#166534;line-height:1.6;">
+            Nếu bạn có câu hỏi trong thời gian chờ xét duyệt, vui lòng liên hệ chúng tôi qua email <a href="mailto:phuc9cham@gmail.com" style="color:#16a34a;font-weight:600;">phuc9cham@gmail.com</a>.
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    ${closing()}
+  `, '#16a34a');
+  await sendMail(toEmail, '[CleanConnect] Hồ sơ của bạn đang được xét duyệt', html).catch(() => {});
+};
+
+// Helper: được admin phê duyệt
+const sendHelperApprovedEmail = async (toEmail, fullName) => {
+  const html = layout(`
+    ${hero('✅', 'Hồ sơ đã được phê duyệt!', 'Chúc mừng! Bạn đã chính thức trở thành người giúp việc của CleanConnect', '#16a34a')}
+    ${greeting(fullName)}
+    <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
+      Chúng tôi vui mừng thông báo rằng hồ sơ đăng ký làm người giúp việc của bạn đã được <strong style="color:#16a34a;">xét duyệt thành công</strong>. Bạn có thể đăng nhập và bắt đầu nhận đơn ngay từ bây giờ.
+    </p>
+
+    <!-- Hướng dẫn bắt đầu -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;border:1px solid #d1fae5;border-radius:10px;overflow:hidden;">
+      <tr style="background:#ecfdf5;">
+        <td colspan="2" style="padding:12px 16px;border-bottom:1px solid #a7f3d0;">
+          <p style="margin:0;font-size:13px;font-weight:700;color:#065f46;letter-spacing:0.5px;text-transform:uppercase;">Bắt đầu ngay hôm nay</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:14px 16px;border-bottom:1px solid #f0fdf4;width:32px;vertical-align:top;font-size:18px;">🔑</td>
+        <td style="padding:14px 16px 14px 0;border-bottom:1px solid #f0fdf4;font-size:14px;color:#374151;">
+          <strong>Đăng nhập tài khoản</strong><br />
+          <span style="color:#6b7280;font-size:13px;">Dùng email và mật khẩu đã đăng ký để đăng nhập vào CleanConnect</span>
+        </td>
+      </tr>
+      <tr style="background:#fafafa;">
+        <td style="padding:14px 16px;border-bottom:1px solid #f0fdf4;font-size:18px;vertical-align:top;">⚙️</td>
+        <td style="padding:14px 16px 14px 0;border-bottom:1px solid #f0fdf4;font-size:14px;color:#374151;">
+          <strong>Hoàn thiện hồ sơ</strong><br />
+          <span style="color:#6b7280;font-size:13px;">Cập nhật ảnh đại diện, mô tả kinh nghiệm và bật trạng thái sẵn sàng nhận việc</span>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:14px 16px;font-size:18px;vertical-align:top;">📦</td>
+        <td style="padding:14px 16px 14px 0;font-size:14px;color:#374151;">
+          <strong>Nhận đơn đầu tiên</strong><br />
+          <span style="color:#6b7280;font-size:13px;">Theo dõi bảng việc làm và nhận đơn phù hợp với lịch của bạn</span>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Thu nhập -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;">
+      <tr>
+        <td style="padding:20px;text-align:center;">
+          <p style="margin:0 0 6px;font-size:13px;color:#6b7280;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">Thu nhập tham khảo</p>
+          <p style="margin:0;font-size:28px;font-weight:900;color:#16a34a;line-height:1.2;">65.000 – 95.000đ</p>
+          <p style="margin:4px 0 0;font-size:13px;color:#6b7280;">mỗi giờ làm việc</p>
+        </td>
+      </tr>
+    </table>
+
+    ${ctaButton('Đăng nhập và nhận việc ngay', '#16a34a')}
+    ${closing()}
+  `, '#16a34a');
+  await sendMail(toEmail, '[CleanConnect] Chúc mừng! Hồ sơ của bạn đã được phê duyệt', html).catch(() => {});
 };
 
 // ─── BOOKING NOTIFICATIONS ────────────────────────────────────────────────────
@@ -115,194 +402,288 @@ const sendOtpEmail = async (toEmail, otpCode, fullName, purpose = 'register') =>
 // Khách hàng: xác nhận đặt lịch thành công
 const sendBookingCreatedEmail = async (toEmail, customerName, booking) => {
   const html = layout(`
-    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${customerName}</strong>,</h2>
-    <p style="color:#4b5563;line-height:1.6;">
-      Đơn đặt lịch của bạn đã được ghi nhận thành công.
-      Chúng tôi sẽ thông báo ngay khi có người giúp việc xác nhận nhận đơn.
+    ${hero('📅', 'Đặt lịch thành công!', `Chúng tôi đã nhận đơn #${booking.bookingId} của bạn`)}
+    ${greeting(customerName)}
+    <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
+      Đơn đặt lịch của bạn đã được ghi nhận thành công. Chúng tôi đang tìm kiếm người giúp việc phù hợp và sẽ thông báo ngay khi có người xác nhận nhận đơn.
     </p>
     ${bookingTable(booking)}
-    <p style="color:#6b7280;font-size:14px;">Bạn có thể theo dõi trạng thái đơn hàng trên trang web CleanConnect.</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
+      <tr>
+        <td style="background:#fff7ed;border-left:4px solid #ea580c;border-radius:0 8px 8px 0;padding:14px 18px;">
+          <p style="margin:0;font-size:13px;color:#92400e;line-height:1.6;">
+            💡 Bạn có thể theo dõi trạng thái đơn hàng và nhận thông báo cập nhật trong mục <strong>Lịch sử đặt lịch</strong> trên CleanConnect.
+          </p>
+        </td>
+      </tr>
+    </table>
+    ${closing()}
   `);
-  await sendMail(toEmail, `[CleanConnect] Đặt lịch thành công – Đơn ${booking.bookingId}`, html).catch(() => {});
+  await sendMail(toEmail, `[CleanConnect] Xác nhận đặt lịch – Đơn #${booking.bookingId}`, html).catch(() => {});
 };
 
 // Khách hàng: helper đã xác nhận nhận đơn
 const sendBookingConfirmedEmail = async (toEmail, customerName, booking, helperName) => {
   const html = layout(`
-    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${customerName}</strong>,</h2>
-    <p style="color:#4b5563;line-height:1.6;">
-      Tin vui! Người giúp việc <strong style="color:#16a34a;">${helperName}</strong>
-      đã xác nhận nhận đơn của bạn. ${statusBadge('Đã xác nhận', '#16a34a')}
+    ${hero('✅', 'Đơn hàng đã được xác nhận', `${helperName} sẽ thực hiện dịch vụ cho bạn`)}
+    ${greeting(customerName)}
+    <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
+      Tin vui! Người giúp việc <strong style="color:#16a34a;">${helperName}</strong> đã xác nhận nhận đơn của bạn.
+      ${statusBadge('Đã xác nhận', '#16a34a')}
     </p>
     ${bookingTable(booking)}
-    <p style="color:#6b7280;font-size:14px;">Vui lòng chuẩn bị sẵn để đón tiếp người giúp việc đúng giờ.</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
+      <tr>
+        <td style="background:#f0fdf4;border-left:4px solid #16a34a;border-radius:0 8px 8px 0;padding:14px 18px;">
+          <p style="margin:0;font-size:13px;color:#166534;line-height:1.6;">
+            📍 Vui lòng có mặt tại địa chỉ đã đăng ký để đón tiếp người giúp việc đúng giờ hẹn.
+          </p>
+        </td>
+      </tr>
+    </table>
+    ${closing()}
   `);
-  await sendMail(toEmail, `[CleanConnect] Đơn ${booking.bookingId} đã được xác nhận`, html).catch(() => {});
+  await sendMail(toEmail, `[CleanConnect] Đơn #${booking.bookingId} đã được xác nhận`, html).catch(() => {});
 };
 
 // Khách hàng: helper đã check-in (đang làm việc)
 const sendCheckinEmail = async (toEmail, customerName, booking, helperName) => {
   const html = layout(`
-    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${customerName}</strong>,</h2>
-    <p style="color:#4b5563;line-height:1.6;">
-      <strong style="color:#2563eb;">${helperName}</strong> đã check-in và bắt đầu công việc tại nhà bạn.
+    ${hero('🔄', 'Dịch vụ đang được thực hiện', `${helperName} đã check-in và bắt đầu công việc`, '#2563eb')}
+    ${greeting(customerName)}
+    <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
+      Người giúp việc <strong style="color:#2563eb;">${helperName}</strong> đã check-in thành công và đang thực hiện công việc tại nhà bạn.
       ${statusBadge('Đang thực hiện', '#2563eb')}
     </p>
     ${bookingTable(booking)}
-  `);
-  await sendMail(toEmail, `[CleanConnect] Đơn ${booking.bookingId} đang được thực hiện`, html).catch(() => {});
+    ${closing()}
+  `, '#2563eb');
+  await sendMail(toEmail, `[CleanConnect] Đơn #${booking.bookingId} – Đang thực hiện`, html).catch(() => {});
 };
 
 // Khách hàng: hoàn thành công việc
 const sendCompletedEmail = async (toEmail, customerName, booking, helperName) => {
   const html = layout(`
-    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${customerName}</strong>,</h2>
-    <p style="color:#4b5563;line-height:1.6;">
-      <strong>${helperName}</strong> đã hoàn thành công việc. ${statusBadge('Hoàn thành', '#16a34a')}
+    ${hero('⭐', 'Dịch vụ đã hoàn thành!', 'Cảm ơn bạn đã sử dụng dịch vụ CleanConnect', '#16a34a')}
+    ${greeting(customerName)}
+    <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
+      <strong>${helperName}</strong> đã hoàn thành công việc cho bạn.
+      ${statusBadge('Hoàn thành', '#16a34a')}
+      Hy vọng bạn hài lòng với chất lượng dịch vụ lần này.
     </p>
     ${bookingTable(booking)}
-    <div style="background:#f0fdf4;border-left:4px solid #16a34a;padding:12px 16px;border-radius:4px;margin-top:8px;">
-      <p style="margin:0;color:#15803d;font-size:14px;">
-        Hãy để lại đánh giá để giúp chúng tôi cải thiện dịch vụ nhé! ⭐
-      </p>
-    </div>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;background:#fffbf5;border:1px solid #fed7aa;border-radius:10px;">
+      <tr>
+        <td style="padding:20px;text-align:center;">
+          <p style="margin:0 0 8px;font-size:15px;color:#92400e;font-weight:600;">Đánh giá trải nghiệm của bạn</p>
+          <p style="margin:0 0 16px;font-size:13px;color:#a16207;line-height:1.5;">Phản hồi của bạn giúp chúng tôi cải thiện chất lượng dịch vụ và hỗ trợ người giúp việc tốt hơn.</p>
+          ${ctaButton('Để lại đánh giá ngay ⭐', '#ea580c')}
+        </td>
+      </tr>
+    </table>
+    ${closing()}
   `);
-  await sendMail(toEmail, `[CleanConnect] Đơn ${booking.bookingId} đã hoàn thành`, html).catch(() => {});
+  await sendMail(toEmail, `[CleanConnect] Dịch vụ hoàn thành – Đơn #${booking.bookingId}`, html).catch(() => {});
 };
 
 // Thông báo hủy đơn (gửi cho bên bị ảnh hưởng)
 const sendCancelledEmail = async (toEmail, recipientName, booking, cancelledBy) => {
   const html = layout(`
-    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${recipientName}</strong>,</h2>
-    <p style="color:#4b5563;line-height:1.6;">
-      Đơn hàng dưới đây đã bị hủy bởi <strong>${cancelledBy}</strong>.
+    ${hero('❌', 'Đơn hàng đã bị hủy', `Đơn #${booking.bookingId} đã bị hủy bởi ${cancelledBy}`, '#dc2626')}
+    ${greeting(recipientName)}
+    <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
+      Chúng tôi xin thông báo rằng đơn hàng dưới đây đã được hủy bởi <strong>${cancelledBy}</strong>.
       ${statusBadge('Đã hủy', '#dc2626')}
     </p>
     ${bookingTable(booking)}
-    <p style="color:#6b7280;font-size:14px;">Nếu bạn có thắc mắc, vui lòng liên hệ hỗ trợ CleanConnect.</p>
-  `);
-  await sendMail(toEmail, `[CleanConnect] Đơn ${booking.bookingId} đã bị hủy`, html).catch(() => {});
-};
-
-// Helper: được giao đơn (admin assign)
-const sendHelperAssignedEmail = async (toEmail, helperName, booking) => {
-  const html = layout(`
-    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${helperName}</strong>,</h2>
-    <p style="color:#4b5563;line-height:1.6;">
-      Bạn vừa được Admin giao một đơn hàng mới. Vui lòng vào ứng dụng để xác nhận.
-    </p>
-    ${bookingTable(booking)}
-    <div style="background:#eff6ff;border-left:4px solid #2563eb;padding:12px 16px;border-radius:4px;margin-top:8px;">
-      <p style="margin:0;color:#1d4ed8;font-size:14px;">
-        Hãy đăng nhập vào CleanConnect để xác nhận và xem chi tiết đơn.
-      </p>
-    </div>
-  `);
-  await sendMail(toEmail, `[CleanConnect] Bạn có đơn mới – ${booking.bookingId}`, html).catch(() => {});
-};
-
-// Helper: tự xác nhận nhận đơn thành công
-const sendHelperConfirmedEmail = async (toEmail, helperName, booking, customerName) => {
-  const html = layout(`
-    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${helperName}</strong>,</h2>
-    <p style="color:#4b5563;line-height:1.6;">
-      Bạn đã xác nhận nhận đơn của khách hàng <strong>${customerName}</strong>.
-      ${statusBadge('Đã xác nhận', '#16a34a')}
-    </p>
-    ${bookingTable(booking)}
-    <div style="background:#f0fdf4;border-left:4px solid #16a34a;padding:12px 16px;border-radius:4px;margin-top:8px;">
-      <p style="margin:0;color:#15803d;font-size:14px;">
-        Vui lòng có mặt đúng giờ tại địa điểm và nhớ check-in khi đến nơi.
-      </p>
-    </div>
-  `);
-  await sendMail(toEmail, `[CleanConnect] Xác nhận nhận đơn ${booking.bookingId} thành công`, html).catch(() => {});
-};
-
-// Helper: hoàn thành công việc
-const sendHelperCompletedEmail = async (toEmail, helperName, booking, customerName) => {
-  const html = layout(`
-    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${helperName}</strong>,</h2>
-    <p style="color:#4b5563;line-height:1.6;">
-      Bạn đã hoàn thành công việc cho khách hàng <strong>${customerName}</strong>.
-      ${statusBadge('Hoàn thành', '#16a34a')}
-    </p>
-    ${bookingTable(booking)}
-    ${booking.totalPrice ? `
-    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin-top:12px;text-align:center;">
-      <p style="margin:0 0 4px;color:#6b7280;font-size:13px;">Thu nhập từ đơn này</p>
-      <p style="margin:0;font-size:24px;font-weight:700;color:#16a34a;">${Number(booking.totalPrice).toLocaleString('vi-VN')}đ</p>
-    </div>` : ''}
-    <p style="color:#6b7280;font-size:14px;margin-top:16px;">Cảm ơn bạn đã cống hiến dịch vụ chất lượng!</p>
-  `);
-  await sendMail(toEmail, `[CleanConnect] Hoàn thành đơn ${booking.bookingId}`, html).catch(() => {});
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
+      <tr>
+        <td style="background:#fef2f2;border-left:4px solid #ef4444;border-radius:0 8px 8px 0;padding:14px 18px;">
+          <p style="margin:0;font-size:13px;color:#991b1b;line-height:1.6;">
+            Nếu bạn có thắc mắc về việc hủy đơn, vui lòng liên hệ đội ngũ hỗ trợ CleanConnect qua email <a href="mailto:phuc9cham@gmail.com" style="color:#dc2626;font-weight:600;">phuc9cham@gmail.com</a>.
+          </p>
+        </td>
+      </tr>
+    </table>
+    ${closing()}
+  `, '#dc2626');
+  await sendMail(toEmail, `[CleanConnect] Thông báo hủy đơn – Đơn #${booking.bookingId}`, html).catch(() => {});
 };
 
 // Xác nhận hủy cho chính người hủy (customer tự hủy)
 const sendCancellationReceiptEmail = async (toEmail, recipientName, booking) => {
   const html = layout(`
-    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${recipientName}</strong>,</h2>
-    <p style="color:#4b5563;line-height:1.6;">
-      Đơn hàng của bạn đã được hủy thành công. ${statusBadge('Đã hủy', '#dc2626')}
+    ${hero('🚫', 'Yêu cầu hủy đơn đã được xử lý', `Đơn #${booking.bookingId} đã được hủy theo yêu cầu của bạn`, '#6b7280')}
+    ${greeting(recipientName)}
+    <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
+      Đơn hàng của bạn đã được hủy thành công theo yêu cầu.
+      ${statusBadge('Đã hủy', '#6b7280')}
     </p>
     ${bookingTable(booking)}
-    <p style="color:#6b7280;font-size:14px;">
-      Nếu bạn cần đặt lại dịch vụ, hãy vào CleanConnect và tạo đơn mới bất cứ lúc nào.
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
+      <tr>
+        <td style="background:#f9fafb;border-left:4px solid #9ca3af;border-radius:0 8px 8px 0;padding:14px 18px;">
+          <p style="margin:0;font-size:13px;color:#374151;line-height:1.6;">
+            Nếu bạn cần đặt lại dịch vụ, hãy vào CleanConnect và tạo đơn mới bất cứ lúc nào. Chúng tôi luôn sẵn sàng phục vụ bạn.
+          </p>
+        </td>
+      </tr>
+    </table>
+    ${ctaButton('Đặt lịch mới', '#ea580c')}
+    ${closing()}
+  `, '#6b7280');
+  await sendMail(toEmail, `[CleanConnect] Xác nhận hủy đơn – Đơn #${booking.bookingId}`, html).catch(() => {});
+};
+
+// ─── HELPER NOTIFICATIONS ─────────────────────────────────────────────────────
+
+// Helper: được giao đơn (admin assign)
+const sendHelperAssignedEmail = async (toEmail, helperName, booking) => {
+  const html = layout(`
+    ${hero('📦', 'Bạn có đơn hàng mới!', 'Admin đã giao đơn cho bạn. Vui lòng xác nhận sớm.', '#16a34a')}
+    ${greeting(helperName)}
+    <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
+      Admin CleanConnect vừa giao cho bạn một đơn hàng mới. Vui lòng đăng nhập vào hệ thống để xem chi tiết và xác nhận nhận đơn.
     </p>
-  `);
-  await sendMail(toEmail, `[CleanConnect] Đã hủy đơn ${booking.bookingId}`, html).catch(() => {});
+    ${bookingTable(booking)}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
+      <tr>
+        <td style="background:#eff6ff;border-left:4px solid #2563eb;border-radius:0 8px 8px 0;padding:14px 18px;">
+          <p style="margin:0;font-size:13px;color:#1e40af;line-height:1.6;">
+            📌 Hãy check-in đúng giờ khi đến địa điểm để khách hàng biết bạn đã có mặt. Đây là tiêu chí đánh giá chuyên nghiệp của bạn trên CleanConnect.
+          </p>
+        </td>
+      </tr>
+    </table>
+    ${ctaButton('Xem chi tiết đơn hàng', '#16a34a')}
+    ${closing()}
+  `, '#16a34a');
+  await sendMail(toEmail, `[CleanConnect] Bạn được giao đơn mới – #${booking.bookingId}`, html).catch(() => {});
+};
+
+// Helper: tự xác nhận nhận đơn thành công
+const sendHelperConfirmedEmail = async (toEmail, helperName, booking, customerName) => {
+  const html = layout(`
+    ${hero('✅', 'Nhận đơn thành công!', `Bạn đã xác nhận nhận đơn của ${customerName}`, '#16a34a')}
+    ${greeting(helperName)}
+    <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
+      Bạn đã xác nhận nhận đơn của khách hàng <strong>${customerName}</strong>.
+      ${statusBadge('Đã xác nhận', '#16a34a')}
+      Vui lòng chuẩn bị và có mặt đúng giờ tại địa chỉ bên dưới.
+    </p>
+    ${bookingTable(booking)}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
+      <tr>
+        <td style="background:#f0fdf4;border-left:4px solid #16a34a;border-radius:0 8px 8px 0;padding:14px 18px;">
+          <p style="margin:0;font-size:13px;color:#166534;line-height:1.6;">
+            ⏰ Nhớ check-in trên ứng dụng khi bạn đến nơi. Nếu có vấn đề phát sinh, hãy liên hệ CleanConnect ngay lập tức.
+          </p>
+        </td>
+      </tr>
+    </table>
+    ${closing()}
+  `, '#16a34a');
+  await sendMail(toEmail, `[CleanConnect] Xác nhận nhận đơn #${booking.bookingId} thành công`, html).catch(() => {});
+};
+
+// Helper: hoàn thành công việc
+const sendHelperCompletedEmail = async (toEmail, helperName, booking, customerName) => {
+  const html = layout(`
+    ${hero('💰', 'Công việc hoàn thành!', `Cảm ơn bạn đã hoàn thành xuất sắc đơn #${booking.bookingId}`, '#16a34a')}
+    ${greeting(helperName)}
+    <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
+      Bạn đã hoàn thành công việc cho khách hàng <strong>${customerName}</strong>.
+      ${statusBadge('Hoàn thành', '#16a34a')}
+      Cảm ơn bạn đã cống hiến chất lượng dịch vụ tuyệt vời!
+    </p>
+    ${bookingTable(booking)}
+    ${booking.totalPrice ? `
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;">
+      <tr>
+        <td style="padding:20px;text-align:center;">
+          <p style="margin:0 0 4px;font-size:12px;color:#6b7280;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">Thu nhập từ đơn này</p>
+          <p style="margin:0;font-size:32px;font-weight:900;color:#16a34a;line-height:1.2;">${Number(booking.totalPrice).toLocaleString('vi-VN')}đ</p>
+          <p style="margin:6px 0 0;font-size:12px;color:#6b7280;">(Đã được cập nhật vào ví thu nhập của bạn)</p>
+        </td>
+      </tr>
+    </table>` : ''}
+    ${closing()}
+  `, '#16a34a');
+  await sendMail(toEmail, `[CleanConnect] Hoàn thành đơn #${booking.bookingId}`, html).catch(() => {});
 };
 
 // Helper: có đơn mới trên job board
 const sendNewJobEmail = async (toEmail, helperName, booking) => {
   const html = layout(`
-    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${helperName}</strong>,</h2>
-    <p style="color:#4b5563;line-height:1.6;">
-      Có một đơn <strong>${booking.serviceName}</strong> mới phù hợp với bạn đang chờ được nhận.
-      ${statusBadge('Đang chờ nhận', '#f97316')}
+    ${hero('🔔', 'Có đơn mới phù hợp với bạn!', 'Đăng nhập ngay để nhận đơn trước khi có người khác nhận', '#f97316')}
+    ${greeting(helperName)}
+    <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
+      Có một đơn <strong>${booking.serviceName}</strong> mới vừa được đăng và phù hợp với kỹ năng của bạn. Đây là cơ hội tốt để tăng thu nhập!
     </p>
     ${bookingTable(booking)}
-    <div style="background:#fff7ed;border-left:4px solid #f97316;padding:12px 16px;border-radius:4px;margin-top:8px;">
-      <p style="margin:0;color:#c2410c;font-size:14px;">
-        Đăng nhập CleanConnect ngay để nhận đơn trước khi có người khác nhận!
-      </p>
-    </div>
-  `);
-  await sendMail(toEmail, `[CleanConnect] Có đơn mới – ${booking.serviceName} (${booking.bookingDate})`, html).catch(() => {});
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
+      <tr>
+        <td style="background:#fff7ed;border-left:4px solid #f97316;border-radius:0 8px 8px 0;padding:14px 18px;">
+          <p style="margin:0;font-size:13px;color:#c2410c;line-height:1.6;">
+            ⚡ Đơn này có thể được nhận bởi người khác bất cứ lúc nào. Đăng nhập ngay để không bỏ lỡ cơ hội!
+          </p>
+        </td>
+      </tr>
+    </table>
+    ${ctaButton('Nhận đơn ngay', '#f97316')}
+    ${closing()}
+  `, '#f97316');
+  await sendMail(toEmail, `[CleanConnect] Đơn mới – ${booking.serviceName} ngày ${booking.bookingDate}`, html).catch(() => {});
 };
 
 // Khách hàng: helper đã tự nhận đơn từ job board
 const sendJobAcceptedEmail = async (toEmail, customerName, booking, helperName) => {
   const html = layout(`
-    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${customerName}</strong>,</h2>
-    <p style="color:#4b5563;line-height:1.6;">
-      Người giúp việc <strong style="color:#16a34a;">${helperName}</strong> đã nhận đơn của bạn.
+    ${hero('✅', 'Đơn hàng đã được nhận!', `${helperName} sẽ thực hiện dịch vụ cho bạn`)}
+    ${greeting(customerName)}
+    <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
+      Người giúp việc <strong style="color:#16a34a;">${helperName}</strong> đã nhận đơn của bạn và xác nhận thực hiện.
       ${statusBadge('Đã xác nhận', '#16a34a')}
     </p>
     ${bookingTable(booking)}
-    <p style="color:#6b7280;font-size:14px;">Vui lòng có mặt tại nhà để đón người giúp việc đúng giờ.</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
+      <tr>
+        <td style="background:#f0fdf4;border-left:4px solid #16a34a;border-radius:0 8px 8px 0;padding:14px 18px;">
+          <p style="margin:0;font-size:13px;color:#166534;line-height:1.6;">
+            📍 Vui lòng có mặt tại địa chỉ đã đặt để đón tiếp người giúp việc đúng giờ. Bạn sẽ nhận thông báo khi họ check-in.
+          </p>
+        </td>
+      </tr>
+    </table>
+    ${closing()}
   `);
-  await sendMail(toEmail, `[CleanConnect] Đơn ${booking.bookingId} đã được nhận bởi ${helperName}`, html).catch(() => {});
+  await sendMail(toEmail, `[CleanConnect] Đơn #${booking.bookingId} đã được ${helperName} nhận`, html).catch(() => {});
 };
 
 // Nhắc lịch (dùng cho cả customer và helper)
 const sendReminderEmail = async (toEmail, recipientName, booking, otherPartyName, role) => {
   const isHelper = role === 'helper';
   const html = layout(`
-    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${recipientName}</strong>,</h2>
-    <p style="color:#4b5563;line-height:1.6;">
-      Nhắc nhở: Bạn có lịch <strong>${booking.serviceName}</strong> sắp tới.
+    ${hero('⏰', 'Nhắc lịch sắp tới', `${booking.serviceName} lúc ${booking.startTime} ngày ${booking.bookingDate}`, '#2563eb')}
+    ${greeting(recipientName)}
+    <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
+      Đây là thông báo nhắc nhở về lịch <strong>${booking.serviceName}</strong> sắp diễn ra của bạn.
       ${statusBadge('Sắp diễn ra', '#2563eb')}
     </p>
     ${bookingTable(booking)}
-    <div style="background:#eff6ff;border-left:4px solid #2563eb;padding:12px 16px;border-radius:4px;margin-top:8px;">
-      <p style="margin:0;color:#1d4ed8;font-size:14px;">
-        ${isHelper
-          ? `Hãy đến đúng giờ và nhớ check-in khi tới nơi. Khách hàng: <strong>${otherPartyName}</strong>.`
-          : `Người giúp việc <strong>${otherPartyName}</strong> sẽ đến đúng giờ hẹn.`}
-      </p>
-    </div>
-  `);
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
+      <tr>
+        <td style="background:#eff6ff;border-left:4px solid #2563eb;border-radius:0 8px 8px 0;padding:14px 18px;">
+          <p style="margin:0;font-size:13px;color:#1e40af;line-height:1.6;">
+            ${isHelper
+              ? `📌 Hãy đến đúng giờ và nhớ check-in khi tới nơi. Khách hàng của bạn là <strong>${otherPartyName}</strong>.`
+              : `🙋 Người giúp việc <strong>${otherPartyName}</strong> sẽ đến theo đúng lịch hẹn. Vui lòng chuẩn bị sẵn sàng.`}
+          </p>
+        </td>
+      </tr>
+    </table>
+    ${closing()}
+  `, '#2563eb');
   await sendMail(toEmail, `[CleanConnect] Nhắc lịch – ${booking.serviceName} lúc ${booking.startTime} ngày ${booking.bookingDate}`, html).catch(() => {});
 };
 
@@ -310,124 +691,79 @@ const sendReminderEmail = async (toEmail, recipientName, booking, otherPartyName
 const sendPaymentReceivedEmail = async (toEmail, helperName, amount, bookingId) => {
   const amountStr = Number(amount).toLocaleString('vi-VN');
   const html = layout(`
-    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${helperName}</strong>,</h2>
-    <p style="color:#4b5563;line-height:1.6;">
-      Khách hàng đã xác nhận thanh toán cho đơn <strong>#${bookingId}</strong>.
+    ${hero('💳', 'Thanh toán đã được ghi nhận', `Đơn #${bookingId} – Thu nhập đã vào ví của bạn`, '#16a34a')}
+    ${greeting(helperName)}
+    <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
+      Khách hàng đã hoàn tất thanh toán cho đơn <strong>#${bookingId}</strong>. Thu nhập của bạn đã được cập nhật vào ví CleanConnect.
       ${statusBadge('Đã thanh toán', '#16a34a')}
     </p>
-    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:20px;margin:16px 0;text-align:center;">
-      <p style="margin:0 0 4px;color:#6b7280;font-size:13px;">Thu nhập nhận được</p>
-      <p style="margin:0;font-size:28px;font-weight:700;color:#16a34a;">${amountStr}đ</p>
-      <p style="margin:4px 0 0;color:#6b7280;font-size:12px;">(80% giá trị đơn sau phí nền tảng 20%)</p>
-    </div>
-    <p style="color:#6b7280;font-size:14px;">Số dư đã được cập nhật vào ví thu nhập của bạn trên CleanConnect.</p>
-  `);
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;">
+      <tr>
+        <td style="padding:28px;text-align:center;">
+          <p style="margin:0 0 6px;font-size:12px;color:#6b7280;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Thu nhập nhận được</p>
+          <p style="margin:0;font-size:38px;font-weight:900;color:#16a34a;line-height:1.2;">${amountStr}đ</p>
+          <p style="margin:8px 0 0;font-size:12px;color:#6b7280;">80% giá trị đơn hàng sau phí nền tảng 20%</p>
+        </td>
+      </tr>
+    </table>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
+      <tr>
+        <td style="background:#f0fdf4;border-left:4px solid #16a34a;border-radius:0 8px 8px 0;padding:14px 18px;">
+          <p style="margin:0;font-size:13px;color:#166534;line-height:1.6;">
+            💼 Số dư đã được cập nhật vào ví thu nhập của bạn. Bạn có thể xem chi tiết trong mục <strong>Ví thu nhập</strong> trên CleanConnect.
+          </p>
+        </td>
+      </tr>
+    </table>
+    ${closing()}
+  `, '#16a34a');
   await sendMail(toEmail, `[CleanConnect] Đã nhận thanh toán ${amountStr}đ – Đơn #${bookingId}`, html).catch(() => {});
-};
-
-// Khách hàng: đăng ký thành công (sau khi xác minh OTP)
-const sendCustomerWelcomeEmail = async (toEmail, fullName) => {
-  const html = layout(`
-    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${fullName}</strong>,</h2>
-    <p style="color:#4b5563;line-height:1.6;">
-      Chào mừng bạn đến với <strong style="color:#ea580c;">CleanConnect</strong>!
-      Tài khoản của bạn đã được kích hoạt thành công.
-    </p>
-    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:20px;margin:20px 0;text-align:center;">
-      <p style="margin:0 0 6px;font-size:20px;">🎉</p>
-      <p style="margin:0;font-size:16px;font-weight:700;color:#ea580c;">Đăng ký thành công!</p>
-      <p style="margin:6px 0 0;color:#6b7280;font-size:13px;">Bạn có thể đăng nhập và đặt lịch ngay bây giờ</p>
-    </div>
-    <div style="background:#fff7ed;border-left:4px solid #ea580c;padding:16px;border-radius:4px;margin:16px 0;">
-      <p style="margin:0 0 8px;color:#c2410c;font-size:14px;font-weight:600;">Khám phá ngay:</p>
-      <ul style="margin:0;padding-left:20px;color:#c2410c;font-size:14px;line-height:1.8;">
-        <li>Đặt lịch dọn dẹp, giặt ủi, nấu ăn và nhiều dịch vụ khác</li>
-        <li>Chọn người giúp việc được xác minh CCCD, có đánh giá thực tế</li>
-        <li>Thanh toán linh hoạt: tiền mặt hoặc VNPay</li>
-      </ul>
-    </div>
-    <p style="color:#6b7280;font-size:14px;">
-      Cảm ơn bạn đã tin tưởng CleanConnect. Chúc bạn có trải nghiệm tuyệt vời!
-    </p>
-  `);
-  await sendMail(toEmail, '[CleanConnect] Chào mừng bạn đến với CleanConnect! 🎉', html).catch(() => {});
-};
-
-// Helper: đăng ký xong, đang chờ admin duyệt
-const sendHelperPendingEmail = async (toEmail, fullName) => {
-  const html = layout(`
-    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${fullName}</strong>,</h2>
-    <p style="color:#4b5563;line-height:1.6;">
-      Cảm ơn bạn đã đăng ký trở thành người giúp việc tại <strong style="color:#16a34a;">CleanConnect</strong>.
-      Chúng tôi đã nhận được hồ sơ của bạn và đang tiến hành xét duyệt.
-    </p>
-    <div style="background:#f0fdf4;border-left:4px solid #16a34a;padding:16px;border-radius:4px;margin:20px 0;">
-      <p style="margin:0 0 8px;color:#15803d;font-size:14px;font-weight:600;">Các bước tiếp theo:</p>
-      <ol style="margin:0;padding-left:20px;color:#15803d;font-size:14px;line-height:1.8;">
-        <li>Đội ngũ CleanConnect sẽ xem xét hồ sơ của bạn</li>
-        <li>Quá trình xét duyệt thường mất <strong>1–2 ngày làm việc</strong></li>
-        <li>Bạn sẽ nhận được email thông báo kết quả ngay khi có</li>
-      </ol>
-    </div>
-    <p style="color:#6b7280;font-size:14px;">
-      Nếu bạn có câu hỏi, vui lòng liên hệ đội ngũ hỗ trợ CleanConnect.
-    </p>
-  `);
-  await sendMail(toEmail, '[CleanConnect] Hồ sơ người giúp việc đang chờ xét duyệt', html).catch(() => {});
-};
-
-// Helper: được admin phê duyệt
-const sendHelperApprovedEmail = async (toEmail, fullName) => {
-  const html = layout(`
-    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${fullName}</strong>,</h2>
-    <p style="color:#4b5563;line-height:1.6;">
-      Chúc mừng! Hồ sơ của bạn đã được <strong style="color:#16a34a;">xét duyệt thành công</strong>.
-      Bạn đã chính thức trở thành người giúp việc của <strong>CleanConnect</strong>.
-    </p>
-    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:20px;margin:20px 0;text-align:center;">
-      <p style="margin:0 0 6px;font-size:20px;">🎉</p>
-      <p style="margin:0;font-size:16px;font-weight:700;color:#16a34a;">Hồ sơ đã được duyệt!</p>
-      <p style="margin:6px 0 0;color:#6b7280;font-size:13px;">Bạn có thể đăng nhập và bắt đầu nhận đơn ngay bây giờ</p>
-    </div>
-    <div style="background:#eff6ff;border-left:4px solid #2563eb;padding:16px;border-radius:4px;margin:16px 0;">
-      <p style="margin:0 0 8px;color:#1d4ed8;font-size:14px;font-weight:600;">Bắt đầu như thế nào:</p>
-      <ol style="margin:0;padding-left:20px;color:#1d4ed8;font-size:14px;line-height:1.8;">
-        <li>Đăng nhập vào CleanConnect bằng email và mật khẩu của bạn</li>
-        <li>Cập nhật hồ sơ và đặt trạng thái sẵn sàng nhận việc</li>
-        <li>Theo dõi bảng việc làm để nhận các đơn phù hợp</li>
-      </ol>
-    </div>
-    <p style="color:#6b7280;font-size:14px;">
-      Chúc bạn có nhiều đơn thành công và thu nhập ổn định cùng CleanConnect!
-    </p>
-  `);
-  await sendMail(toEmail, '[CleanConnect] Hồ sơ người giúp việc đã được phê duyệt 🎉', html).catch(() => {});
 };
 
 // User: admin đã trả lời phản hồi
 const sendFeedbackRepliedEmail = async (toEmail, userName, subject, adminNote, status) => {
-  const statusMap = { resolved: 'Đã giải quyết', closed: 'Đã đóng', in_progress: 'Đang xử lý', open: 'Mở' };
+  const statusMap   = { resolved: 'Đã giải quyết', closed: 'Đã đóng', in_progress: 'Đang xử lý', open: 'Mở' };
   const statusColor = { resolved: '#16a34a', closed: '#6b7280', in_progress: '#2563eb', open: '#f97316' };
+  const color = statusColor[status] || '#6b7280';
   const html = layout(`
-    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${userName}</strong>,</h2>
-    <p style="color:#4b5563;line-height:1.6;">
-      Phản hồi của bạn về <strong>"${subject}"</strong> đã được Admin xử lý.
-      ${statusBadge(statusMap[status] || status, statusColor[status] || '#6b7280')}
+    ${hero('💬', 'Phản hồi của bạn đã được xử lý', `Chủ đề: "${subject}"`, color)}
+    ${greeting(userName)}
+    <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
+      Cảm ơn bạn đã gửi phản hồi đến CleanConnect. Đội ngũ Admin đã xem xét và cập nhật trạng thái:
+      ${statusBadge(statusMap[status] || status, color)}
     </p>
+
     ${adminNote ? `
-    <div style="background:#eff6ff;border-left:4px solid #2563eb;padding:16px;border-radius:4px;margin-top:12px;">
-      <p style="margin:0 0 6px;color:#1d4ed8;font-size:13px;font-weight:600;">Phản hồi từ Admin:</p>
-      <p style="margin:0;color:#1e40af;font-size:14px;line-height:1.6;">${adminNote}</p>
-    </div>` : ''}
-    <p style="color:#6b7280;font-size:14px;margin-top:16px;">
-      Đăng nhập CleanConnect để xem chi tiết phản hồi trong phần <em>Hồ sơ → Phản hồi của tôi</em>.
-    </p>
-  `);
-  await sendMail(toEmail, `[CleanConnect] Admin đã trả lời phản hồi của bạn – "${subject}"`, html).catch(() => {});
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
+      <tr>
+        <td style="background:#eff6ff;border-left:4px solid #2563eb;border-radius:0 8px 8px 0;padding:16px 18px;">
+          <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#1e40af;letter-spacing:0.3px;text-transform:uppercase;">Phản hồi từ Admin</p>
+          <p style="margin:0;font-size:14px;color:#1e3a8a;line-height:1.7;">${adminNote}</p>
+        </td>
+      </tr>
+    </table>` : ''}
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
+      <tr>
+        <td style="background:#f9fafb;border-left:4px solid #9ca3af;border-radius:0 8px 8px 0;padding:14px 18px;">
+          <p style="margin:0;font-size:13px;color:#374151;line-height:1.6;">
+            📄 Bạn có thể xem toàn bộ lịch sử phản hồi trong mục <strong>Hồ sơ → Phản hồi của tôi</strong> trên CleanConnect.
+          </p>
+        </td>
+      </tr>
+    </table>
+    ${closing()}
+  `, color);
+  await sendMail(toEmail, `[CleanConnect] Phản hồi "${subject}" đã được cập nhật`, html).catch(() => {});
 };
 
 module.exports = {
   sendOtpEmail,
+  sendCustomerWelcomeEmail,
+  sendHelperPendingEmail,
+  sendHelperApprovedEmail,
   sendBookingCreatedEmail,
   sendBookingConfirmedEmail,
   sendHelperConfirmedEmail,
@@ -442,7 +778,4 @@ module.exports = {
   sendReminderEmail,
   sendPaymentReceivedEmail,
   sendFeedbackRepliedEmail,
-  sendHelperPendingEmail,
-  sendHelperApprovedEmail,
-  sendCustomerWelcomeEmail,
 };
