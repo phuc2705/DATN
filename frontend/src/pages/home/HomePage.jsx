@@ -8,7 +8,7 @@ import SEO from '../../components/common/SEO';
 import {
   Sparkles, Shirt, ChefHat, Baby, HeartHandshake, Building2,
   Wind, Droplets, PawPrint, Briefcase, Zap, Home, Layers,
-  Users, ShieldCheck, CreditCard, MapPin,
+  Users, ShieldCheck, CreditCard, MapPin, Star,
   Search, Calendar, CheckCircle, Check,
   ArrowRight, X, ChevronDown, Heart,
 } from 'lucide-react';
