@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getAllServicesApi } from '../../api/service.api';
-import { createBookingApi, validatePromoCodeApi, pricePreviewApi, checkAvailabilityApi } from '../../api/booking.api';
-import { createVNPayUrlApi } from '../../api/payment.api';
+import { createBookingApi, validatePromoCodeApi, pricePreviewApi, checkAvailabilityApi, getCustomerTrustInfoApi } from '../../api/booking.api';
+import { createVNPayUrlApi, createVNPayDepositUrlApi } from '../../api/payment.api';
 import { formatPrice } from '../../utils/format';
 import toast from 'react-hot-toast';
 import {
   ArrowLeft, CheckCircle2, Calendar, MapPin,
   CreditCard, Banknote, ChevronRight, Info, Loader2, Check, Tag, X, AlertTriangle,
-  Clock, Users, Lightbulb,
+  Clock, Users, Lightbulb, ShieldCheck, ShieldAlert, ShieldOff,
 } from 'lucide-react';
 import TimePicker24h from '../../components/common/TimePicker24h';
 
@@ -124,6 +124,8 @@ export default function CreateBookingPage() {
   const [conflictError, setConflictError] = useState(null);
   const [availability, setAvailability]   = useState(null); // { available, availableCount, suggestions }
   const [availChecking, setAvailChecking] = useState(false);
+  const [trustInfo, setTrustInfo]         = useState(null);
+  const [trustLoading, setTrustLoading]   = useState(false);
 
   useEffect(() => {
     getAllServicesApi()
@@ -200,6 +202,20 @@ export default function CreateBookingPage() {
     }, 600);
     return () => clearTimeout(t);
   }, [form.serviceId, form.bookingDate, form.startTime, form.endTime]);
+
+  // Tải thông tin uy tín khi vào bước 2; tự động chọn VNPay nếu không được dùng tiền mặt
+  useEffect(() => {
+    if (step !== 2) return;
+    setTrustLoading(true);
+    getCustomerTrustInfoApi()
+      .then(({ data }) => {
+        const info = data.data;
+        setTrustInfo(info);
+        if (info.requiresOnlinePayment) setPaymentMethod('vnpay');
+      })
+      .catch(() => {})
+      .finally(() => setTrustLoading(false));
+  }, [step]);
 
   const handleApplyPromo = async () => {
     if (!promoCode.trim()) return toast.error('Vui lòng nhập mã khuyến mãi trước khi áp dụng.');
@@ -294,7 +310,11 @@ export default function CreateBookingPage() {
 
       if (paymentMethod === 'vnpay') {
         try {
-          const { data: payData } = await createVNPayUrlApi(bookingId);
+          // Khách mới/uy tín thấp → cọc 70%; khách uy tín → thanh toán đủ ngay
+          const createUrlFn = trustInfo?.requiresOnlinePayment
+            ? createVNPayDepositUrlApi
+            : createVNPayUrlApi;
+          const { data: payData } = await createUrlFn(bookingId);
           window.location.href = payData.data.paymentUrl;
         } catch {
           navigate(`/bookings/${bookingId}`);
@@ -556,6 +576,18 @@ export default function CreateBookingPage() {
                       <dt className="text-[#222222]">Tổng dự kiến</dt>
                       <dd className="text-orange-500">{formatPrice(priceData.totalPrice)}</dd>
                     </div>
+                    {trustInfo?.requiresOnlinePayment && (
+                      <>
+                        <div className="flex justify-between text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2 mt-1">
+                          <dt className="font-medium">Cọc ngay qua VNPay (70%)</dt>
+                          <dd className="font-bold">{formatPrice(Math.round(priceData.totalPrice * 0.7))}</dd>
+                        </div>
+                        <div className="flex justify-between text-sm text-gray-500 px-1">
+                          <dt>Thanh toán sau khi hoàn thành (30%)</dt>
+                          <dd>{formatPrice(Math.round(priceData.totalPrice * 0.3))}</dd>
+                        </div>
+                      </>
+                    )}
                   </>
                 ) : null}
               </dl>
@@ -661,30 +693,104 @@ export default function CreateBookingPage() {
               </div>
             </SectionCard>
 
+            {/* Banner uy tín khách hàng */}
+            {trustLoading && (
+              <div className="flex items-center gap-2 text-sm text-[#6a6a6a] bg-gray-50 rounded-xl px-4 py-3">
+                <Loader2 className="w-4 h-4 animate-spin text-orange-400" /> Đang kiểm tra thông tin tài khoản...
+              </div>
+            )}
+            {!trustLoading && trustInfo && (
+              trustInfo.isNewCustomer ? (
+                <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl p-4">
+                  <ShieldAlert className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-blue-800">Lần đầu đặt lịch — thanh toán online bắt buộc</p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Để đảm bảo cam kết và tránh đặt lịch ảo gây lãng phí thời gian của nhân viên,
+                      lần đầu tiên bạn cần thanh toán qua VNPay. Sau khi hoàn thành đơn đầu tiên,
+                      bạn sẽ được mở khóa thêm hình thức thanh toán.
+                    </p>
+                  </div>
+                </div>
+              ) : !trustInfo.isTrusted ? (
+                <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <ShieldOff className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-amber-800">Tỷ lệ hoàn thành thấp — thanh toán online bắt buộc</p>
+                      <span className="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full ml-2 shrink-0">
+                        {trustInfo.completionRatePercent}%
+                      </span>
+                    </div>
+                    <p className="text-xs text-amber-600 mt-1">
+                      Tỷ lệ hoàn thành của bạn ({trustInfo.completionRatePercent}%) thấp hơn ngưỡng
+                      tối thiểu {trustInfo.trustThresholdPercent}%. Vui lòng thanh toán online để đặt lịch.
+                      Hoàn thành thêm đơn để nâng uy tín và mở khóa thanh toán tiền mặt.
+                    </p>
+                    <div className="mt-2 bg-amber-100 rounded-full overflow-hidden h-1.5">
+                      <div
+                        className="h-full bg-amber-400 rounded-full transition-all"
+                        style={{ width: `${Math.min(trustInfo.completionRatePercent, 100)}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs text-amber-500 mt-0.5">
+                      <span>{trustInfo.completionRatePercent}% hiện tại</span>
+                      <span>Cần {trustInfo.trustThresholdPercent}% để mở khóa</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-xl p-4">
+                  <ShieldCheck className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-green-800">Tài khoản uy tín cao</p>
+                      <span className="text-xs font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full ml-2 shrink-0">
+                        {trustInfo.completionRatePercent}% hoàn thành
+                      </span>
+                    </div>
+                    <p className="text-xs text-green-600 mt-0.5">
+                      Bạn đã hoàn thành {trustInfo.completedBookings}/{trustInfo.totalBookings} đơn.
+                      Bạn được tự do chọn hình thức thanh toán sau khi dịch vụ hoàn tất.
+                    </p>
+                  </div>
+                </div>
+              )
+            )}
+
             {/* Phương thức thanh toán */}
             <SectionCard title="Phương thức thanh toán" icon={CreditCard}>
               <div className="space-y-2.5">
                 {PAYMENT_METHODS.map(({ key, icon: Icon, label, sub }) => {
-                  const active = paymentMethod === key;
+                  const active   = paymentMethod === key;
+                  const disabled = key === 'cash' && trustInfo?.requiresOnlinePayment;
                   return (
                     <button
                       key={key}
                       type="button"
-                      onClick={() => setPaymentMethod(key)}
+                      onClick={() => !disabled && setPaymentMethod(key)}
+                      disabled={disabled}
                       className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all
-                        ${active ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-white hover:border-orange-200'}`}
+                        ${disabled
+                          ? 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed'
+                          : active
+                            ? 'border-orange-500 bg-orange-50'
+                            : 'border-gray-200 bg-white hover:border-orange-200'}`}
                     >
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0
-                        ${active ? 'bg-orange-100' : 'bg-gray-100'}`}>
-                        <Icon className={`w-5 h-5 ${active ? 'text-orange-500' : 'text-[#6a6a6a]'}`} />
+                        ${active && !disabled ? 'bg-orange-100' : 'bg-gray-100'}`}>
+                        <Icon className={`w-5 h-5 ${active && !disabled ? 'text-orange-500' : 'text-[#6a6a6a]'}`} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={`font-semibold text-sm ${active ? 'text-orange-600' : 'text-[#222222]'}`}>{label}</p>
+                        <p className={`font-semibold text-sm ${active && !disabled ? 'text-orange-600' : 'text-[#222222]'}`}>
+                          {label}
+                          {disabled && <span className="ml-2 text-xs text-gray-400 font-normal">(Chưa mở khóa)</span>}
+                        </p>
                         <p className="text-xs text-[#6a6a6a] mt-0.5">{sub}</p>
                       </div>
                       <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors
-                        ${active ? 'border-orange-500' : 'border-gray-300'}`}>
-                        {active && <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />}
+                        ${active && !disabled ? 'border-orange-500' : 'border-gray-300'}`}>
+                        {active && !disabled && <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />}
                       </div>
                     </button>
                   );

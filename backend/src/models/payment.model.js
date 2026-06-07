@@ -199,6 +199,151 @@ const PaymentModel = {
     return rows;
   },
 
+  // Xác nhận đặt cọc thành công (VNPay deposit return)
+  confirmDeposit: async (bookingId, transactionId) => {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      const [[payRow]] = await connection.query(
+        'SELECT payment_id, amount FROM payments WHERE booking_id = ?',
+        [bookingId]
+      );
+      if (!payRow) throw new Error('Không tìm thấy thông tin thanh toán');
+
+      const { DEPOSIT_RATE } = require('../utils/customerTrust');
+      const depositAmount = Math.round(Number(payRow.amount) * DEPOSIT_RATE);
+
+      await connection.query(
+        `UPDATE payments
+         SET payment_status = 'deposit_paid',
+             payment_method  = 'vnpay',
+             deposit_amount  = ?,
+             deposit_transaction_id = ?,
+             deposit_paid_at = NOW()
+         WHERE booking_id = ?`,
+        [depositAmount, transactionId || null, bookingId]
+      );
+
+      // Lấy user_id khách hàng để ghi log
+      const [[b]] = await connection.query(
+        `SELECT c.user_id FROM bookings b
+         JOIN customers c ON b.customer_id = c.customer_id
+         WHERE b.booking_id = ?`,
+        [bookingId]
+      );
+      if (b?.user_id) {
+        await connection.query(
+          `INSERT INTO booking_logs (booking_id, changed_by, old_status, new_status, note)
+           VALUES (?, ?, 'pending', 'pending', ?)`,
+          [bookingId, b.user_id, `Đặt cọc ${Math.round(DEPOSIT_RATE * 100)}% thành công qua VNPay`]
+        );
+      }
+
+      await connection.commit();
+    } catch (err) {
+      await connection.rollback();
+      throw err;
+    } finally {
+      connection.release();
+    }
+  },
+
+  // Xác nhận thanh toán 30% còn lại sau khi dịch vụ hoàn thành
+  confirmRemainingPayment: async (bookingId, remainingMethod, paidByUserId) => {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      const commissionRateStr = await SettingModel.get('platform_commission_rate');
+      const commissionRate = parseFloat(commissionRateStr) || 0.20;
+
+      const [[payRow]] = await connection.query(
+        `SELECT p.amount, p.deposit_amount, h.user_id AS helper_user_id
+         FROM payments p
+         JOIN bookings b ON b.booking_id = p.booking_id
+         LEFT JOIN helpers h ON h.helper_id = b.helper_id
+         WHERE p.booking_id = ?`,
+        [bookingId]
+      );
+      if (!payRow) throw new Error('Không tìm thấy thông tin thanh toán');
+
+      const totalAmount       = Number(payRow.amount);
+      const depositAmount     = Number(payRow.deposit_amount || 0);
+      const remainingAmount   = totalAmount - depositAmount;
+      const platformFee       = Math.round(totalAmount * commissionRate);
+      const helperEarning     = totalAmount - platformFee;
+      const helperUserId      = payRow.helper_user_id;
+
+      await connection.query(
+        `UPDATE payments
+         SET payment_status           = 'paid',
+             paid_at                  = NOW(),
+             commission_rate          = ?,
+             platform_fee_amount      = ?,
+             helper_earning           = ?,
+             remaining_payment_method = ?
+         WHERE booking_id = ?`,
+        [commissionRate, platformFee, helperEarning, remainingMethod, bookingId]
+      );
+
+      // Cập nhật ví helper
+      if (helperUserId) {
+        await connection.query(
+          `INSERT IGNORE INTO wallets (user_id, balance, total_earned, total_withdrawn)
+           VALUES (?, 0, 0, 0)`,
+          [helperUserId]
+        );
+        const [[w]] = await connection.query(
+          'SELECT wallet_id, balance FROM wallets WHERE user_id = ?',
+          [helperUserId]
+        );
+
+        if (remainingMethod === 'cash') {
+          // Helper thu tiền mặt 30% trực tiếp; platform cộng phần còn lại vào ví
+          // net_to_helper = helper_earning - remaining_amount (platform chuyển tiếp)
+          const netCredit = helperEarning - remainingAmount;
+          if (netCredit > 0) {
+            const balanceAfter = Number(w.balance) + netCredit;
+            await connection.query(
+              `INSERT INTO wallet_transactions
+                 (wallet_id, type, amount, balance_after, source, booking_id, description)
+               VALUES (?, 'credit', ?, ?, 'booking_payment', ?, ?)`,
+              [w.wallet_id, netCredit, balanceAfter, bookingId,
+               `Thu nhập đơn #${bookingId} (cọc 70% + tiền mặt 30%)`]
+            );
+          }
+        } else {
+          // VNPay remaining: platform nhận toàn bộ, trả hết cho helper
+          const balanceAfter = Number(w.balance) + helperEarning;
+          await connection.query(
+            `INSERT INTO wallet_transactions
+               (wallet_id, type, amount, balance_after, source, booking_id, description)
+             VALUES (?, 'credit', ?, ?, 'booking_payment', ?, ?)`,
+            [w.wallet_id, helperEarning, balanceAfter, bookingId,
+             `Thu nhập đơn #${bookingId} (cọc 70% + VNPay 30%)`]
+          );
+        }
+      }
+
+      if (paidByUserId) {
+        await connection.query(
+          `INSERT INTO booking_logs (booking_id, changed_by, old_status, new_status, note)
+           VALUES (?, ?, 'completed', 'completed', ?)`,
+          [bookingId, paidByUserId,
+           `Thanh toán 30% còn lại thành công (${remainingMethod === 'cash' ? 'tiền mặt' : 'VNPay'})`]
+        );
+      }
+
+      await connection.commit();
+    } catch (err) {
+      await connection.rollback();
+      throw err;
+    } finally {
+      connection.release();
+    }
+  },
+
   // Tổng doanh thu (dùng cho admin dashboard) — trả về { totalRevenue, platformRevenue }
   getTotalRevenue: async (startDate = null, endDate = null) => {
     let query = `SELECT COALESCE(SUM(amount), 0) AS totalRevenue,

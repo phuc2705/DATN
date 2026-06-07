@@ -28,6 +28,10 @@ export const BOOKING_STATUS_LABEL = {
 };
 
 export const PAYMENT_STATUS_LABEL = {
-  unpaid: { text: 'Chưa thanh toán', color: 'bg-orange-100 text-orange-800' },
-  paid:   { text: 'Đã thanh toán',   color: 'bg-green-100 text-green-800'   },
+  unpaid:             { text: 'Chưa thanh toán',         color: 'bg-orange-100 text-orange-800'  },
+  deposit_paid:       { text: 'Đã cọc 70%',              color: 'bg-blue-100 text-blue-800'      },
+  paid:               { text: '��ã thanh toán',           color: 'bg-green-100 text-green-800'    },
+  refund_pending:     { text: 'Đang hoàn tiền',          color: 'bg-yellow-100 text-yellow-800'  },
+  refunded:           { text: 'Đã hoàn tiền',            color: 'bg-gray-100 text-gray-600'      },
+  deposit_forfeited:  { text: 'Cọc chuyển cho helper',   color: 'bg-red-100 text-red-700'        },
 };

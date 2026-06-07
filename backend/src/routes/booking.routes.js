@@ -34,6 +34,9 @@ router.get('/check-availability', BookingController.checkAvailability);
 // GET /api/bookings/my - Lịch sử đặt lịch của khách hàng
 router.get('/my', authorize('customer'), BookingController.getMyBookingsAsCustomer);
 
+// GET /api/bookings/my-trust-info - Thông tin uy tín (tỷ lệ hoàn thành, phương thức thanh toán được phép)
+router.get('/my-trust-info', authorize('customer'), BookingController.getMyTrustInfo);
+
 // GET /api/bookings/my-previous-helpers - Danh sách helper quen để customer yêu cầu lại
 router.get('/my-previous-helpers', authorize('customer'), BookingController.getPreviousHelpers);
 

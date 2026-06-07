@@ -13,8 +13,17 @@ router.use(authenticate);
 // POST /api/payments/:bookingId/confirm — Xác nhận thanh toán tiền mặt
 router.post('/:bookingId/confirm', authorize('customer', 'admin'), PaymentController.confirmPayment);
 
-// POST /api/payments/:bookingId/vnpay-url — Tạo URL thanh toán VNPay
+// POST /api/payments/:bookingId/vnpay-url — Tạo URL thanh toán VNPay (full amount, khách uy tín)
 router.post('/:bookingId/vnpay-url', authorize('customer'), PaymentController.createVNPayPaymentUrl);
+
+// POST /api/payments/:bookingId/vnpay-deposit — Tạo URL VNPay đặt cọc 70% (khách mới/uy tín thấp)
+router.post('/:bookingId/vnpay-deposit', authorize('customer'), PaymentController.createVNPayDepositUrl);
+
+// POST /api/payments/:bookingId/vnpay-remaining — Tạo URL VNPay thanh toán 30% còn lại
+router.post('/:bookingId/vnpay-remaining', authorize('customer'), PaymentController.createVNPayRemainingUrl);
+
+// POST /api/payments/:bookingId/confirm-remaining — Xác nhận 30% còn lại bằng tiền mặt
+router.post('/:bookingId/confirm-remaining', authorize('customer', 'admin'), PaymentController.confirmRemainingPayment);
 
 // GET /api/payments/:bookingId/bank-transfer — Lấy thông tin chuyển khoản ngân hàng
 router.get('/:bookingId/bank-transfer', authorize('customer'), PaymentController.getBankTransferInfo);

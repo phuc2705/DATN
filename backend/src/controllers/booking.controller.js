@@ -4,6 +4,7 @@ const UserModel = require('../models/user.model');
 const { pool } = require('../config/database');
 const { calculateBookingPrice, getEffectiveRate } = require('../utils/pricing');
 const { findSuggestedHelpers } = require('../utils/matching');
+const { getCustomerTrustInfo } = require('../utils/customerTrust');
 const { geocodeAddress } = require('../utils/geocode');
 const { sendSuccess, sendError } = require('../utils/response');
 const { pushNotification, mailIfOffline } = require('../utils/notify');
@@ -54,6 +55,7 @@ function mapBooking(b) {
     isRequested:    Boolean(b.is_requested),
     createdAt:      b.created_at,
     logs:           b.logs || [],
+    depositAmount:  b.deposit_amount ? Number(b.deposit_amount) : null,
   };
 }
 
@@ -85,6 +87,16 @@ const BookingController = {
 
       const customerProfile = await UserModel.getCustomerProfile(user_id);
       if (!customerProfile) return sendError(res, 'Không tìm thấy thông tin khách hàng.', 404);
+
+      // Kiểm tra uy tín khách hàng để đảm bảo phương thức thanh toán hợp lệ
+      const trustInfo = await getCustomerTrustInfo(customerProfile.customer_id);
+      const resolvedPaymentMethod = paymentMethod || customerProfile.preferred_payment;
+      if (trustInfo.requiresOnlinePayment && resolvedPaymentMethod === 'cash') {
+        const reason = trustInfo.isNewCustomer
+          ? 'Lần đầu đặt lịch, bạn cần thanh toán online (VNPay) để xác nhận cam kết và tránh đặt lịch ảo.'
+          : `Tỷ lệ hoàn thành đơn của bạn đang thấp (${trustInfo.completionRatePercent}%). Vui lòng thanh toán online (VNPay) để đặt lịch.`;
+        return sendError(res, reason, 403);
+      }
 
       // Không cho đặt lịch ngày/giờ trong quá khứ (dùng timezone Việt Nam UTC+7)
       const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
@@ -539,12 +551,14 @@ const BookingController = {
           [bookingId, user_id, booking.status, reason || 'Khách hàng hủy đơn']
         );
 
-        // Nếu đơn đã thanh toán → khởi tạo hoàn tiền
+        // Xử lý hoàn tiền / tịch thu cọc khi hủy đơn
         const [[paymentRow]] = await conn.query(
-          'SELECT payment_status FROM payments WHERE booking_id = ?',
+          'SELECT payment_status, deposit_amount FROM payments WHERE booking_id = ?',
           [bookingId]
         );
+
         if (paymentRow && paymentRow.payment_status === 'paid') {
+          // Đã thanh toán đầy đủ → hoàn tiền
           await conn.query(
             `UPDATE payments SET payment_status = 'refund_pending' WHERE booking_id = ?`,
             [bookingId]
@@ -554,6 +568,58 @@ const BookingController = {
              VALUES (?, ?, 'cancelled', 'cancelled', ?)`,
             [bookingId, user_id, 'Hoàn tiền tự động khi hủy đơn']
           );
+        } else if (paymentRow && paymentRow.payment_status === 'deposit_paid') {
+          const helperAlreadyAccepted = ['confirmed', 'in_progress'].includes(booking.status);
+
+          if (helperAlreadyAccepted) {
+            // Khách bom lịch sau khi helper đã nhận → tịch thu cọc, chuyển cho helper
+            const depositAmount = Number(paymentRow.deposit_amount || 0);
+            const [[helperRow]] = await conn.query(
+              `SELECT h.user_id AS helper_user_id
+               FROM bookings b JOIN helpers h ON h.helper_id = b.helper_id
+               WHERE b.booking_id = ?`,
+              [bookingId]
+            );
+            if (helperRow?.helper_user_id && depositAmount > 0) {
+              await conn.query(
+                `INSERT IGNORE INTO wallets (user_id, balance, total_earned, total_withdrawn)
+                 VALUES (?, 0, 0, 0)`,
+                [helperRow.helper_user_id]
+              );
+              const [[w]] = await conn.query(
+                'SELECT wallet_id, balance FROM wallets WHERE user_id = ?',
+                [helperRow.helper_user_id]
+              );
+              const balanceAfter = Number(w.balance) + depositAmount;
+              await conn.query(
+                `INSERT INTO wallet_transactions
+                   (wallet_id, type, amount, balance_after, source, booking_id, description)
+                 VALUES (?, 'credit', ?, ?, 'booking_payment', ?, ?)`,
+                [w.wallet_id, depositAmount, balanceAfter, bookingId,
+                 `Tiền bồi thường đi lại — khách bom lịch đơn #${bookingId}`]
+              );
+            }
+            await conn.query(
+              `UPDATE payments SET payment_status = 'deposit_forfeited' WHERE booking_id = ?`,
+              [bookingId]
+            );
+            await conn.query(
+              `INSERT INTO booking_logs (booking_id, changed_by, old_status, new_status, note)
+               VALUES (?, ?, 'cancelled', 'cancelled', ?)`,
+              [bookingId, user_id, 'Tiền cọc chuyển cho helper — khách hủy sau khi helper đã nhận đơn']
+            );
+          } else {
+            // Chưa có helper nào nhận → hoàn cọc cho khách
+            await conn.query(
+              `UPDATE payments SET payment_status = 'refund_pending' WHERE booking_id = ?`,
+              [bookingId]
+            );
+            await conn.query(
+              `INSERT INTO booking_logs (booking_id, changed_by, old_status, new_status, note)
+               VALUES (?, ?, 'cancelled', 'cancelled', ?)`,
+              [bookingId, user_id, 'Khởi tạo hoàn cọc 70% — khách hủy trước khi có helper nhận đơn']
+            );
+          }
         }
 
         await conn.commit();
@@ -704,6 +770,19 @@ const BookingController = {
       if (!customerProfile) return sendError(res, 'Không tìm thấy thông tin khách hàng.', 404);
       const helpers = await BookingModel.findPreviousHelpers(customerProfile.customer_id);
       return sendSuccess(res, helpers);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Khách hàng xem thông tin uy tín của tài khoản (tỷ lệ hoàn thành, có được dùng tiền mặt không)
+  getMyTrustInfo: async (req, res, next) => {
+    try {
+      const { user_id } = req.user;
+      const customerProfile = await UserModel.getCustomerProfile(user_id);
+      if (!customerProfile) return sendError(res, 'Không tìm thấy thông tin khách hàng.', 404);
+      const trustInfo = await getCustomerTrustInfo(customerProfile.customer_id);
+      return sendSuccess(res, trustInfo);
     } catch (error) {
       next(error);
     }

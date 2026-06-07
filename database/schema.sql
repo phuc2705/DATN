@@ -178,9 +178,14 @@ CREATE TABLE payments (
     platform_fee_amount   DECIMAL(10,2) NULL,             -- Số tiền nền tảng giữ lại
     helper_earning        DECIMAL(10,2) NULL,             -- Số tiền helper thực nhận
     payment_method        ENUM('cash','bank_transfer','e_wallet','vnpay') NOT NULL DEFAULT 'cash',
-    payment_status        ENUM('unpaid','paid','refunded','refund_pending') DEFAULT 'unpaid',
+    payment_status        ENUM('unpaid','deposit_paid','paid','refunded','refund_pending','deposit_forfeited') DEFAULT 'unpaid',
     transaction_id        VARCHAR(100) NULL,
     paid_at               TIMESTAMP NULL,
+    -- Thông tin đặt cọc 70% trước (khách hàng mới hoặc uy tín thấp)
+    deposit_amount        DECIMAL(10,2) NULL,             -- Số tiền đã cọc (70% total_price)
+    deposit_transaction_id VARCHAR(100) NULL,              -- Mã giao dịch VNPay của tiền cọc
+    deposit_paid_at       TIMESTAMP NULL,                 -- Thời điểm đóng cọc thành công
+    remaining_payment_method ENUM('cash','vnpay') NULL,   -- Phương thức thanh toán 30% còn lại
     created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (booking_id) REFERENCES bookings(booking_id) ON DELETE CASCADE,
     INDEX idx_payment_status (payment_status)

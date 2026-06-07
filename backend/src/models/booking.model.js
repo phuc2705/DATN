@@ -109,7 +109,7 @@ const BookingModel = {
   findByCustomer: async (customerId, status = null) => {
     let query = `
       SELECT b.*, s.service_name, u.full_name AS helper_name, u.avatar_url AS helper_avatar,
-             p.payment_status, p.payment_method
+             p.payment_status, p.payment_method, p.deposit_amount
       FROM bookings b
       JOIN services s ON b.service_id = s.service_id
       LEFT JOIN helpers h ON b.helper_id = h.helper_id
@@ -147,7 +147,8 @@ const BookingModel = {
       `SELECT b.*, s.service_name, s.base_price AS service_base_price,
               uc.user_id AS customer_user_id, uc.full_name AS customer_name, uc.phone AS customer_phone, uc.email AS customer_email,
               uh.user_id AS helper_user_id, uh.full_name AS helper_name, uh.avatar_url AS helper_avatar, uh.phone AS helper_phone, uh.email AS helper_email,
-              p.payment_status, p.payment_method, p.paid_at
+              p.payment_status, p.payment_method, p.paid_at,
+              p.deposit_amount, p.deposit_paid_at
        FROM bookings b
        JOIN services s ON b.service_id = s.service_id
        JOIN customers c ON b.customer_id = c.customer_id

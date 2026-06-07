@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { getBookingDetailApi, cancelBookingApi, getBookingSuggestionsApi } from '../../api/booking.api';
 import FeedbackModal from '../../components/common/FeedbackModal';
-import { confirmPaymentApi, createVNPayUrlApi, getBankTransferInfoApi } from '../../api/payment.api';
+import {
+  confirmPaymentApi, createVNPayUrlApi, getBankTransferInfoApi,
+  createVNPayDepositUrlApi, createVNPayRemainingUrlApi, confirmRemainingPaymentApi,
+} from '../../api/payment.api';
 import { createReviewApi } from '../../api/review.api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { formatPrice, formatDate, BOOKING_STATUS_LABEL, PAYMENT_STATUS_LABEL } from '../../utils/format';
@@ -67,8 +70,9 @@ function StatusTimeline({ status, booking }) {
       l.newStatus === 'cancelled' || l.new_status === 'cancelled'
     );
     const isAutoCancel = cancelLog?.note?.includes('Tự động hủy');
-    const isRefundPending = booking?.paymentStatus === 'refund_pending';
-    const isRefunded = booking?.paymentStatus === 'refunded';
+    const isRefundPending     = booking?.paymentStatus === 'refund_pending';
+    const isRefunded          = booking?.paymentStatus === 'refunded';
+    const isDepositForfeited  = booking?.paymentStatus === 'deposit_forfeited';
 
     return (
       <div className="space-y-3">
@@ -92,12 +96,23 @@ function StatusTimeline({ status, booking }) {
             <RefreshCw className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
             <div>
               <p className="text-sm font-semibold text-blue-700">
-                {isRefunded ? 'Đã hoàn tiền' : 'Đang xử lý hoàn tiền'}
+                {isRefunded ? 'Đã hoàn tiền' : 'Đang xử lý hoàn cọc'}
               </p>
               <p className="text-xs text-blue-500 mt-0.5">
                 {isRefunded
                   ? 'Tiền đã được hoàn lại vào tài khoản của bạn'
-                  : 'Tiền sẽ được hoàn lại trong 1–3 ngày làm việc'}
+                  : 'Tiền cọc sẽ được hoàn lại trong 1–3 ngày làm việc'}
+              </p>
+            </div>
+          </div>
+        )}
+        {isDepositForfeited && (
+          <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-100 rounded-xl">
+            <XCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-red-700">Tiền cọc đã chuyển cho người giúp việc</p>
+              <p className="text-xs text-red-500 mt-0.5">
+                Do bạn hủy đơn sau khi người giúp việc đã nhận, tiền cọc 70% được dùng để bù đắp chi phí di chuyển của họ.
               </p>
             </div>
           </div>
@@ -265,6 +280,38 @@ export default function BookingDetailPage() {
       window.location.href = data.data.paymentUrl;
     } catch (err) {
       toast.error(err.response?.data?.message || 'Không thể tạo link thanh toán VNPay');
+    }
+  };
+
+  // Thanh toán cọc 70% (khi booking ở trạng thái unpaid + deposit required)
+  const handleVNPayDeposit = async () => {
+    try {
+      const { data } = await createVNPayDepositUrlApi(bookingId);
+      window.location.href = data.data.paymentUrl;
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Không thể tạo link đặt cọc VNPay');
+    }
+  };
+
+  // Thanh toán 30% còn lại qua VNPay
+  const handleVNPayRemaining = async () => {
+    try {
+      const { data } = await createVNPayRemainingUrlApi(bookingId);
+      window.location.href = data.data.paymentUrl;
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Không thể tạo link thanh toán');
+    }
+  };
+
+  // Xác nhận thanh toán 30% còn lại bằng tiền mặt
+  const handleCashRemaining = async () => {
+    if (!confirm('Xác nhận khách đã thanh toán 30% còn lại bằng tiền mặt?')) return;
+    try {
+      await confirmRemainingPaymentApi(bookingId);
+      toast.success('Xác nhận thanh toán thành công!');
+      refresh();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Lỗi xác nhận thanh toán');
     }
   };
 
@@ -575,6 +622,25 @@ export default function BookingDetailPage() {
                     {pl.text}
                   </span>
                 </div>
+
+                {/* Thông tin đặt cọc */}
+                {booking.paymentStatus === 'deposit_paid' && booking.depositAmount && (
+                  <>
+                    <div className="h-px bg-gray-100" />
+                    <div className="bg-blue-50 rounded-xl p-3 space-y-1.5 text-sm">
+                      <div className="flex justify-between text-blue-700">
+                        <span className="font-medium">Đã cọc (70%)</span>
+                        <span className="font-bold">{formatPrice(booking.depositAmount)}</span>
+                      </div>
+                      <div className="flex justify-between text-gray-500">
+                        <span>Còn lại (30%)</span>
+                        <span className="font-medium text-orange-600">
+                          {formatPrice(booking.totalPrice - booking.depositAmount)}
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -594,11 +660,11 @@ export default function BookingDetailPage() {
                   <>
                     {booking.paymentMethod === 'vnpay' && (
                       <button
-                        onClick={handleVNPayPayment}
+                        onClick={handleVNPayDeposit}
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors"
                       >
                         <Building2 className="w-4 h-4" />
-                        Thanh toán qua VNPay
+                        Đặt cọc 70% qua VNPay
                       </button>
                     )}
                     {booking.paymentMethod === 'bank_transfer' && (
@@ -620,6 +686,41 @@ export default function BookingDetailPage() {
                       </button>
                     )}
                   </>
+                )}
+
+                {/* Thanh toán 30% còn lại khi dịch vụ hoàn thành */}
+                {booking.paymentStatus === 'deposit_paid' && booking.status === 'completed' && (
+                  <div className="space-y-2.5">
+                    <div className="bg-orange-50 border border-orange-200 rounded-xl p-3">
+                      <p className="text-sm font-semibold text-orange-800 mb-0.5">Dịch vụ đã hoàn thành!</p>
+                      <p className="text-xs text-orange-600">
+                        Vui lòng thanh toán {formatPrice(booking.totalPrice - (booking.depositAmount || 0))} còn lại (30%)
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleCashRemaining}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white h-12 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <Wallet className="w-4 h-4" />
+                      Đã trả 30% tiền mặt cho nhân viên
+                    </button>
+                    <button
+                      onClick={handleVNPayRemaining}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <Building2 className="w-4 h-4" />
+                      Thanh toán 30% qua VNPay
+                    </button>
+                  </div>
+                )}
+
+                {/* Deposit đang chờ thanh toán (booking pending, deposit required) */}
+                {booking.paymentStatus === 'unpaid' && booking.status === 'pending' && booking.paymentMethod === 'vnpay' && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                    <p className="text-xs text-amber-700 font-medium">
+                      Vui lòng hoàn tất đặt cọc để đơn được xử lý. Nhấn nút trên để thanh toán qua VNPay.
+                    </p>
+                  </div>
                 )}
 
                 {booking.status === 'completed' && booking.paymentStatus === 'paid' && !booking.hasReviewed && (

@@ -17,3 +17,4 @@ export const pricePreviewApi   = (params) => api.get('/api/bookings/price-previe
 export const suggestHelpersApi    = (params) => api.get('/api/bookings/suggest-helpers', { params });
 export const getBookingSuggestionsApi   = (id)     => api.get(`/api/bookings/${id}/suggestions`);
 export const checkAvailabilityApi       = (params) => api.get('/api/bookings/check-availability', { params });
+export const getCustomerTrustInfoApi    = ()       => api.get('/api/bookings/my-trust-info');

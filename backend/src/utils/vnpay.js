@@ -61,4 +61,34 @@ const verifyVNPayReturn = (query) => {
   return signed === secureHash;
 };
 
-module.exports = { createVNPayUrl, verifyVNPayReturn };
+// Tạo URL thanh toán cọc 70% — txnRef có hậu tố '_dep_' để phân biệt khi VNPay return
+const createVNPayDepositUrl = (bookingId, depositAmount, orderInfo, ipAddr) => {
+  const now = new Date();
+  const vnTime = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+  const createDate = vnTime.toISOString().replace(/[-:T.Z]/g, '').slice(0, 14);
+  const txnRef = `${bookingId}_dep_${Date.now()}`;
+
+  let params = {
+    vnp_Version:    '2.1.0',
+    vnp_Command:    'pay',
+    vnp_TmnCode:    process.env.VNP_TMN_CODE,
+    vnp_Amount:     Math.round(parseFloat(depositAmount)) * 100,
+    vnp_CurrCode:   'VND',
+    vnp_TxnRef:     txnRef,
+    vnp_OrderInfo:  orderInfo,
+    vnp_OrderType:  'other',
+    vnp_Locale:     'vn',
+    vnp_ReturnUrl:  process.env.VNP_RETURN_URL,
+    vnp_IpAddr:     ipAddr || '127.0.0.1',
+    vnp_CreateDate: createDate,
+  };
+
+  params = sortObject(params);
+  const signData = qs.stringify(params, { encode: false });
+  const hmac = crypto.createHmac('sha512', process.env.VNP_HASH_SECRET);
+  params.vnp_SecureHash = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
+
+  return process.env.VNP_URL + '?' + qs.stringify(params, { encode: false });
+};
+
+module.exports = { createVNPayUrl, createVNPayDepositUrl, verifyVNPayReturn };

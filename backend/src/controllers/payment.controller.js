@@ -1,7 +1,8 @@
 // Controller thanh toán - tiền mặt, chuyển khoản ngân hàng và VNPay
 const PaymentModel = require('../models/payment.model');
 const UserModel = require('../models/user.model');
-const { createVNPayUrl, verifyVNPayReturn } = require('../utils/vnpay');
+const { createVNPayUrl, createVNPayDepositUrl, verifyVNPayReturn } = require('../utils/vnpay');
+const { DEPOSIT_RATE } = require('../utils/customerTrust');
 const { pool } = require('../config/database');
 const { sendSuccess, sendError } = require('../utils/response');
 const { pushNotification, mailIfOffline } = require('../utils/notify');
@@ -102,6 +103,7 @@ const PaymentController = {
   },
 
   // Xử lý redirect từ VNPay sau khi thanh toán (không cần JWT)
+  // Phân biệt: txnRef chứa '_dep_' → thanh toán cọc; không có → thanh toán đầy đủ
   vnpayReturn: async (req, res, next) => {
     try {
       const query = req.query;
@@ -111,19 +113,38 @@ const PaymentController = {
         return res.redirect(`${process.env.CLIENT_URL}/payment/result?status=failed&reason=invalid_signature`);
       }
 
-      const bookingId = query.vnp_TxnRef?.split('_')[0];
+      const txnRef   = query.vnp_TxnRef || '';
+      const bookingId = txnRef.split('_')[0];
+      const isDeposit = txnRef.includes('_dep_');
       const isSuccess = query.vnp_ResponseCode === '00';
 
       if (isSuccess && bookingId) {
         const payment = await PaymentModel.findByBooking(bookingId);
-        // Chỉ confirm nếu chưa thanh toán (tránh double-confirm)
-        if (payment && payment.payment_status !== 'paid') {
-          await PaymentModel.confirmPayment(bookingId, null);
-          await pool.query(
-            'UPDATE payments SET payment_method = ? WHERE booking_id = ?',
-            ['vnpay', bookingId]
-          );
-          sendPaymentNotification(bookingId);
+
+        if (isDeposit) {
+          // Thanh toán cọc 70%
+          if (payment && payment.payment_status === 'unpaid') {
+            await PaymentModel.confirmDeposit(bookingId, query.vnp_TransactionNo || null);
+            // Thông báo cho helper biết đơn đã có cọc (nếu helper đã nhận)
+            if (payment.helper_name) sendPaymentNotification(bookingId);
+          }
+          const redirectUrl = `${process.env.CLIENT_URL}/payment/vnpay-return?status=success&bookingId=${bookingId}&type=deposit`;
+          return res.redirect(redirectUrl);
+        } else {
+          // Thanh toán đầy đủ hoặc thanh toán 30% còn lại qua VNPay
+          if (payment && payment.payment_status === 'deposit_paid') {
+            // Thanh toán nốt 30% còn lại
+            await PaymentModel.confirmRemainingPayment(bookingId, 'vnpay', null);
+            sendPaymentNotification(bookingId);
+          } else if (payment && payment.payment_status === 'unpaid') {
+            // Thanh toán full ngay (trusted customer dùng VNPay)
+            await PaymentModel.confirmPayment(bookingId, null);
+            await pool.query(
+              'UPDATE payments SET payment_method = ? WHERE booking_id = ?',
+              ['vnpay', bookingId]
+            );
+            sendPaymentNotification(bookingId);
+          }
         }
       }
 
@@ -133,6 +154,110 @@ const PaymentController = {
     } catch (error) {
       const redirectUrl = `${process.env.CLIENT_URL}/payment/vnpay-return?status=failed`;
       return res.redirect(redirectUrl);
+    }
+  },
+
+  // Tạo URL VNPay để thanh toán cọc 70% (dành cho khách hàng mới/uy tín thấp)
+  createVNPayDepositUrl: async (req, res, next) => {
+    try {
+      const { bookingId } = req.params;
+      const { user_id } = req.user;
+
+      const customerProfile = await UserModel.getCustomerProfile(user_id);
+      const [[booking]] = await pool.query(
+        'SELECT b.customer_id, b.total_price FROM bookings b WHERE b.booking_id = ?',
+        [bookingId]
+      );
+      if (!booking) return sendError(res, 'Không tìm thấy đơn hàng.', 404);
+      if (booking.customer_id !== customerProfile.customer_id) {
+        return sendError(res, 'Bạn không có quyền thanh toán đơn này.', 403);
+      }
+
+      const payment = await PaymentModel.findByBooking(bookingId);
+      if (!payment) return sendError(res, 'Không tìm thấy thông tin thanh toán.', 404);
+      if (!['unpaid'].includes(payment.payment_status)) {
+        return sendError(res, 'Đơn hàng không ở trạng thái hợp lệ để đặt cọc.', 409);
+      }
+
+      const depositAmount = Math.round(parseFloat(booking.total_price) * DEPOSIT_RATE);
+      const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || '127.0.0.1';
+      const paymentUrl = createVNPayDepositUrl(
+        bookingId,
+        depositAmount,
+        `Dat coc 70% don hang ${bookingId}`,
+        ip
+      );
+
+      return sendSuccess(res, { paymentUrl, depositAmount });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Tạo URL VNPay để thanh toán 30% còn lại (sau khi dịch vụ hoàn thành)
+  createVNPayRemainingUrl: async (req, res, next) => {
+    try {
+      const { bookingId } = req.params;
+      const { user_id } = req.user;
+
+      const customerProfile = await UserModel.getCustomerProfile(user_id);
+      const [[booking]] = await pool.query(
+        'SELECT b.customer_id, b.total_price FROM bookings b WHERE b.booking_id = ?',
+        [bookingId]
+      );
+      if (!booking) return sendError(res, 'Không tìm thấy đơn hàng.', 404);
+      if (booking.customer_id !== customerProfile.customer_id) {
+        return sendError(res, 'Bạn không có quyền thanh toán đơn này.', 403);
+      }
+
+      const payment = await PaymentModel.findByBooking(bookingId);
+      if (!payment || payment.payment_status !== 'deposit_paid') {
+        return sendError(res, 'Đơn hàng không ở trạng thái chờ thanh toán phần còn lại.', 409);
+      }
+
+      const remainingAmount = parseFloat(booking.total_price) - Number(payment.deposit_amount || 0);
+      const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || '127.0.0.1';
+      const paymentUrl = createVNPayUrl(
+        bookingId,
+        remainingAmount,
+        `Thanh toan 30% con lai don ${bookingId}`,
+        ip
+      );
+
+      return sendSuccess(res, { paymentUrl, remainingAmount });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Xác nhận thanh toán 30% còn lại bằng tiền mặt
+  confirmRemainingPayment: async (req, res, next) => {
+    try {
+      const { bookingId } = req.params;
+      const { user_id, user_type } = req.user;
+
+      const payment = await PaymentModel.findByBooking(bookingId);
+      if (!payment) return sendError(res, 'Không tìm thấy thông tin thanh toán.', 404);
+      if (payment.payment_status !== 'deposit_paid') {
+        return sendError(res, 'Đơn hàng không ở trạng thái chờ thanh toán phần còn lại.', 409);
+      }
+
+      if (user_type === 'customer') {
+        const customerProfile = await UserModel.getCustomerProfile(user_id);
+        const [[b]] = await pool.query(
+          'SELECT customer_id FROM bookings WHERE booking_id = ?', [bookingId]
+        );
+        if (!b || b.customer_id !== customerProfile.customer_id) {
+          return sendError(res, 'Bạn không có quyền xác nhận thanh toán này.', 403);
+        }
+      }
+
+      await PaymentModel.confirmRemainingPayment(bookingId, 'cash', user_id);
+      sendPaymentNotification(bookingId);
+
+      return sendSuccess(res, null, 'Xác nhận thanh toán tiền mặt 30% còn lại thành công!');
+    } catch (error) {
+      next(error);
     }
   },
 
