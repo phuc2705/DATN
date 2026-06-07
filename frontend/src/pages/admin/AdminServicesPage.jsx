@@ -9,14 +9,30 @@ import {
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { formatPrice } from '../../utils/format';
 import toast from 'react-hot-toast';
-import { Plus, X, Pencil, Eye, EyeOff, Trash2, RefreshCw } from 'lucide-react';
+import { Plus, X, Pencil, Eye, EyeOff, Trash2, RefreshCw,
+         Sparkles, Shirt, ChefHat, Baby, HeartHandshake, Building2,
+         Wind, Droplets, PawPrint, Briefcase, Zap, Home, Layers, WashingMachine } from 'lucide-react';
 
 // CSS class input chung theo Linear admin style
 const inputCls = 'w-full bg-gray-100 border border-gray-200 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#5e6ad2] focus:ring-1 focus:ring-[#5e6ad2]/25 rounded-md py-2 px-3 text-sm transition-all';
 const labelCls = 'block text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1.5';
 
-// Emoji icon mặc định theo index dịch vụ
-const SERVICE_ICONS = ['🏠', '👕', '🍳', '👶', '👴', '🏭', '🧹', '🌿', '🐾', '🔧'];
+const getServiceIcon = (name = '', className = 'w-5 h-5') => {
+  const n = name.toLowerCase();
+  if (n.includes('trẻ') || n.includes('trông'))           return <Baby           className={className} />;
+  if (n.includes('nấu') || n.includes('nau'))             return <ChefHat        className={className} />;
+  if (n.includes('giặt ủi') || n.includes('giat ui'))     return <Shirt          className={className} />;
+  if (n.includes('người già') || n.includes('cao tu'))    return <HeartHandshake className={className} />;
+  if (n.includes('thú cưng') || n.includes('thu cung'))   return <PawPrint       className={className} />;
+  if (n.includes('văn phòng') || n.includes('shop'))      return <Briefcase      className={className} />;
+  if (n.includes('công nghiệp'))                          return <Building2      className={className} />;
+  if (n.includes('điều hòa'))                             return <Wind           className={className} />;
+  if (n.includes('khử') || n.includes('phun'))            return <Zap            className={className} />;
+  if (n.includes('sofa') || n.includes('nệm') || n.includes('rèm')) return <Layers className={className} />;
+  if (n.includes('máy giặt') || n.includes('thiết bị'))  return <Droplets       className={className} />;
+  if (n.includes('định kỳ') || n.includes('dinh ky'))    return <Home           className={className} />;
+  return <Sparkles className={className} />;
+};
 
 // Modal tạo / chỉnh sửa dịch vụ
 function ServiceModal({ service, onClose, onSaved }) {
@@ -204,8 +220,8 @@ export default function AdminServicesPage() {
         <div className="flex justify-center py-16"><LoadingSpinner /></div>
       ) : services.length === 0 ? (
         <div className="bg-white rounded-lg p-12 text-center border border-gray-200">
-          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3 text-2xl">
-            🧹
+          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3 text-gray-400">
+            <Sparkles className="w-6 h-6" />
           </div>
           <p className="text-gray-700 font-medium">Chưa có dịch vụ nào</p>
           <p className="text-gray-400 text-sm mt-1">Tạo dịch vụ đầu tiên để bắt đầu</p>
@@ -237,8 +253,8 @@ export default function AdminServicesPage() {
                     {/* Tên dịch vụ + icon */}
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-md bg-gray-100 flex items-center justify-center text-xl flex-shrink-0">
-                          {SERVICE_ICONS[i % SERVICE_ICONS.length]}
+                        <div className="w-10 h-10 rounded-md bg-[#5e6ad2]/10 flex items-center justify-center flex-shrink-0 text-[#5e6ad2]">
+                          {getServiceIcon(s.serviceName)}
                         </div>
                         <div>
                           <p className="font-semibold text-gray-900">{s.serviceName}</p>
@@ -326,8 +342,8 @@ export default function AdminServicesPage() {
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-md bg-gray-100 flex items-center justify-center text-2xl flex-shrink-0">
-                      {SERVICE_ICONS[i % SERVICE_ICONS.length]}
+                    <div className="w-11 h-11 rounded-md bg-[#5e6ad2]/10 flex items-center justify-center flex-shrink-0 text-[#5e6ad2]">
+                      {getServiceIcon(s.serviceName)}
                     </div>
                     <div>
                       <h3 className="font-bold text-gray-900">{s.serviceName}</h3>

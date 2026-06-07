@@ -6,22 +6,30 @@ import { formatPrice } from '../../utils/format';
 import { useAuth } from '../../hooks/useAuth';
 import SEO from '../../components/common/SEO';
 import {
-  Sparkles, Sun, Leaf, Shirt, ChefHat, Star, Droplets,
-  Users, Zap, ShieldCheck, CreditCard, MapPin,
+  Sparkles, Shirt, ChefHat, Baby, HeartHandshake, Building2,
+  Wind, Droplets, PawPrint, Briefcase, Zap, Home, Layers,
+  Users, ShieldCheck, CreditCard, MapPin,
   Search, Calendar, CheckCircle, Check,
-  Home, ArrowRight, X, ChevronDown, Heart, Wrench,
+  ArrowRight, X, ChevronDown, Heart,
 } from 'lucide-react';
 
-const SERVICE_ICONS = [
-  { bg: 'from-orange-400 to-orange-600', Icon: Sparkles },
-  { bg: 'from-blue-400 to-blue-600',    Icon: Sun      },
-  { bg: 'from-green-400 to-green-600',  Icon: Leaf     },
-  { bg: 'from-purple-400 to-purple-600',Icon: Shirt    },
-  { bg: 'from-pink-400 to-pink-600',    Icon: ChefHat  },
-  { bg: 'from-yellow-400 to-yellow-600',Icon: Star     },
-  { bg: 'from-teal-400 to-teal-600',    Icon: Droplets },
-  { bg: 'from-red-400 to-red-600',      Icon: Droplets },
-];
+// Ánh xạ slug dịch vụ → icon + màu gradient
+const SERVICE_ICON_MAP = {
+  'giup-viec-theo-gio':            { Icon: Sparkles,       bg: 'from-orange-400 to-orange-600'   },
+  'giup-viec-dinh-ky':             { Icon: Home,           bg: 'from-amber-400 to-amber-600'     },
+  'nau-an-gia-dinh':               { Icon: ChefHat,        bg: 'from-red-400 to-red-600'         },
+  'trong-tre-tai-nha':             { Icon: Baby,           bg: 'from-pink-400 to-pink-600'       },
+  'cham-soc-nguoi-cao-tuoi':       { Icon: HeartHandshake, bg: 'from-rose-400 to-rose-600'       },
+  'tong-ve-sinh-deep-clean':       { Icon: Sparkles,       bg: 'from-blue-400 to-blue-600'       },
+  've-sinh-sofa-nem-rem':          { Icon: Layers,         bg: 'from-violet-400 to-violet-600'   },
+  've-sinh-dieu-hoa':              { Icon: Wind,           bg: 'from-sky-400 to-sky-600'         },
+  've-sinh-may-giat-thiet-bi-bep': { Icon: Droplets,       bg: 'from-teal-400 to-teal-600'       },
+  'cham-soc-thu-cung':             { Icon: PawPrint,       bg: 'from-lime-400 to-lime-600'       },
+  've-sinh-van-phong-shop':        { Icon: Briefcase,      bg: 'from-indigo-400 to-indigo-600'   },
+  'phun-khu-khuan-con-trung':      { Icon: Zap,            bg: 'from-green-400 to-green-600'     },
+};
+const DEFAULT_ICON = { Icon: Sparkles, bg: 'from-gray-400 to-gray-600' };
+const getIconBySlug = (slug) => SERVICE_ICON_MAP[slug] || DEFAULT_ICON;
 
 const SLUG_PHOTOS = {
   'giup-viec-theo-gio':            'https://plus.unsplash.com/premium_photo-1679500354595-0feead204a28?w=480&h=320&fit=crop&auto=format&q=80',
@@ -161,7 +169,7 @@ function StatItem({ value, label, Icon, color, bg, shouldStart }) {
 }
 
 function ServiceCard({ svc, idx, onClick }) {
-  const { bg, Icon } = SERVICE_ICONS[idx % SERVICE_ICONS.length];
+  const { bg, Icon } = getIconBySlug(svc.slug);
   const photo = SLUG_PHOTOS[svc.slug] || null;
   return (
     <button

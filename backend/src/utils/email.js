@@ -156,11 +156,30 @@ const layout = (content, accentColor = '#ea580c') => `
 </html>
 `;
 
-// Hero section (icon + tiêu đề lớn + phụ đề)
-const hero = (icon, title, subtitle, accentColor = '#ea580c') => `
+// SVG icons dùng trong hero email (lucide-style, stroke-based, 28×28)
+const ICONS = {
+  mail:       `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/></svg>`,
+  lock:       `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+  check:      `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+  star:       `<svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+  calendar:   `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+  clock:      `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+  xcircle:    `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+  ban:        `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>`,
+  package:    `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
+  bell:       `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`,
+  wallet:     `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><circle cx="17" cy="15" r="1" fill="currentColor"/></svg>`,
+  card:       `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>`,
+  clipboard:  `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>`,
+  chat:       `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+  refresh:    `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>`,
+};
+
+// Hero section (SVG icon + tiêu đề lớn + phụ đề)
+const hero = (iconKey, title, subtitle, accentColor = '#ea580c') => `
   <div style="text-align:center;padding:8px 0 32px;">
-    <div style="display:inline-block;background:${accentColor}1a;border-radius:50%;width:64px;height:64px;line-height:64px;font-size:30px;margin-bottom:16px;">
-      ${icon}
+    <div style="display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;background:${accentColor}18;color:${accentColor};margin-bottom:20px;">
+      ${ICONS[iconKey] || ICONS.star}
     </div>
     <h1 style="margin:0 0 8px;font-size:22px;font-weight:800;color:#111827;line-height:1.3;">${title}</h1>
     ${subtitle ? `<p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">${subtitle}</p>` : ''}
@@ -189,7 +208,7 @@ const sendOtpEmail = async (toEmail, otpCode, fullName, purpose = 'register') =>
 
   const html = layout(`
     ${hero(
-      isReset ? '🔐' : '✉️',
+      isReset ? 'lock' : 'mail',
       isReset ? 'Đặt lại mật khẩu' : 'Xác minh email của bạn',
       isReset
         ? 'Chúng tôi nhận được yêu cầu đặt lại mật khẩu từ tài khoản của bạn'
@@ -216,7 +235,7 @@ const sendOtpEmail = async (toEmail, otpCode, fullName, purpose = 'register') =>
       <tr>
         <td style="background:#fef2f2;border-left:4px solid #ef4444;border-radius:0 8px 8px 0;padding:14px 18px;">
           <p style="margin:0;font-size:13px;color:#991b1b;line-height:1.6;">
-            <strong>⚠️ Lưu ý bảo mật:</strong>
+            <strong>Lưu ý bảo mật:</strong>
             ${isReset
               ? ' Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email này và đổi mật khẩu ngay lập tức.'
               : ' Không chia sẻ mã này với bất kỳ ai. Nhân viên CleanConnect sẽ không bao giờ hỏi mã OTP của bạn.'}
@@ -236,7 +255,7 @@ const sendOtpEmail = async (toEmail, otpCode, fullName, purpose = 'register') =>
 // Khách hàng: chào mừng sau khi xác minh OTP thành công
 const sendCustomerWelcomeEmail = async (toEmail, fullName) => {
   const html = layout(`
-    ${hero('🎉', 'Chào mừng đến với CleanConnect!', 'Tài khoản của bạn đã được kích hoạt thành công')}
+    ${hero('star', 'Chào mừng đến với CleanConnect!', 'Tài khoản của bạn đã được kích hoạt thành công')}
     ${greeting(fullName)}
     <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
       Chúng tôi rất vui khi có bạn trong cộng đồng CleanConnect. Tài khoản của bạn đã sẵn sàng — bạn có thể bắt đầu đặt lịch dịch vụ ngay bây giờ.
@@ -250,16 +269,16 @@ const sendCustomerWelcomeEmail = async (toEmail, fullName) => {
         </td>
       </tr>
       <tr>
-        <td style="padding:13px 16px;border-bottom:1px solid #f3f4f6;font-size:14px;color:#374151;width:50%;">🧹 Dọn dẹp nhà cửa</td>
-        <td style="padding:13px 16px;border-bottom:1px solid #f3f4f6;font-size:14px;color:#374151;">👕 Giặt ủi quần áo</td>
+        <td style="padding:13px 16px;border-bottom:1px solid #f3f4f6;font-size:14px;color:#374151;width:50%;">· Dọn dẹp nhà cửa</td>
+        <td style="padding:13px 16px;border-bottom:1px solid #f3f4f6;font-size:14px;color:#374151;">· Giặt ủi quần áo</td>
       </tr>
       <tr style="background:#fafafa;">
-        <td style="padding:13px 16px;border-bottom:1px solid #f3f4f6;font-size:14px;color:#374151;">🍳 Nấu ăn theo yêu cầu</td>
-        <td style="padding:13px 16px;border-bottom:1px solid #f3f4f6;font-size:14px;color:#374151;">👶 Chăm sóc trẻ em</td>
+        <td style="padding:13px 16px;border-bottom:1px solid #f3f4f6;font-size:14px;color:#374151;">· Nấu ăn theo yêu cầu</td>
+        <td style="padding:13px 16px;border-bottom:1px solid #f3f4f6;font-size:14px;color:#374151;">· Chăm sóc trẻ em</td>
       </tr>
       <tr>
-        <td style="padding:13px 16px;font-size:14px;color:#374151;">👴 Chăm sóc người cao tuổi</td>
-        <td style="padding:13px 16px;font-size:14px;color:#374151;">🏢 Vệ sinh công nghiệp</td>
+        <td style="padding:13px 16px;font-size:14px;color:#374151;">· Chăm sóc người cao tuổi</td>
+        <td style="padding:13px 16px;font-size:14px;color:#374151;">· Vệ sinh công nghiệp</td>
       </tr>
     </table>
 
@@ -284,7 +303,7 @@ const sendCustomerWelcomeEmail = async (toEmail, fullName) => {
 // Helper: đăng ký xong, đang chờ admin duyệt
 const sendHelperPendingEmail = async (toEmail, fullName) => {
   const html = layout(`
-    ${hero('📋', 'Hồ sơ đang chờ xét duyệt', 'Cảm ơn bạn đã đăng ký làm người giúp việc tại CleanConnect', '#16a34a')}
+    ${hero('clipboard', 'Hồ sơ đang chờ xét duyệt', 'Cảm ơn bạn đã đăng ký làm người giúp việc tại CleanConnect', '#16a34a')}
     ${greeting(fullName)}
     <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
       Chúng tôi đã nhận được hồ sơ đăng ký của bạn và đang tiến hành xem xét. Đội ngũ CleanConnect sẽ kiểm tra thông tin và phản hồi trong thời gian sớm nhất.
@@ -344,7 +363,7 @@ const sendHelperPendingEmail = async (toEmail, fullName) => {
 // Helper: được admin phê duyệt
 const sendHelperApprovedEmail = async (toEmail, fullName) => {
   const html = layout(`
-    ${hero('✅', 'Hồ sơ đã được phê duyệt!', 'Chúc mừng! Bạn đã chính thức trở thành người giúp việc của CleanConnect', '#16a34a')}
+    ${hero('check', 'Hồ sơ đã được phê duyệt!', 'Chúc mừng! Bạn đã chính thức trở thành người giúp việc của CleanConnect', '#16a34a')}
     ${greeting(fullName)}
     <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
       Chúng tôi vui mừng thông báo rằng hồ sơ đăng ký làm người giúp việc của bạn đã được <strong style="color:#16a34a;">xét duyệt thành công</strong>. Bạn có thể đăng nhập và bắt đầu nhận đơn ngay từ bây giờ.
@@ -358,21 +377,27 @@ const sendHelperApprovedEmail = async (toEmail, fullName) => {
         </td>
       </tr>
       <tr>
-        <td style="padding:14px 16px;border-bottom:1px solid #f0fdf4;width:32px;vertical-align:top;font-size:18px;">🔑</td>
+        <td style="padding:14px 16px;border-bottom:1px solid #f0fdf4;width:32px;vertical-align:top;">
+          <div style="background:#16a34a;color:#fff;border-radius:50%;width:24px;height:24px;line-height:24px;text-align:center;font-size:12px;font-weight:700;">1</div>
+        </td>
         <td style="padding:14px 16px 14px 0;border-bottom:1px solid #f0fdf4;font-size:14px;color:#374151;">
           <strong>Đăng nhập tài khoản</strong><br />
           <span style="color:#6b7280;font-size:13px;">Dùng email và mật khẩu đã đăng ký để đăng nhập vào CleanConnect</span>
         </td>
       </tr>
       <tr style="background:#fafafa;">
-        <td style="padding:14px 16px;border-bottom:1px solid #f0fdf4;font-size:18px;vertical-align:top;">⚙️</td>
+        <td style="padding:14px 16px;border-bottom:1px solid #f0fdf4;vertical-align:top;">
+          <div style="background:#16a34a;color:#fff;border-radius:50%;width:24px;height:24px;line-height:24px;text-align:center;font-size:12px;font-weight:700;">2</div>
+        </td>
         <td style="padding:14px 16px 14px 0;border-bottom:1px solid #f0fdf4;font-size:14px;color:#374151;">
           <strong>Hoàn thiện hồ sơ</strong><br />
           <span style="color:#6b7280;font-size:13px;">Cập nhật ảnh đại diện, mô tả kinh nghiệm và bật trạng thái sẵn sàng nhận việc</span>
         </td>
       </tr>
       <tr>
-        <td style="padding:14px 16px;font-size:18px;vertical-align:top;">📦</td>
+        <td style="padding:14px 16px;vertical-align:top;">
+          <div style="background:#16a34a;color:#fff;border-radius:50%;width:24px;height:24px;line-height:24px;text-align:center;font-size:12px;font-weight:700;">3</div>
+        </td>
         <td style="padding:14px 16px 14px 0;font-size:14px;color:#374151;">
           <strong>Nhận đơn đầu tiên</strong><br />
           <span style="color:#6b7280;font-size:13px;">Theo dõi bảng việc làm và nhận đơn phù hợp với lịch của bạn</span>
@@ -402,7 +427,7 @@ const sendHelperApprovedEmail = async (toEmail, fullName) => {
 // Khách hàng: xác nhận đặt lịch thành công
 const sendBookingCreatedEmail = async (toEmail, customerName, booking) => {
   const html = layout(`
-    ${hero('📅', 'Đặt lịch thành công!', `Chúng tôi đã nhận đơn #${booking.bookingId} của bạn`)}
+    ${hero('calendar', 'Đặt lịch thành công!', `Chúng tôi đã nhận đơn #${booking.bookingId} của bạn`)}
     ${greeting(customerName)}
     <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
       Đơn đặt lịch của bạn đã được ghi nhận thành công. Chúng tôi đang tìm kiếm người giúp việc phù hợp và sẽ thông báo ngay khi có người xác nhận nhận đơn.
@@ -412,7 +437,7 @@ const sendBookingCreatedEmail = async (toEmail, customerName, booking) => {
       <tr>
         <td style="background:#fff7ed;border-left:4px solid #ea580c;border-radius:0 8px 8px 0;padding:14px 18px;">
           <p style="margin:0;font-size:13px;color:#92400e;line-height:1.6;">
-            💡 Bạn có thể theo dõi trạng thái đơn hàng và nhận thông báo cập nhật trong mục <strong>Lịch sử đặt lịch</strong> trên CleanConnect.
+            Bạn có thể theo dõi trạng thái đơn hàng và nhận thông báo cập nhật trong mục <strong>Lịch sử đặt lịch</strong> trên CleanConnect.
           </p>
         </td>
       </tr>
@@ -425,7 +450,7 @@ const sendBookingCreatedEmail = async (toEmail, customerName, booking) => {
 // Khách hàng: helper đã xác nhận nhận đơn
 const sendBookingConfirmedEmail = async (toEmail, customerName, booking, helperName) => {
   const html = layout(`
-    ${hero('✅', 'Đơn hàng đã được xác nhận', `${helperName} sẽ thực hiện dịch vụ cho bạn`)}
+    ${hero('check', 'Đơn hàng đã được xác nhận', `${helperName} sẽ thực hiện dịch vụ cho bạn`)}
     ${greeting(customerName)}
     <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
       Tin vui! Người giúp việc <strong style="color:#16a34a;">${helperName}</strong> đã xác nhận nhận đơn của bạn.
@@ -436,7 +461,7 @@ const sendBookingConfirmedEmail = async (toEmail, customerName, booking, helperN
       <tr>
         <td style="background:#f0fdf4;border-left:4px solid #16a34a;border-radius:0 8px 8px 0;padding:14px 18px;">
           <p style="margin:0;font-size:13px;color:#166534;line-height:1.6;">
-            📍 Vui lòng có mặt tại địa chỉ đã đăng ký để đón tiếp người giúp việc đúng giờ hẹn.
+            Vui lòng có mặt tại địa chỉ đã đăng ký để đón tiếp người giúp việc đúng giờ hẹn.
           </p>
         </td>
       </tr>
@@ -449,7 +474,7 @@ const sendBookingConfirmedEmail = async (toEmail, customerName, booking, helperN
 // Khách hàng: helper đã check-in (đang làm việc)
 const sendCheckinEmail = async (toEmail, customerName, booking, helperName) => {
   const html = layout(`
-    ${hero('🔄', 'Dịch vụ đang được thực hiện', `${helperName} đã check-in và bắt đầu công việc`, '#2563eb')}
+    ${hero('refresh', 'Dịch vụ đang được thực hiện', `${helperName} đã check-in và bắt đầu công việc`, '#2563eb')}
     ${greeting(customerName)}
     <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
       Người giúp việc <strong style="color:#2563eb;">${helperName}</strong> đã check-in thành công và đang thực hiện công việc tại nhà bạn.
@@ -464,7 +489,7 @@ const sendCheckinEmail = async (toEmail, customerName, booking, helperName) => {
 // Khách hàng: hoàn thành công việc
 const sendCompletedEmail = async (toEmail, customerName, booking, helperName) => {
   const html = layout(`
-    ${hero('⭐', 'Dịch vụ đã hoàn thành!', 'Cảm ơn bạn đã sử dụng dịch vụ CleanConnect', '#16a34a')}
+    ${hero('star', 'Dịch vụ đã hoàn thành!', 'Cảm ơn bạn đã sử dụng dịch vụ CleanConnect', '#16a34a')}
     ${greeting(customerName)}
     <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
       <strong>${helperName}</strong> đã hoàn thành công việc cho bạn.
@@ -477,7 +502,7 @@ const sendCompletedEmail = async (toEmail, customerName, booking, helperName) =>
         <td style="padding:20px;text-align:center;">
           <p style="margin:0 0 8px;font-size:15px;color:#92400e;font-weight:600;">Đánh giá trải nghiệm của bạn</p>
           <p style="margin:0 0 16px;font-size:13px;color:#a16207;line-height:1.5;">Phản hồi của bạn giúp chúng tôi cải thiện chất lượng dịch vụ và hỗ trợ người giúp việc tốt hơn.</p>
-          ${ctaButton('Để lại đánh giá ngay ⭐', '#ea580c')}
+          ${ctaButton('Để lại đánh giá ngay', '#ea580c')}
         </td>
       </tr>
     </table>
@@ -489,7 +514,7 @@ const sendCompletedEmail = async (toEmail, customerName, booking, helperName) =>
 // Thông báo hủy đơn (gửi cho bên bị ảnh hưởng)
 const sendCancelledEmail = async (toEmail, recipientName, booking, cancelledBy) => {
   const html = layout(`
-    ${hero('❌', 'Đơn hàng đã bị hủy', `Đơn #${booking.bookingId} đã bị hủy bởi ${cancelledBy}`, '#dc2626')}
+    ${hero('xcircle', 'Đơn hàng đã bị hủy', `Đơn #${booking.bookingId} đã bị hủy bởi ${cancelledBy}`, '#dc2626')}
     ${greeting(recipientName)}
     <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
       Chúng tôi xin thông báo rằng đơn hàng dưới đây đã được hủy bởi <strong>${cancelledBy}</strong>.
@@ -513,7 +538,7 @@ const sendCancelledEmail = async (toEmail, recipientName, booking, cancelledBy) 
 // Xác nhận hủy cho chính người hủy (customer tự hủy)
 const sendCancellationReceiptEmail = async (toEmail, recipientName, booking) => {
   const html = layout(`
-    ${hero('🚫', 'Yêu cầu hủy đơn đã được xử lý', `Đơn #${booking.bookingId} đã được hủy theo yêu cầu của bạn`, '#6b7280')}
+    ${hero('ban', 'Yêu cầu hủy đơn đã được xử lý', `Đơn #${booking.bookingId} đã được hủy theo yêu cầu của bạn`, '#6b7280')}
     ${greeting(recipientName)}
     <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
       Đơn hàng của bạn đã được hủy thành công theo yêu cầu.
@@ -540,7 +565,7 @@ const sendCancellationReceiptEmail = async (toEmail, recipientName, booking) => 
 // Helper: được giao đơn (admin assign)
 const sendHelperAssignedEmail = async (toEmail, helperName, booking) => {
   const html = layout(`
-    ${hero('📦', 'Bạn có đơn hàng mới!', 'Admin đã giao đơn cho bạn. Vui lòng xác nhận sớm.', '#16a34a')}
+    ${hero('package', 'Bạn có đơn hàng mới!', 'Admin đã giao đơn cho bạn. Vui lòng xác nhận sớm.', '#16a34a')}
     ${greeting(helperName)}
     <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
       Admin CleanConnect vừa giao cho bạn một đơn hàng mới. Vui lòng đăng nhập vào hệ thống để xem chi tiết và xác nhận nhận đơn.
@@ -550,7 +575,7 @@ const sendHelperAssignedEmail = async (toEmail, helperName, booking) => {
       <tr>
         <td style="background:#eff6ff;border-left:4px solid #2563eb;border-radius:0 8px 8px 0;padding:14px 18px;">
           <p style="margin:0;font-size:13px;color:#1e40af;line-height:1.6;">
-            📌 Hãy check-in đúng giờ khi đến địa điểm để khách hàng biết bạn đã có mặt. Đây là tiêu chí đánh giá chuyên nghiệp của bạn trên CleanConnect.
+            Hãy check-in đúng giờ khi đến địa điểm để khách hàng biết bạn đã có mặt. Đây là tiêu chí đánh giá chuyên nghiệp của bạn trên CleanConnect.
           </p>
         </td>
       </tr>
@@ -564,7 +589,7 @@ const sendHelperAssignedEmail = async (toEmail, helperName, booking) => {
 // Helper: tự xác nhận nhận đơn thành công
 const sendHelperConfirmedEmail = async (toEmail, helperName, booking, customerName) => {
   const html = layout(`
-    ${hero('✅', 'Nhận đơn thành công!', `Bạn đã xác nhận nhận đơn của ${customerName}`, '#16a34a')}
+    ${hero('check', 'Nhận đơn thành công!', `Bạn đã xác nhận nhận đơn của ${customerName}`, '#16a34a')}
     ${greeting(helperName)}
     <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
       Bạn đã xác nhận nhận đơn của khách hàng <strong>${customerName}</strong>.
@@ -576,7 +601,7 @@ const sendHelperConfirmedEmail = async (toEmail, helperName, booking, customerNa
       <tr>
         <td style="background:#f0fdf4;border-left:4px solid #16a34a;border-radius:0 8px 8px 0;padding:14px 18px;">
           <p style="margin:0;font-size:13px;color:#166534;line-height:1.6;">
-            ⏰ Nhớ check-in trên ứng dụng khi bạn đến nơi. Nếu có vấn đề phát sinh, hãy liên hệ CleanConnect ngay lập tức.
+            Nhớ check-in trên ứng dụng khi bạn đến nơi. Nếu có vấn đề phát sinh, hãy liên hệ CleanConnect ngay lập tức.
           </p>
         </td>
       </tr>
@@ -589,7 +614,7 @@ const sendHelperConfirmedEmail = async (toEmail, helperName, booking, customerNa
 // Helper: hoàn thành công việc
 const sendHelperCompletedEmail = async (toEmail, helperName, booking, customerName) => {
   const html = layout(`
-    ${hero('💰', 'Công việc hoàn thành!', `Cảm ơn bạn đã hoàn thành xuất sắc đơn #${booking.bookingId}`, '#16a34a')}
+    ${hero('wallet', 'Công việc hoàn thành!', `Cảm ơn bạn đã hoàn thành xuất sắc đơn #${booking.bookingId}`, '#16a34a')}
     ${greeting(helperName)}
     <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
       Bạn đã hoàn thành công việc cho khách hàng <strong>${customerName}</strong>.
@@ -615,7 +640,7 @@ const sendHelperCompletedEmail = async (toEmail, helperName, booking, customerNa
 // Helper: có đơn mới trên job board
 const sendNewJobEmail = async (toEmail, helperName, booking) => {
   const html = layout(`
-    ${hero('🔔', 'Có đơn mới phù hợp với bạn!', 'Đăng nhập ngay để nhận đơn trước khi có người khác nhận', '#f97316')}
+    ${hero('bell', 'Có đơn mới phù hợp với bạn!', 'Đăng nhập ngay để nhận đơn trước khi có người khác nhận', '#f97316')}
     ${greeting(helperName)}
     <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
       Có một đơn <strong>${booking.serviceName}</strong> mới vừa được đăng và phù hợp với kỹ năng của bạn. Đây là cơ hội tốt để tăng thu nhập!
@@ -625,7 +650,7 @@ const sendNewJobEmail = async (toEmail, helperName, booking) => {
       <tr>
         <td style="background:#fff7ed;border-left:4px solid #f97316;border-radius:0 8px 8px 0;padding:14px 18px;">
           <p style="margin:0;font-size:13px;color:#c2410c;line-height:1.6;">
-            ⚡ Đơn này có thể được nhận bởi người khác bất cứ lúc nào. Đăng nhập ngay để không bỏ lỡ cơ hội!
+            Đơn này có thể được nhận bởi người khác bất cứ lúc nào. Đăng nhập ngay để không bỏ lỡ cơ hội!
           </p>
         </td>
       </tr>
@@ -639,7 +664,7 @@ const sendNewJobEmail = async (toEmail, helperName, booking) => {
 // Khách hàng: helper đã tự nhận đơn từ job board
 const sendJobAcceptedEmail = async (toEmail, customerName, booking, helperName) => {
   const html = layout(`
-    ${hero('✅', 'Đơn hàng đã được nhận!', `${helperName} sẽ thực hiện dịch vụ cho bạn`)}
+    ${hero('check', 'Đơn hàng đã được nhận!', `${helperName} sẽ thực hiện dịch vụ cho bạn`)}
     ${greeting(customerName)}
     <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
       Người giúp việc <strong style="color:#16a34a;">${helperName}</strong> đã nhận đơn của bạn và xác nhận thực hiện.
@@ -650,7 +675,7 @@ const sendJobAcceptedEmail = async (toEmail, customerName, booking, helperName) 
       <tr>
         <td style="background:#f0fdf4;border-left:4px solid #16a34a;border-radius:0 8px 8px 0;padding:14px 18px;">
           <p style="margin:0;font-size:13px;color:#166534;line-height:1.6;">
-            📍 Vui lòng có mặt tại địa chỉ đã đặt để đón tiếp người giúp việc đúng giờ. Bạn sẽ nhận thông báo khi họ check-in.
+            Vui lòng có mặt tại địa chỉ đã đặt để đón tiếp người giúp việc đúng giờ. Bạn sẽ nhận thông báo khi họ check-in.
           </p>
         </td>
       </tr>
@@ -664,7 +689,7 @@ const sendJobAcceptedEmail = async (toEmail, customerName, booking, helperName) 
 const sendReminderEmail = async (toEmail, recipientName, booking, otherPartyName, role) => {
   const isHelper = role === 'helper';
   const html = layout(`
-    ${hero('⏰', 'Nhắc lịch sắp tới', `${booking.serviceName} lúc ${booking.startTime} ngày ${booking.bookingDate}`, '#2563eb')}
+    ${hero('clock', 'Nhắc lịch sắp tới', `${booking.serviceName} lúc ${booking.startTime} ngày ${booking.bookingDate}`, '#2563eb')}
     ${greeting(recipientName)}
     <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
       Đây là thông báo nhắc nhở về lịch <strong>${booking.serviceName}</strong> sắp diễn ra của bạn.
@@ -676,8 +701,8 @@ const sendReminderEmail = async (toEmail, recipientName, booking, otherPartyName
         <td style="background:#eff6ff;border-left:4px solid #2563eb;border-radius:0 8px 8px 0;padding:14px 18px;">
           <p style="margin:0;font-size:13px;color:#1e40af;line-height:1.6;">
             ${isHelper
-              ? `📌 Hãy đến đúng giờ và nhớ check-in khi tới nơi. Khách hàng của bạn là <strong>${otherPartyName}</strong>.`
-              : `🙋 Người giúp việc <strong>${otherPartyName}</strong> sẽ đến theo đúng lịch hẹn. Vui lòng chuẩn bị sẵn sàng.`}
+              ? `Hãy đến đúng giờ và nhớ check-in khi tới nơi. Khách hàng của bạn là <strong>${otherPartyName}</strong>.`
+              : `Người giúp việc <strong>${otherPartyName}</strong> sẽ đến theo đúng lịch hẹn. Vui lòng chuẩn bị sẵn sàng.`}
           </p>
         </td>
       </tr>
@@ -691,7 +716,7 @@ const sendReminderEmail = async (toEmail, recipientName, booking, otherPartyName
 const sendPaymentReceivedEmail = async (toEmail, helperName, amount, bookingId) => {
   const amountStr = Number(amount).toLocaleString('vi-VN');
   const html = layout(`
-    ${hero('💳', 'Thanh toán đã được ghi nhận', `Đơn #${bookingId} – Thu nhập đã vào ví của bạn`, '#16a34a')}
+    ${hero('card', 'Thanh toán đã được ghi nhận', `Đơn #${bookingId} – Thu nhập đã vào ví của bạn`, '#16a34a')}
     ${greeting(helperName)}
     <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
       Khách hàng đã hoàn tất thanh toán cho đơn <strong>#${bookingId}</strong>. Thu nhập của bạn đã được cập nhật vào ví CleanConnect.
@@ -712,7 +737,7 @@ const sendPaymentReceivedEmail = async (toEmail, helperName, amount, bookingId) 
       <tr>
         <td style="background:#f0fdf4;border-left:4px solid #16a34a;border-radius:0 8px 8px 0;padding:14px 18px;">
           <p style="margin:0;font-size:13px;color:#166534;line-height:1.6;">
-            💼 Số dư đã được cập nhật vào ví thu nhập của bạn. Bạn có thể xem chi tiết trong mục <strong>Ví thu nhập</strong> trên CleanConnect.
+            Số dư đã được cập nhật vào ví thu nhập của bạn. Bạn có thể xem chi tiết trong mục <strong>Ví thu nhập</strong> trên CleanConnect.
           </p>
         </td>
       </tr>
@@ -728,7 +753,7 @@ const sendFeedbackRepliedEmail = async (toEmail, userName, subject, adminNote, s
   const statusColor = { resolved: '#16a34a', closed: '#6b7280', in_progress: '#2563eb', open: '#f97316' };
   const color = statusColor[status] || '#6b7280';
   const html = layout(`
-    ${hero('💬', 'Phản hồi của bạn đã được xử lý', `Chủ đề: "${subject}"`, color)}
+    ${hero('chat', 'Phản hồi của bạn đã được xử lý', `Chủ đề: "${subject}"`, color)}
     ${greeting(userName)}
     <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
       Cảm ơn bạn đã gửi phản hồi đến CleanConnect. Đội ngũ Admin đã xem xét và cập nhật trạng thái:
@@ -749,7 +774,7 @@ const sendFeedbackRepliedEmail = async (toEmail, userName, subject, adminNote, s
       <tr>
         <td style="background:#f9fafb;border-left:4px solid #9ca3af;border-radius:0 8px 8px 0;padding:14px 18px;">
           <p style="margin:0;font-size:13px;color:#374151;line-height:1.6;">
-            📄 Bạn có thể xem toàn bộ lịch sử phản hồi trong mục <strong>Hồ sơ → Phản hồi của tôi</strong> trên CleanConnect.
+            Bạn có thể xem toàn bộ lịch sử phản hồi trong mục <strong>Hồ sơ → Phản hồi của tôi</strong> trên CleanConnect.
           </p>
         </td>
       </tr>

@@ -9,8 +9,8 @@ import toast from 'react-hot-toast';
 export const AuthContext = createContext(null);
 
 const NOTIF_ICONS = {
-  booking_created: '📋', booking_confirmed: '✅', booking_cancelled: '❌',
-  checkin: '📍', checkout: '🏁', payment_received: '💰', review_received: '⭐',
+  booking_created:   '◆', booking_confirmed: '✓', booking_cancelled: '✕',
+  checkin:           '▸', checkout:          '■', payment_received:  '$', review_received: '★',
 };
 
 export function AuthProvider({ children }) {

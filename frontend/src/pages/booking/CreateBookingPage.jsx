@@ -9,6 +9,8 @@ import {
   ArrowLeft, CheckCircle2, Calendar, MapPin,
   CreditCard, Banknote, ChevronRight, Info, Loader2, Check, Tag, X, AlertTriangle,
   Clock, Users, Lightbulb, ShieldCheck, ShieldAlert,
+  Sparkles, Shirt, ChefHat, Baby, HeartHandshake, Building2,
+  Wind, Droplets, PawPrint, Briefcase, Zap, Home,
 } from 'lucide-react';
 import TimePicker24h from '../../components/common/TimePicker24h';
 
@@ -24,7 +26,22 @@ const PAYMENT_METHODS = [
   { key: 'vnpay', icon: CreditCard,  label: 'VNPay',    sub: 'Thanh toán online ngay sau khi đặt lịch' },
 ];
 
-const SERVICE_ICONS = ['🧹', '🪟', '🌿', '👕', '🍳', '✨', '🚿', '🛁'];
+const getServiceIcon = (name = '', className = 'w-6 h-6') => {
+  const n = name.toLowerCase();
+  if (n.includes('trẻ') || n.includes('trông'))           return <Baby           className={className} />;
+  if (n.includes('nấu') || n.includes('nau'))             return <ChefHat        className={className} />;
+  if (n.includes('giặt') || n.includes('giat'))           return <Shirt          className={className} />;
+  if (n.includes('người già') || n.includes('cao tu'))    return <HeartHandshake className={className} />;
+  if (n.includes('thú cưng') || n.includes('thu cung'))   return <PawPrint       className={className} />;
+  if (n.includes('văn phòng') || n.includes('shop'))      return <Briefcase      className={className} />;
+  if (n.includes('công nghiệp') || n.includes('cong ng')) return <Building2      className={className} />;
+  if (n.includes('điều hòa') || n.includes('dieu hoa'))   return <Wind           className={className} />;
+  if (n.includes('khử') || n.includes('phun'))            return <Zap            className={className} />;
+  if (n.includes('sofa') || n.includes('nệm') || n.includes('rèm')) return <Wind className={className} />;
+  if (n.includes('máy giặt') || n.includes('thiết bị'))  return <Droplets       className={className} />;
+  if (n.includes('định kỳ') || n.includes('dinh ky'))    return <Home           className={className} />;
+  return <Sparkles className={className} />;
+};
 
 const INPUT_CLS =
   'w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm text-[#222222] placeholder:text-[#6a6a6a] focus:outline-none focus:border-gray-900 focus:ring-0 transition-colors';
@@ -378,8 +395,8 @@ export default function CreateBookingPage() {
           {hasServiceParam ? (
             selectedService && (
               <div className="bg-orange-50 border border-orange-200 rounded-2xl px-5 py-4 flex items-center gap-3">
-                <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0 text-xl">
-                  {SERVICE_ICONS[services.findIndex(s => String(s.serviceId) === String(form.serviceId)) % SERVICE_ICONS.length] || '🧹'}
+                <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0 text-orange-500">
+                  {getServiceIcon(selectedService?.serviceName, 'w-5 h-5')}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-orange-700">{selectedService.serviceName}</p>
@@ -406,7 +423,9 @@ export default function CreateBookingPage() {
                             ? 'border-orange-500 bg-orange-50'
                             : 'border-gray-200 bg-white hover:border-orange-300'}`}
                       >
-                        <div className="text-2xl mb-2">{SERVICE_ICONS[idx % SERVICE_ICONS.length]}</div>
+                        <div className={`mb-2 ${selected ? 'text-orange-500' : 'text-gray-400'}`}>
+                          {getServiceIcon(s.serviceName, 'w-7 h-7')}
+                        </div>
                         <p className={`text-sm font-semibold leading-tight mb-1 ${selected ? 'text-orange-600' : 'text-[#222222]'}`}>
                           {s.serviceName}
                         </p>

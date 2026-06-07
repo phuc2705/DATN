@@ -5,18 +5,19 @@ import { useAuth } from '../../hooks/useAuth';
 import toast from 'react-hot-toast';
 import OtpInput from '../../components/common/OtpInput';
 import SEO from '../../components/common/SEO';
+import { Sparkles, Shirt, ChefHat, Baby, HeartHandshake, Building2, DollarSign, CalendarDays, ShieldCheck } from 'lucide-react';
 
 export default function RegisterHelperPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
   const SERVICES = [
-    { id: 1, label: 'Dọn dẹp nhà cửa', icon: '🧹' },
-    { id: 2, label: 'Giặt ủi',          icon: '👕' },
-    { id: 3, label: 'Nấu ăn',           icon: '🍳' },
-    { id: 4, label: 'Chăm sóc trẻ em',  icon: '👶' },
-    { id: 5, label: 'Chăm sóc người già',icon: '👴' },
-    { id: 6, label: 'Vệ sinh công nghiệp',icon:'🏢' },
+    { id: 1, label: 'Dọn dẹp nhà cửa',   Icon: Sparkles       },
+    { id: 2, label: 'Giặt ủi',            Icon: Shirt          },
+    { id: 3, label: 'Nấu ăn',             Icon: ChefHat        },
+    { id: 4, label: 'Chăm sóc trẻ em',    Icon: Baby           },
+    { id: 5, label: 'Chăm sóc người già', Icon: HeartHandshake },
+    { id: 6, label: 'Vệ sinh công nghiệp',Icon: Building2      },
   ];
 
   const [form, setForm] = useState({
@@ -129,11 +130,14 @@ export default function RegisterHelperPage() {
           </p>
           <div className="bg-white/10 rounded-2xl p-4 space-y-2">
             {[
-              '💰  Thu nhập linh hoạt, nhận tiền đúng hạn',
-              '📅  Tự chọn lịch làm việc phù hợp',
-              '🛡️  Được bảo vệ bởi chính sách CleanConnect',
-            ].map((item) => (
-              <p key={item} className="text-green-100 text-sm">{item}</p>
+              { Icon: DollarSign,   text: 'Thu nhập linh hoạt, nhận tiền đúng hạn' },
+              { Icon: CalendarDays, text: 'Tự chọn lịch làm việc phù hợp' },
+              { Icon: ShieldCheck,  text: 'Được bảo vệ bởi chính sách CleanConnect' },
+            ].map(({ Icon, text }) => (
+              <div key={text} className="flex items-center gap-2.5">
+                <Icon className="w-4 h-4 text-green-200 flex-shrink-0" />
+                <p className="text-green-100 text-sm">{text}</p>
+              </div>
             ))}
           </div>
           <div className="mt-6 bg-white/10 rounded-xl p-4">
@@ -411,7 +415,7 @@ export default function RegisterHelperPage() {
                           checked={selectedServices.includes(s.id)}
                           onChange={() => toggleService(s.id)}
                         />
-                        <span className="text-base">{s.icon}</span>
+                        <s.Icon className={`w-4 h-4 flex-shrink-0 ${selectedServices.includes(s.id) ? 'text-green-500' : 'text-gray-400'}`} />
                         <span>{s.label}</span>
                         {selectedServices.includes(s.id) && (
                           <span className="ml-auto text-green-500">✓</span>

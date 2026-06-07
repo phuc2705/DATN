@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
-import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Loader2, ShieldCheck, CreditCard, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 import SEO from '../../components/common/SEO';
 
@@ -127,12 +127,12 @@ export default function LoginPage() {
           </p>
           <div className="space-y-3">
             {[
-              { icon: '✅', text: 'Người giúp việc được xác minh CCCD' },
-              { icon: '💳', text: 'Thanh toán minh bạch, không phí ẩn' },
-              { icon: '⭐', text: 'Đánh giá 2 chiều, uy tín rõ ràng' },
-            ].map(({ icon, text }) => (
+              { Icon: ShieldCheck, text: 'Người giúp việc được xác minh CCCD' },
+              { Icon: CreditCard,  text: 'Thanh toán minh bạch, không phí ẩn' },
+              { Icon: Star,        text: 'Đánh giá 2 chiều, uy tín rõ ràng' },
+            ].map(({ Icon, text }) => (
               <div key={text} className="flex items-center gap-3">
-                <span className="text-lg">{icon}</span>
+                <Icon className="w-4 h-4 text-orange-200 flex-shrink-0" />
                 <span className="text-orange-100 text-sm">{text}</span>
               </div>
             ))}
