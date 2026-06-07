@@ -101,11 +101,13 @@ const layout = (content, accentColor = '#ea580c') => `
 
           <!-- ── HEADER ── -->
           <tr>
-            <td style="background:${accentColor};border-radius:12px 12px 0 0;padding:28px 40px;text-align:center;">
-              <span style="font-size:24px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;text-decoration:none;">
+            <td style="background:${accentColor};border-radius:12px 12px 0 0;padding:24px 40px;text-align:center;">
+              <img src="https://connectclean.onrender.com/logo.png" alt="CleanConnect" width="56" height="56"
+                style="display:block;margin:0 auto 10px;border-radius:12px;object-fit:cover;" />
+              <span style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">
                 Clean<span style="color:${accentColor === '#ea580c' ? '#fed7aa' : '#bbf7d0'}">Connect</span>
               </span>
-              <p style="margin:6px 0 0;font-size:12px;color:${accentColor === '#ea580c' ? '#fdba74' : '#86efac'};letter-spacing:0.5px;">
+              <p style="margin:5px 0 0;font-size:12px;color:${accentColor === '#ea580c' ? '#fdba74' : '#86efac'};letter-spacing:0.5px;">
                 DỊCH VỤ GIÚP VIỆC GIA ĐÌNH THEO GIỜ
               </p>
             </td>
