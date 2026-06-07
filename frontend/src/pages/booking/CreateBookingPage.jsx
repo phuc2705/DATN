@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import {
   ArrowLeft, CheckCircle2, Calendar, MapPin,
   CreditCard, Banknote, ChevronRight, Info, Loader2, Check, Tag, X, AlertTriangle,
-  Clock, Users, Lightbulb, ShieldCheck, ShieldAlert,
+  Clock, Users, Lightbulb, ShieldCheck, ShieldAlert, LocateFixed,
   Sparkles, Shirt, ChefHat, Baby, HeartHandshake, Building2,
   Wind, Droplets, PawPrint, Briefcase, Zap, Home,
 } from 'lucide-react';
@@ -132,6 +132,8 @@ export default function CreateBookingPage() {
     note:        '',
   });
 
+  const [formCoords, setFormCoords]       = useState(null); // { lat, lng } từ GPS
+  const [gpsLoading, setGpsLoading]       = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [promoCode, setPromoCode]         = useState('');
   const [promoApplied, setPromoApplied]   = useState(null);
@@ -283,6 +285,33 @@ export default function CreateBookingPage() {
     return null;
   };
 
+  // Lấy vị trí GPS và reverse geocode qua Nominatim (OpenStreetMap, miễn phí)
+  const handleGPS = async () => {
+    if (!navigator.geolocation) { toast.error('Trình duyệt không hỗ trợ định vị GPS'); return; }
+    setGpsLoading(true);
+    try {
+      const coords = await new Promise((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 })
+      );
+      const { latitude: lat, longitude: lng } = coords.coords;
+      setFormCoords({ lat, lng });
+      const resp = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+        { headers: { 'Accept-Language': 'vi' } }
+      );
+      const geo = await resp.json();
+      const addr = geo.display_name || '';
+      setForm(f => ({ ...f, address: addr }));
+      toast.success('Đã lấy vị trí hiện tại');
+    } catch (err) {
+      if (err.code === 1) toast.error('Bạn đã từ chối quyền định vị. Vui lòng bật trong cài đặt trình duyệt.');
+      else if (err.code === 3) toast.error('Hết thời gian lấy GPS. Vui lòng thử lại.');
+      else toast.error('Không lấy được vị trí GPS');
+    } finally {
+      setGpsLoading(false);
+    }
+  };
+
   const validateStep1 = () => {
     if (!form.serviceId)  { toast.error('Vui lòng chọn dịch vụ'); return false; }
     if (!form.bookingDate){ toast.error('Vui lòng chọn ngày làm việc'); return false; }
@@ -315,6 +344,7 @@ export default function CreateBookingPage() {
         note:        form.note || undefined,
         paymentMethod,
         promoCode: promoApplied ? promoCode.trim() : undefined,
+        ...(formCoords ? { lat: formCoords.lat, lng: formCoords.lng } : {}),
       });
 
       const bookingId = data.data.bookingId;
@@ -687,17 +717,39 @@ export default function CreateBookingPage() {
               <div className="space-y-4">
                 <div>
                   <Label required>Địa chỉ đầy đủ</Label>
-                  <input
-                    type="text"
-                    value={form.address}
-                    onChange={set('address')}
-                    placeholder="VD: 15 Phố Huế, P.Nguyễn Du, Q.Hai Bà Trưng, Hà Nội"
-                    className={INPUT_CLS}
-                  />
-                  <p className="flex items-center gap-1.5 text-xs text-[#6a6a6a] mt-1.5">
-                    <Info className="w-3.5 h-3.5 shrink-0" />
-                    Nhập địa chỉ chi tiết để người giúp việc dễ tìm đến
-                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={form.address}
+                      onChange={(e) => { set('address')(e); setFormCoords(null); }}
+                      placeholder="VD: 15 Phố Huế, P.Nguyễn Du, Q.Hai Bà Trưng, Hà Nội"
+                      className={`${INPUT_CLS} flex-1`}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleGPS}
+                      disabled={gpsLoading}
+                      title="Lấy vị trí hiện tại"
+                      className="flex-shrink-0 flex items-center justify-center gap-1.5 h-10 px-3 rounded-lg border border-gray-200 bg-white hover:bg-orange-50 hover:border-orange-300 text-gray-500 hover:text-orange-500 disabled:opacity-50 transition-colors text-xs font-medium"
+                    >
+                      {gpsLoading
+                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : <LocateFixed className="w-4 h-4" />}
+                      <span className="hidden sm:inline">{gpsLoading ? 'Đang lấy...' : 'GPS'}</span>
+                    </button>
+                  </div>
+                  {formCoords && (
+                    <p className="flex items-center gap-1.5 text-xs text-green-600 mt-1.5">
+                      <LocateFixed className="w-3.5 h-3.5 shrink-0" />
+                      Đã định vị GPS · {formCoords.lat.toFixed(5)}, {formCoords.lng.toFixed(5)}
+                    </p>
+                  )}
+                  {!formCoords && (
+                    <p className="flex items-center gap-1.5 text-xs text-[#6a6a6a] mt-1.5">
+                      <Info className="w-3.5 h-3.5 shrink-0" />
+                      Nhập địa chỉ hoặc bấm GPS để tự động điền vị trí hiện tại
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label>Ghi chú (tùy chọn)</Label>

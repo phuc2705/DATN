@@ -83,7 +83,7 @@ const BookingController = {
   createBooking: async (req, res, next) => {
     try {
       const { user_id } = req.user;
-      const { helperId, serviceId, promoCode, bookingDate, startTime, endTime, address, note, paymentMethod } = req.body;
+      const { helperId, serviceId, promoCode, bookingDate, startTime, endTime, address, note, paymentMethod, lat, lng } = req.body;
 
       const customerProfile = await UserModel.getCustomerProfile(user_id);
       if (!customerProfile) return sendError(res, 'Không tìm thấy thông tin khách hàng.', 404);
@@ -253,15 +253,23 @@ const BookingController = {
             [serviceId]
           );
 
-          // Geocode địa chỉ booking (timeout 5s, không chặn response đã trả)
-          const coords = await geocodeAddress(address);
+          // Ưu tiên dùng GPS từ client (chính xác hơn geocode), fallback sang geocodeAddress
           let bookingLat = null, bookingLng = null;
-          if (coords) {
-            bookingLat = coords.lat; bookingLng = coords.lng;
+          if (lat && lng) {
+            bookingLat = parseFloat(lat); bookingLng = parseFloat(lng);
             await pool.query(
               'UPDATE bookings SET latitude = ?, longitude = ? WHERE booking_id = ?',
               [bookingLat, bookingLng, bookingId]
             );
+          } else {
+            const coords = await geocodeAddress(address);
+            if (coords) {
+              bookingLat = coords.lat; bookingLng = coords.lng;
+              await pool.query(
+                'UPDATE bookings SET latitude = ?, longitude = ? WHERE booking_id = ?',
+                [bookingLat, bookingLng, bookingId]
+              );
+            }
           }
 
           // Phân loại: gần (≤5km) → giai đoạn 1, xa hơn → giai đoạn 2
@@ -448,7 +456,9 @@ const BookingController = {
       }
 
       assertValidTransition(booking.status, 'in_progress');
-      await BookingModel.updateStatus(bookingId, 'in_progress', user_id, 'Helper đã check-in');
+      const { lat, lng } = req.body;
+      const gps = (lat && lng) ? { lat: parseFloat(lat), lng: parseFloat(lng) } : null;
+      await BookingModel.updateStatus(bookingId, 'in_progress', user_id, 'Helper đã check-in', gps);
 
       pushNotification({
         userId: booking.customer_user_id,
@@ -488,7 +498,9 @@ const BookingController = {
       }
 
       assertValidTransition(booking.status, 'completed');
-      await BookingModel.updateStatus(bookingId, 'completed', user_id, 'Helper đã check-out - hoàn thành công việc');
+      const { lat, lng } = req.body;
+      const gps = (lat && lng) ? { lat: parseFloat(lat), lng: parseFloat(lng) } : null;
+      await BookingModel.updateStatus(bookingId, 'completed', user_id, 'Helper đã check-out - hoàn thành công việc', gps);
 
       pushNotification({
         userId: booking.customer_user_id,

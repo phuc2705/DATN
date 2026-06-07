@@ -237,6 +237,19 @@ async function runMigrations(connection) {
   try {
     await connection.query('ALTER TABLE bookings ADD COLUMN longitude DECIMAL(11,8) NULL');
   } catch (err) { /* ignore — cột đã tồn tại */ }
+  // GPS tọa độ lúc helper check-in và check-out
+  try {
+    await connection.query('ALTER TABLE bookings ADD COLUMN checkin_lat DECIMAL(10,8) NULL');
+  } catch (err) { /* ignore — cột đã tồn tại */ }
+  try {
+    await connection.query('ALTER TABLE bookings ADD COLUMN checkin_lng DECIMAL(11,8) NULL');
+  } catch (err) { /* ignore — cột đã tồn tại */ }
+  try {
+    await connection.query('ALTER TABLE bookings ADD COLUMN checkout_lat DECIMAL(10,8) NULL');
+  } catch (err) { /* ignore — cột đã tồn tại */ }
+  try {
+    await connection.query('ALTER TABLE bookings ADD COLUMN checkout_lng DECIMAL(11,8) NULL');
+  } catch (err) { /* ignore — cột đã tồn tại */ }
 
   // Thêm trạng thái refund_pending cho payment (khi tự động hủy và cần hoàn tiền)
   try {

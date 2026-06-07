@@ -14,8 +14,19 @@ import toast from 'react-hot-toast';
 import {
   ClipboardList, Calendar, MapPin, User, FileText,
   CheckCircle, Home, Flag, Loader2, RefreshCw,
-  Clock, Banknote, ChevronRight, MessageSquare,
+  Clock, Banknote, ChevronRight, MessageSquare, LocateFixed,
 } from 'lucide-react';
+
+// Lấy tọa độ GPS của thiết bị — trả null nếu bị từ chối hoặc lỗi
+const requestGPS = () =>
+  new Promise((resolve) => {
+    if (!navigator.geolocation) { resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve(null),
+      { timeout: 10000, maximumAge: 30000 }
+    );
+  });
 
 const SCHEDULE_TABS = [
   { key: 'confirmed',   label: 'Cần check-in', badge: 'bg-blue-100 text-blue-700' },
@@ -109,13 +120,18 @@ function JobCard({ job, onAccept }) {
 
 /* ─── Schedule Card ──────────────────────────────────────────────── */
 function ScheduleCard({ booking, onCheckin, onCheckout }) {
-  const [loading, setLoading]           = useState(false);
+  const [loading, setLoading]       = useState(false);
+  const [gpsPhase, setGpsPhase]     = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const sl = BOOKING_STATUS_LABEL[booking.status] || {};
 
-  const handle = async (fn) => {
+  const handleGPSAction = async (apiFn) => {
+    setGpsPhase(true);
+    const coords = await requestGPS();
+    setGpsPhase(false);
+    if (!coords) toast('Không lấy được GPS — vẫn tiếp tục ghi nhận.', { icon: '📍', duration: 3000 });
     setLoading(true);
-    try { await fn(); }
+    try { await apiFn(coords); }
     finally { setLoading(false); }
   };
 
@@ -165,12 +181,17 @@ function ScheduleCard({ booking, onCheckin, onCheckout }) {
       {/* Action area */}
       {booking.status === 'confirmed' && (
         <button
-          onClick={() => handle(onCheckin)}
-          disabled={loading}
+          onClick={() => handleGPSAction(onCheckin)}
+          disabled={loading || gpsPhase}
           className="w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white h-11 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors mt-2"
         >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
-          Check-in khi đến nơi
+          {gpsPhase ? (
+            <><Loader2 className="w-4 h-4 animate-spin" />Đang lấy vị trí GPS...</>
+          ) : loading ? (
+            <><Loader2 className="w-4 h-4 animate-spin" />Đang check-in...</>
+          ) : (
+            <><LocateFixed className="w-4 h-4" />Check-in GPS khi đến nơi</>
+          )}
         </button>
       )}
 
@@ -181,12 +202,17 @@ function ScheduleCard({ booking, onCheckin, onCheckout }) {
             <p className="text-sm font-medium text-orange-700">Đang thực hiện công việc...</p>
           </div>
           <button
-            onClick={() => handle(onCheckout)}
-            disabled={loading}
+            onClick={() => handleGPSAction(onCheckout)}
+            disabled={loading || gpsPhase}
             className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white h-11 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors"
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Flag className="w-4 h-4" />}
-            Check-out khi hoàn thành
+            {gpsPhase ? (
+              <><Loader2 className="w-4 h-4 animate-spin" />Đang lấy vị trí GPS...</>
+            ) : loading ? (
+              <><Loader2 className="w-4 h-4 animate-spin" />Đang check-out...</>
+            ) : (
+              <><Flag className="w-4 h-4" />Check-out GPS khi hoàn thành</>
+            )}
           </button>
         </div>
       )}
@@ -295,9 +321,10 @@ export default function HelperJobsPage() {
     }
   };
 
-  const makeAction = (fn, successMsg, bookingId) => async () => {
+  // coords được truyền từ ScheduleCard sau khi lấy GPS
+  const makeAction = (fn, successMsg, bookingId) => async (coords) => {
     try {
-      await fn(bookingId);
+      await fn(bookingId, coords);
       toast.success(successMsg);
       loadBookings();
     } catch (err) {

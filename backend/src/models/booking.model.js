@@ -53,7 +53,8 @@ const BookingModel = {
   },
 
   // Cập nhật trạng thái booking + ghi log (luồng matching và check-in/out)
-  updateStatus: async (bookingId, newStatus, changedByUserId, note = null) => {
+  // gps = { lat, lng } — tọa độ GPS lúc check-in hoặc check-out (tuỳ chọn)
+  updateStatus: async (bookingId, newStatus, changedByUserId, note = null, gps = null) => {
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
@@ -65,15 +66,27 @@ const BookingModel = {
       );
       const oldStatus = current[0]?.status;
 
-      // Cập nhật trạng thái booking
-      let updateQuery = 'UPDATE bookings SET status = ? WHERE booking_id = ?';
-      const updateParams = [newStatus, bookingId];
-
-      // Ghi thêm timestamp check-in hoặc check-out
+      // Xây dựng câu UPDATE kèm timestamp và tọa độ GPS (nếu có)
+      let updateQuery, updateParams;
       if (newStatus === 'in_progress') {
-        updateQuery = 'UPDATE bookings SET status = ?, checkin_at = NOW() WHERE booking_id = ?';
+        if (gps?.lat && gps?.lng) {
+          updateQuery = 'UPDATE bookings SET status = ?, checkin_at = NOW(), checkin_lat = ?, checkin_lng = ? WHERE booking_id = ?';
+          updateParams = [newStatus, gps.lat, gps.lng, bookingId];
+        } else {
+          updateQuery = 'UPDATE bookings SET status = ?, checkin_at = NOW() WHERE booking_id = ?';
+          updateParams = [newStatus, bookingId];
+        }
       } else if (newStatus === 'completed') {
-        updateQuery = 'UPDATE bookings SET status = ?, checkout_at = NOW() WHERE booking_id = ?';
+        if (gps?.lat && gps?.lng) {
+          updateQuery = 'UPDATE bookings SET status = ?, checkout_at = NOW(), checkout_lat = ?, checkout_lng = ? WHERE booking_id = ?';
+          updateParams = [newStatus, gps.lat, gps.lng, bookingId];
+        } else {
+          updateQuery = 'UPDATE bookings SET status = ?, checkout_at = NOW() WHERE booking_id = ?';
+          updateParams = [newStatus, bookingId];
+        }
+      } else {
+        updateQuery = 'UPDATE bookings SET status = ? WHERE booking_id = ?';
+        updateParams = [newStatus, bookingId];
       }
 
       await connection.query(updateQuery, updateParams);
