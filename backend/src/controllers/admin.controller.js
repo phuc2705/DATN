@@ -5,7 +5,7 @@ const { pool } = require('../config/database');
 const { sendSuccess, sendError } = require('../utils/response');
 const { pushNotification, mailIfOffline } = require('../utils/notify');
 const { emitToUser } = require('../socket');
-const { sendHelperAssignedEmail, sendBookingConfirmedEmail } = require('../utils/email');
+const { sendHelperAssignedEmail, sendBookingConfirmedEmail, sendHelperApprovedEmail } = require('../utils/email');
 
 const AdminController = {
   // Thống kê tổng quan cho dashboard
@@ -156,6 +156,16 @@ const AdminController = {
     try {
       const { helperId } = req.params;
       await UserModel.adminVerifyHelper(helperId);
+
+      // Gửi email chúc mừng được duyệt cho helper
+      const [[helperUser]] = await pool.query(
+        'SELECT u.email, u.full_name FROM helpers h JOIN users u ON h.user_id = u.user_id WHERE h.helper_id = ?',
+        [helperId]
+      );
+      if (helperUser) {
+        sendHelperApprovedEmail(helperUser.email, helperUser.full_name).catch(() => {});
+      }
+
       return sendSuccess(res, null, 'Đã xác minh helper thành công!');
     } catch (error) {
       next(error);

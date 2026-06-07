@@ -325,6 +325,57 @@ const sendPaymentReceivedEmail = async (toEmail, helperName, amount, bookingId) 
   await sendMail(toEmail, `[CleanConnect] Đã nhận thanh toán ${amountStr}đ – Đơn #${bookingId}`, html).catch(() => {});
 };
 
+// Helper: đăng ký xong, đang chờ admin duyệt
+const sendHelperPendingEmail = async (toEmail, fullName) => {
+  const html = layout(`
+    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${fullName}</strong>,</h2>
+    <p style="color:#4b5563;line-height:1.6;">
+      Cảm ơn bạn đã đăng ký trở thành người giúp việc tại <strong style="color:#16a34a;">CleanConnect</strong>.
+      Chúng tôi đã nhận được hồ sơ của bạn và đang tiến hành xét duyệt.
+    </p>
+    <div style="background:#f0fdf4;border-left:4px solid #16a34a;padding:16px;border-radius:4px;margin:20px 0;">
+      <p style="margin:0 0 8px;color:#15803d;font-size:14px;font-weight:600;">Các bước tiếp theo:</p>
+      <ol style="margin:0;padding-left:20px;color:#15803d;font-size:14px;line-height:1.8;">
+        <li>Đội ngũ CleanConnect sẽ xem xét hồ sơ của bạn</li>
+        <li>Quá trình xét duyệt thường mất <strong>1–2 ngày làm việc</strong></li>
+        <li>Bạn sẽ nhận được email thông báo kết quả ngay khi có</li>
+      </ol>
+    </div>
+    <p style="color:#6b7280;font-size:14px;">
+      Nếu bạn có câu hỏi, vui lòng liên hệ đội ngũ hỗ trợ CleanConnect.
+    </p>
+  `);
+  await sendMail(toEmail, '[CleanConnect] Hồ sơ người giúp việc đang chờ xét duyệt', html).catch(() => {});
+};
+
+// Helper: được admin phê duyệt
+const sendHelperApprovedEmail = async (toEmail, fullName) => {
+  const html = layout(`
+    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${fullName}</strong>,</h2>
+    <p style="color:#4b5563;line-height:1.6;">
+      Chúc mừng! Hồ sơ của bạn đã được <strong style="color:#16a34a;">xét duyệt thành công</strong>.
+      Bạn đã chính thức trở thành người giúp việc của <strong>CleanConnect</strong>.
+    </p>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:20px;margin:20px 0;text-align:center;">
+      <p style="margin:0 0 6px;font-size:20px;">🎉</p>
+      <p style="margin:0;font-size:16px;font-weight:700;color:#16a34a;">Hồ sơ đã được duyệt!</p>
+      <p style="margin:6px 0 0;color:#6b7280;font-size:13px;">Bạn có thể đăng nhập và bắt đầu nhận đơn ngay bây giờ</p>
+    </div>
+    <div style="background:#eff6ff;border-left:4px solid #2563eb;padding:16px;border-radius:4px;margin:16px 0;">
+      <p style="margin:0 0 8px;color:#1d4ed8;font-size:14px;font-weight:600;">Bắt đầu như thế nào:</p>
+      <ol style="margin:0;padding-left:20px;color:#1d4ed8;font-size:14px;line-height:1.8;">
+        <li>Đăng nhập vào CleanConnect bằng email và mật khẩu của bạn</li>
+        <li>Cập nhật hồ sơ và đặt trạng thái sẵn sàng nhận việc</li>
+        <li>Theo dõi bảng việc làm để nhận các đơn phù hợp</li>
+      </ol>
+    </div>
+    <p style="color:#6b7280;font-size:14px;">
+      Chúc bạn có nhiều đơn thành công và thu nhập ổn định cùng CleanConnect!
+    </p>
+  `);
+  await sendMail(toEmail, '[CleanConnect] Hồ sơ người giúp việc đã được phê duyệt 🎉', html).catch(() => {});
+};
+
 // User: admin đã trả lời phản hồi
 const sendFeedbackRepliedEmail = async (toEmail, userName, subject, adminNote, status) => {
   const statusMap = { resolved: 'Đã giải quyết', closed: 'Đã đóng', in_progress: 'Đang xử lý', open: 'Mở' };
@@ -363,4 +414,6 @@ module.exports = {
   sendReminderEmail,
   sendPaymentReceivedEmail,
   sendFeedbackRepliedEmail,
+  sendHelperPendingEmail,
+  sendHelperApprovedEmail,
 };

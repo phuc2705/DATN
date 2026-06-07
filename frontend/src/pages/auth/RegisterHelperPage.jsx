@@ -85,9 +85,8 @@ export default function RegisterHelperPage() {
     setLoading(true);
     try {
       await verifyOtpApi({ email: registeredEmail, otp: code });
-      await login(registeredEmail, savedPassword);
-      toast.success('Xác minh thành công! Hồ sơ của bạn đang chờ Admin xét duyệt (1–2 ngày làm việc).');
-      navigate('/');
+      toast.success('Xác minh email thành công! Hồ sơ đang chờ Admin xét duyệt. Vui lòng kiểm tra email để biết thêm chi tiết.');
+      navigate('/login', { state: { message: 'Đăng ký thành công! Hồ sơ của bạn đang được xét duyệt (1–2 ngày làm việc). Bạn sẽ nhận email khi được duyệt.' } });
     } catch (err) {
       toast.error(err.response?.data?.message || 'Mã OTP không đúng');
     } finally {

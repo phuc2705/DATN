@@ -4,7 +4,7 @@ const UserModel = require('../models/user.model');
 const OtpModel = require('../models/otp.model');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../config/jwt');
 const { sendSuccess, sendError } = require('../utils/response');
-const { sendOtpEmail } = require('../utils/email');
+const { sendOtpEmail, sendHelperPendingEmail } = require('../utils/email');
 const { geocodeAddress } = require('../utils/geocode');
 const { pool } = require('../config/database');
 
@@ -226,6 +226,11 @@ const AuthController = {
               );
             }
           }).catch(() => {});
+      }
+
+      // Gửi email thông báo cho helper mới (chờ admin duyệt)
+      if (activatedUser?.user_type === 'helper') {
+        sendHelperPendingEmail(email, activatedUser.full_name).catch(() => {});
       }
 
       // Kiểm tra loại tài khoản để trả về thông báo phù hợp
