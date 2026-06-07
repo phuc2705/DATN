@@ -325,6 +325,34 @@ const sendPaymentReceivedEmail = async (toEmail, helperName, amount, bookingId) 
   await sendMail(toEmail, `[CleanConnect] Đã nhận thanh toán ${amountStr}đ – Đơn #${bookingId}`, html).catch(() => {});
 };
 
+// Khách hàng: đăng ký thành công (sau khi xác minh OTP)
+const sendCustomerWelcomeEmail = async (toEmail, fullName) => {
+  const html = layout(`
+    <h2 style="color:#1f2937;margin-top:0;">Xin chào <strong>${fullName}</strong>,</h2>
+    <p style="color:#4b5563;line-height:1.6;">
+      Chào mừng bạn đến với <strong style="color:#ea580c;">CleanConnect</strong>!
+      Tài khoản của bạn đã được kích hoạt thành công.
+    </p>
+    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:20px;margin:20px 0;text-align:center;">
+      <p style="margin:0 0 6px;font-size:20px;">🎉</p>
+      <p style="margin:0;font-size:16px;font-weight:700;color:#ea580c;">Đăng ký thành công!</p>
+      <p style="margin:6px 0 0;color:#6b7280;font-size:13px;">Bạn có thể đăng nhập và đặt lịch ngay bây giờ</p>
+    </div>
+    <div style="background:#fff7ed;border-left:4px solid #ea580c;padding:16px;border-radius:4px;margin:16px 0;">
+      <p style="margin:0 0 8px;color:#c2410c;font-size:14px;font-weight:600;">Khám phá ngay:</p>
+      <ul style="margin:0;padding-left:20px;color:#c2410c;font-size:14px;line-height:1.8;">
+        <li>Đặt lịch dọn dẹp, giặt ủi, nấu ăn và nhiều dịch vụ khác</li>
+        <li>Chọn người giúp việc được xác minh CCCD, có đánh giá thực tế</li>
+        <li>Thanh toán linh hoạt: tiền mặt hoặc VNPay</li>
+      </ul>
+    </div>
+    <p style="color:#6b7280;font-size:14px;">
+      Cảm ơn bạn đã tin tưởng CleanConnect. Chúc bạn có trải nghiệm tuyệt vời!
+    </p>
+  `);
+  await sendMail(toEmail, '[CleanConnect] Chào mừng bạn đến với CleanConnect! 🎉', html).catch(() => {});
+};
+
 // Helper: đăng ký xong, đang chờ admin duyệt
 const sendHelperPendingEmail = async (toEmail, fullName) => {
   const html = layout(`
@@ -416,4 +444,5 @@ module.exports = {
   sendFeedbackRepliedEmail,
   sendHelperPendingEmail,
   sendHelperApprovedEmail,
+  sendCustomerWelcomeEmail,
 };
