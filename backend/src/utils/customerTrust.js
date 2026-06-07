@@ -26,9 +26,10 @@ async function getCustomerTrustInfo(customerId) {
   const completionRate        = total > 0 ? completed / total : 0;
   const completionRatePercent = Math.round(completionRate * 100);
 
-  const isNewCustomer       = total === 0;
-  const isTrusted           = !isNewCustomer && completionRate >= TRUST_THRESHOLD;
-  const requiresOnlinePayment = isNewCustomer || !isTrusted;
+  const isNewCustomer         = total === 0;
+  const isTrusted             = !isNewCustomer && completionRate >= TRUST_THRESHOLD;
+  // Chỉ khách hàng mới (chưa từng đặt lịch) mới bắt buộc đặt cọc 70% qua VNPay
+  const requiresOnlinePayment = isNewCustomer;
 
   return {
     totalBookings:          total,

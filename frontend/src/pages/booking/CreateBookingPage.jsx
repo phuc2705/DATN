@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import {
   ArrowLeft, CheckCircle2, Calendar, MapPin,
   CreditCard, Banknote, ChevronRight, Info, Loader2, Check, Tag, X, AlertTriangle,
-  Clock, Users, Lightbulb, ShieldCheck, ShieldAlert, ShieldOff,
+  Clock, Users, Lightbulb, ShieldCheck, ShieldAlert,
 } from 'lucide-react';
 import TimePicker24h from '../../components/common/TimePicker24h';
 
@@ -704,54 +704,21 @@ export default function CreateBookingPage() {
                 <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl p-4">
                   <ShieldAlert className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-sm font-semibold text-blue-800">Lần đầu đặt lịch — thanh toán online bắt buộc</p>
+                    <p className="text-sm font-semibold text-blue-800">Lần đầu đặt lịch — đặt cọc 70% qua VNPay</p>
                     <p className="text-xs text-blue-600 mt-1">
-                      Để đảm bảo cam kết và tránh đặt lịch ảo gây lãng phí thời gian của nhân viên,
-                      lần đầu tiên bạn cần thanh toán qua VNPay. Sau khi hoàn thành đơn đầu tiên,
-                      bạn sẽ được mở khóa thêm hình thức thanh toán.
+                      Để đảm bảo cam kết và bảo vệ thời gian di chuyển của nhân viên,
+                      lần đầu bạn cần đặt cọc 70% giá trị đơn qua VNPay ngay khi đặt lịch.
+                      Phần 30% còn lại thanh toán sau khi dịch vụ hoàn thành.
                     </p>
-                  </div>
-                </div>
-              ) : !trustInfo.isTrusted ? (
-                <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
-                  <ShieldOff className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-amber-800">Tỷ lệ hoàn thành thấp — thanh toán online bắt buộc</p>
-                      <span className="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full ml-2 shrink-0">
-                        {trustInfo.completionRatePercent}%
-                      </span>
-                    </div>
-                    <p className="text-xs text-amber-600 mt-1">
-                      Tỷ lệ hoàn thành của bạn ({trustInfo.completionRatePercent}%) thấp hơn ngưỡng
-                      tối thiểu {trustInfo.trustThresholdPercent}%. Vui lòng thanh toán online để đặt lịch.
-                      Hoàn thành thêm đơn để nâng uy tín và mở khóa thanh toán tiền mặt.
-                    </p>
-                    <div className="mt-2 bg-amber-100 rounded-full overflow-hidden h-1.5">
-                      <div
-                        className="h-full bg-amber-400 rounded-full transition-all"
-                        style={{ width: `${Math.min(trustInfo.completionRatePercent, 100)}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-xs text-amber-500 mt-0.5">
-                      <span>{trustInfo.completionRatePercent}% hiện tại</span>
-                      <span>Cần {trustInfo.trustThresholdPercent}% để mở khóa</span>
-                    </div>
                   </div>
                 </div>
               ) : (
                 <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-xl p-4">
                   <ShieldCheck className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-green-800">Tài khoản uy tín cao</p>
-                      <span className="text-xs font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full ml-2 shrink-0">
-                        {trustInfo.completionRatePercent}% hoàn thành
-                      </span>
-                    </div>
+                  <div>
+                    <p className="text-sm font-semibold text-green-800">Khách hàng thân quen — tự do chọn thanh toán</p>
                     <p className="text-xs text-green-600 mt-0.5">
-                      Bạn đã hoàn thành {trustInfo.completedBookings}/{trustInfo.totalBookings} đơn.
-                      Bạn được tự do chọn hình thức thanh toán sau khi dịch vụ hoàn tất.
+                      Bạn đã có lịch sử đặt lịch. Bạn được chọn tiền mặt hoặc VNPay tùy ý.
                     </p>
                   </div>
                 </div>
