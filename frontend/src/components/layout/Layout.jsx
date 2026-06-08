@@ -28,16 +28,16 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navbar />
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-8">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-4 py-6 sm:py-8 min-w-0">
         <Outlet />
       </main>
 
       {/* ─── FOOTER ─────────────────────────────────────────────── */}
       <footer className="bg-gray-900 text-gray-300 mt-16">
         <div className="max-w-6xl mx-auto px-4 py-12">
-          <div className="grid md:grid-cols-4 gap-8 mb-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-10">
             {/* Brand */}
-            <div>
+            <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2.5 mb-4">
                 <img src="/logo.png" alt="CleanConnect" className="h-12 w-auto object-contain rounded-xl opacity-90" />
                 <span className="flex flex-col leading-none">
@@ -83,7 +83,7 @@ export default function Layout() {
 
           {/* Contact & Cities */}
           <div className="border-t border-gray-800 pt-8 mb-6">
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <h3 className="text-white font-semibold mb-3">Liên hệ</h3>
                 <div className="space-y-2 text-sm text-gray-400">

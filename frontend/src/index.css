@@ -5,9 +5,14 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    overflow-x: hidden;
+  }
+
   body {
     @apply bg-slate-50 text-gray-800;
     font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
   }
 
   * {

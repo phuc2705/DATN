@@ -333,9 +333,22 @@ function ReviewCard({ review }) {
 function PhotoGallery({ images }) {
   const [main, ...thumbs] = images;
   return (
-    <div className="rounded-2xl overflow-hidden mb-8">
-      <div className="grid grid-cols-2 grid-rows-2 h-[380px] md:h-[460px] gap-2">
-        {/* Ảnh chính — chiếm toàn bộ cột trái */}
+    <div className="rounded-2xl overflow-hidden mb-6 sm:mb-8">
+      {/* Mobile: only main image */}
+      <div className="sm:hidden relative h-[220px] bg-gray-100 cursor-pointer overflow-hidden">
+        <img
+          src={main.url}
+          alt={main.label}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+        <span className="absolute bottom-3 left-3 bg-black/50 text-white text-xs px-2.5 py-1 rounded-full backdrop-blur-sm font-medium">
+          {main.label}
+        </span>
+      </div>
+      {/* sm+: two-column grid */}
+      <div className="hidden sm:grid grid-cols-2 grid-rows-2 h-[300px] md:h-[460px] gap-2">
         <div className="row-span-2 relative group cursor-pointer overflow-hidden bg-gray-100">
           <img
             src={main.url}
@@ -343,13 +356,11 @@ function PhotoGallery({ images }) {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
           />
-          {/* Gradient overlay + label */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
           <span className="absolute bottom-3 left-3 bg-black/50 text-white text-xs px-2.5 py-1 rounded-full backdrop-blur-sm font-medium">
             {main.label}
           </span>
         </div>
-        {/* 2 thumbnail nhỏ — cột phải */}
         {thumbs.slice(0, 2).map((img) => (
           <div key={img.id} className="relative group cursor-pointer overflow-hidden bg-gray-100">
             <img
@@ -623,8 +634,8 @@ export default function ServiceDetailPage() {
   if (loading) {
     return (
       <div className="animate-pulse">
-        <div className="h-5 bg-gray-100 rounded w-48 mb-6" />
-        <div className="h-[380px] bg-gray-100 rounded-2xl mb-8" />
+        <div className="h-5 bg-gray-100 rounded w-48 mb-4 sm:mb-6" />
+        <div className="h-[220px] sm:h-[300px] md:h-[460px] bg-gray-100 rounded-2xl mb-6 sm:mb-8" />
         <div className="grid lg:grid-cols-[1fr_360px] gap-10">
           <div className="space-y-4">
             <div className="h-8 bg-gray-100 rounded w-3/4" />
@@ -713,15 +724,15 @@ export default function ServiceDetailPage() {
       />
 
       {/* ── Breadcrumb ──────────────────────────────────────────────────────── */}
-      <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-        <Link to="/" className="hover:text-orange-500 transition-colors flex items-center gap-1">
+      <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-4 sm:mb-6 overflow-hidden">
+        <Link to="/" className="hover:text-orange-500 transition-colors flex items-center gap-1 shrink-0">
           <Home className="w-3.5 h-3.5" />
-          Trang chủ
+          <span className="hidden xs:inline">Trang chủ</span>
         </Link>
         <span>/</span>
-        <Link to="/" className="hover:text-orange-500 transition-colors">Dịch vụ</Link>
+        <Link to="/" className="hover:text-orange-500 transition-colors shrink-0">Dịch vụ</Link>
         <span>/</span>
-        <span className="text-gray-900 font-medium truncate max-w-[200px]">{service.serviceName}</span>
+        <span className="text-gray-900 font-medium truncate min-w-0">{service.serviceName}</span>
       </nav>
 
       {/* ── Photo gallery ───────────────────────────────────────────────────── */}

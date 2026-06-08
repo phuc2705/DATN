@@ -343,23 +343,23 @@ export default function HomePage() {
           <div className="absolute bottom-10 right-10 w-12 h-12 bg-white/15 rounded-full" />
         </div>
 
-        <div className="relative px-6 py-14 md:py-20 max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-full text-sm font-medium mb-6 border border-white/20">
+        <div className="relative px-4 sm:px-6 py-10 sm:py-14 md:py-20 max-w-4xl mx-auto">
+          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 sm:px-4 py-1.5 rounded-full text-sm font-medium mb-5 sm:mb-6 border border-white/20">
             <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
             Đang phục vụ tại Hà Nội
           </div>
 
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 leading-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-3 sm:mb-4 leading-tight">
             Giúp việc gia đình<br />
             <span className="text-orange-200">theo giờ, tiện lợi</span>
           </h1>
-          <p className="text-orange-100 text-lg mb-8 max-w-xl leading-relaxed">
+          <p className="text-orange-100 text-base sm:text-lg mb-6 sm:mb-8 max-w-xl leading-relaxed">
             Đặt lịch trong 3 phút. Người giúp việc được xác minh CCCD đến tận nhà bạn.
             Minh bạch, uy tín, giá cả rõ ràng.
           </p>
 
           {/* Search form */}
-          <div className="bg-white rounded-2xl p-3 shadow-2xl max-w-2xl">
+          <div className="bg-white rounded-2xl p-3 shadow-2xl max-w-2xl overflow-hidden">
             <div className="flex flex-col sm:flex-row gap-2">
               {/* Khu vực */}
               <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-xl sm:w-36 shrink-0">
@@ -391,7 +391,7 @@ export default function HomePage() {
                 </button>
 
                 {serviceDropdownOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-full min-w-[300px] bg-white rounded-2xl shadow-2xl border border-gray-100 z-50">
+                  <div className="absolute top-full left-0 mt-1 w-full bg-white rounded-2xl shadow-2xl border border-gray-100 z-50">
                     <div className="px-4 py-2.5 bg-gray-50/80 border-b border-gray-100 rounded-t-2xl">
                       <p className="text-xs text-gray-500 font-medium">Chọn một hoặc nhiều dịch vụ</p>
                     </div>
@@ -669,7 +669,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── ĐĂNG KÝ LÀM NGƯỜI GIÚP VIỆC ───────────────────────── */}
-      <section className="mb-12 bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl p-8 md:p-10 text-white overflow-hidden relative">
+      <section className="mb-12 bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl p-5 sm:p-8 md:p-10 text-white overflow-hidden relative">
         <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
         <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
@@ -699,7 +699,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── CTA CUỐI ─────────────────────────────────────────────── */}
-      <section className="bg-gradient-to-br from-orange-500 to-red-600 rounded-3xl p-10 text-center text-white mb-2">
+      <section className="bg-gradient-to-br from-orange-500 to-red-600 rounded-3xl p-6 sm:p-10 text-center text-white mb-2">
         <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <Home className="w-8 h-8 text-white" />
         </div>

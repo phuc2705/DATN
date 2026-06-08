@@ -170,7 +170,7 @@ export default function HelperProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pb-20 lg:pb-0">
       <SEO
         title={`${helper.fullName} – Người giúp việc`}
         description={`${helper.fullName} – ${helper.experienceYears ?? 0} năm kinh nghiệm, ${helper.totalBookings || 0} lần làm việc, đánh giá ${helper.rating}/5. Đặt lịch ngay trên CleanConnect.`}

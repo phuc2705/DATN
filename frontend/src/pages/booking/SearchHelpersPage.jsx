@@ -428,55 +428,55 @@ export default function SearchHelpersPage() {
           style={{ boxShadow: 'rgba(0,0,0,0.02) 0 0 0 1px, rgba(0,0,0,0.04) 0 2px 6px, rgba(0,0,0,0.1) 0 4px 8px' }}
         >
           {/* Hàng trên: tìm theo thành phố + sort + bộ lọc nâng cao */}
-          <div className="flex gap-3 flex-wrap">
-            {/* Input thành phố */}
-            <div className="flex-1 min-w-[160px] relative">
-              <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6a6a6a]" />
-              <input
-                type="text"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && doSearch(city)}
-                placeholder="Lọc theo thành phố…"
-                className="w-full h-11 pl-10 pr-3 bg-white border border-[#dddddd] rounded-xl text-[#222222] text-sm placeholder-[#929292] focus:outline-none focus:border-2 focus:border-[#222222] transition-all"
-              />
-            </div>
-
-            {/* Nút tìm */}
-            <button
-              onClick={() => doSearch(city)}
-              className="h-11 px-5 bg-[#222222] hover:bg-[#444444] text-white text-sm font-medium rounded-xl transition-colors flex items-center gap-2 flex-shrink-0"
-            >
-              <Search className="w-4 h-4" />
-              Tìm
-            </button>
-
-            {/* Sort */}
-            <div className="relative flex-shrink-0">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="h-11 pl-4 pr-8 bg-white border border-[#dddddd] rounded-xl text-[#222222] text-sm font-medium focus:outline-none focus:border-2 focus:border-[#222222] transition-all appearance-none cursor-pointer"
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Row 1 on mobile: search input + find button */}
+            <div className="flex gap-2 flex-1">
+              <div className="flex-1 relative">
+                <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6a6a6a]" />
+                <input
+                  type="text"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && doSearch(city)}
+                  placeholder="Lọc theo thành phố…"
+                  className="w-full h-11 pl-10 pr-3 bg-white border border-[#dddddd] rounded-xl text-[#222222] text-sm placeholder-[#929292] focus:outline-none focus:border-2 focus:border-[#222222] transition-all"
+                />
+              </div>
+              <button
+                onClick={() => doSearch(city)}
+                className="h-11 px-4 sm:px-5 bg-[#222222] hover:bg-[#444444] text-white text-sm font-medium rounded-xl transition-colors flex items-center gap-2 shrink-0"
               >
-                <option value="rating">Đánh giá cao nhất</option>
-                <option value="price_asc">Giá thấp → cao</option>
-                <option value="price_desc">Giá cao → thấp</option>
-              </select>
-              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#6a6a6a] pointer-events-none" />
+                <Search className="w-4 h-4" />
+                <span className="hidden sm:inline">Tìm</span>
+              </button>
             </div>
 
-            {/* Toggle bộ lọc thời gian */}
-            <button
-              onClick={() => setShowFilterPanel(!showFilterPanel)}
-              className={`h-11 w-11 rounded-xl border flex items-center justify-center flex-shrink-0 transition-colors ${
-                showFilterPanel || isUsingMatch
-                  ? 'bg-[#222222] border-[#222222] text-white'
-                  : 'bg-white border-[#dddddd] text-[#222222] hover:border-[#222222]'
-              }`}
-              title="Lọc theo khung giờ"
-            >
-              <Filter className="w-4 h-4" />
-            </button>
+            {/* Row 2 on mobile: sort + filter button */}
+            <div className="flex gap-2">
+              <div className="relative flex-1 sm:flex-none">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="w-full sm:w-auto h-11 pl-4 pr-8 bg-white border border-[#dddddd] rounded-xl text-[#222222] text-sm font-medium focus:outline-none focus:border-2 focus:border-[#222222] transition-all appearance-none cursor-pointer"
+                >
+                  <option value="rating">Đánh giá cao nhất</option>
+                  <option value="price_asc">Giá thấp → cao</option>
+                  <option value="price_desc">Giá cao → thấp</option>
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#6a6a6a] pointer-events-none" />
+              </div>
+              <button
+                onClick={() => setShowFilterPanel(!showFilterPanel)}
+                className={`h-11 w-11 rounded-xl border flex items-center justify-center shrink-0 transition-colors ${
+                  showFilterPanel || isUsingMatch
+                    ? 'bg-[#222222] border-[#222222] text-white'
+                    : 'bg-white border-[#dddddd] text-[#222222] hover:border-[#222222]'
+                }`}
+                title="Lọc theo khung giờ"
+              >
+                <Filter className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Bộ lọc thời gian mở rộng */}

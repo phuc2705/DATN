@@ -153,7 +153,7 @@ export default function ForgotPasswordPage() {
       </div>
 
       {/* Right — form */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-slate-50">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 bg-slate-50">
         <div className="w-full max-w-md">
 
           {/* Back */}
@@ -172,7 +172,7 @@ export default function ForgotPasswordPage() {
             <img src="/logo.png" alt="CleanConnect" className="h-10 w-auto mx-auto" />
           </div>
 
-          <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-8">
+          <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-5 sm:p-8">
 
             {/* ─── BƯỚC 1: Nhập email ─── */}
             {step === 1 && (

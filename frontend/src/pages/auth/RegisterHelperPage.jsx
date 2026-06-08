@@ -152,8 +152,8 @@ export default function RegisterHelperPage() {
       </div>
 
       {/* Right — form */}
-      <div className="flex-1 flex items-start justify-center p-6 bg-slate-50 overflow-y-auto">
-        <div className="w-full max-w-lg py-6">
+      <div className="flex-1 flex items-start justify-center p-4 sm:p-6 bg-slate-50 overflow-y-auto">
+        <div className="w-full max-w-lg py-4 sm:py-6">
           {/* Back to home */}
           <div className="mb-4">
             <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-orange-500 transition-colors">
@@ -173,7 +173,7 @@ export default function RegisterHelperPage() {
 
           {otpStep ? (
             /* OTP verification card */
-            <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-8">
+            <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-5 sm:p-8">
               <div className="text-center mb-6">
                 <div className="text-4xl mb-3">📧</div>
                 <h1 className="text-2xl font-bold text-gray-900">Xác minh email</h1>
@@ -230,7 +230,7 @@ export default function RegisterHelperPage() {
             </div>
           ) : (
             /* Registration form card */
-            <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-8">
+            <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-5 sm:p-8">
               <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-900">Đăng ký người giúp việc</h1>
                 <p className="text-gray-500 text-sm mt-1">Điền đầy đủ thông tin để tạo hồ sơ của bạn</p>

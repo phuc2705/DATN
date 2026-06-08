@@ -226,7 +226,7 @@ export default function HelperEarningsPage() {
               </div>
             </div>
             {walletNegative && (
-              <div className="flex items-start gap-2 text-red-500 max-w-[220px]">
+              <div className="flex items-start gap-2 text-red-500 max-w-xs">
                 <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
                 <p className="text-xs leading-relaxed">
                   Số dư âm do phí nền tảng từ đơn tiền mặt chưa được bù đắp

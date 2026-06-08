@@ -145,7 +145,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right — form */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-slate-50">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 bg-slate-50">
         <div className="w-full max-w-md">
           <div className="mb-4">
             <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-orange-500 transition-colors">
@@ -162,7 +162,7 @@ export default function LoginPage() {
             <p className="text-xs text-gray-400 mt-1">Dịch vụ giúp việc theo giờ</p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-8">
+          <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-5 sm:p-8">
             <div className="mb-7">
               <h1 className="text-2xl font-bold text-gray-900">Chào mừng trở lại</h1>
               <p className="text-gray-500 text-sm mt-1">Đăng nhập vào tài khoản CleanConnect của bạn</p>
