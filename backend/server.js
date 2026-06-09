@@ -43,6 +43,9 @@ const isOriginAllowed = (origin) =>
 
 // ─── Khởi tạo app + Socket.io ────────────────────────────────────────────────
 const app = express();
+// Render (và các reverse proxy) đặt X-Forwarded-For — phải bật trust proxy
+// để express-rate-limit và IP detection hoạt động đúng trên production
+app.set('trust proxy', 1);
 const httpServer = createServer(app);
 
 // Fix: không dùng origin:'*' khi credentials:true — trình duyệt sẽ block
