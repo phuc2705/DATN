@@ -147,7 +147,10 @@ const UserController = {
 
       // Lấy các ca từ hôm nay trở về sau, sắp xếp theo ngày tăng dần
       const [rows] = await pool.query(
-        `SELECT id, shift_date AS shiftDate, start_time AS startTime, end_time AS endTime,
+        `SELECT id,
+                DATE_FORMAT(shift_date, '%Y-%m-%d') AS shiftDate,
+                TIME_FORMAT(start_time, '%H:%i')    AS startTime,
+                TIME_FORMAT(end_time,   '%H:%i')    AS endTime,
                 status, created_at AS createdAt
          FROM helper_shift_registrations
          WHERE helper_id = ? AND shift_date >= CURDATE()
