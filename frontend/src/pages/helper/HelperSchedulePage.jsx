@@ -142,6 +142,13 @@ function RegisterShiftModal({ onClose, onSuccess, todayISO }) {
   const [selectedShift, setSelectedShift] = useState(null);
   const [submitting,    setSubmitting]    = useState(false);
 
+  // Tính ca nào hết hạn theo ngày và giờ VN hiện tại
+  const expiredShiftIds = useMemo(() => {
+    return PREDEFINED_SHIFTS
+      .filter((s) => isShiftExpired(shiftDate, s.end, todayISO))
+      .map((s) => s.id);
+  }, [shiftDate, todayISO]);
+
   const handleDateChange = (e) => {
     setShiftDate(e.target.value);
     setSelectedShift(null);
@@ -194,21 +201,33 @@ function RegisterShiftModal({ onClose, onSuccess, todayISO }) {
           <div>
             <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Chọn ca</label>
             <div className="grid grid-cols-2 gap-2">
-              {PREDEFINED_SHIFTS.map((shift) => (
-                <button
-                  key={shift.id}
-                  type="button"
-                  onClick={() => setSelectedShift(shift)}
-                  className={`border rounded-xl p-3 text-left transition-all ${
-                    selectedShift?.id === shift.id
-                      ? 'border-[#ff385c] bg-rose-50 ring-1 ring-[#ff385c]'
-                      : 'border-gray-200 hover:border-gray-300 bg-white'
-                  }`}
-                >
-                  <p className="text-sm font-semibold text-gray-800">{shift.label}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{shift.time}</p>
-                </button>
-              ))}
+              {PREDEFINED_SHIFTS.map((shift) => {
+                const expired  = expiredShiftIds.includes(shift.id);
+                const selected = selectedShift?.id === shift.id;
+                return (
+                  <button
+                    key={shift.id}
+                    type="button"
+                    disabled={expired}
+                    onClick={() => !expired && setSelectedShift(shift)}
+                    className={`border rounded-xl p-3 text-left transition-all relative ${
+                      expired
+                        ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-70'
+                        : selected
+                          ? 'border-[#ff385c] bg-rose-50 ring-1 ring-[#ff385c]'
+                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-1">
+                      <p className={`text-sm font-semibold ${expired ? 'text-gray-400' : 'text-gray-800'}`}>{shift.label}</p>
+                      {expired && (
+                        <span className="text-[9px] font-bold text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded-full shrink-0">hết hạn</span>
+                      )}
+                    </div>
+                    <p className={`text-xs mt-0.5 ${expired ? 'text-gray-400' : 'text-gray-500'}`}>{shift.time}</p>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
