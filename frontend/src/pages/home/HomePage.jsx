@@ -595,24 +595,31 @@ export default function HomePage() {
       <section className="mb-12">
         <div className="text-center mb-8">
           <p className="text-orange-500 text-sm font-semibold uppercase tracking-wide mb-1">Đơn giản & nhanh chóng</p>
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Chỉ 3 bước để có nhà sạch</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Quy trình sử dụng dịch vụ</h2>
+          <p className="text-gray-500 text-sm mt-2">5 bước đơn giản để có một ngôi nhà sạch sẽ</p>
         </div>
-        <div className="grid md:grid-cols-3 gap-6 relative">
-          <div className="hidden md:block absolute top-14 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-orange-200 via-orange-300 to-orange-200" />
-          {[
-            { step: '01', Icon: Search,      title: 'Chọn dịch vụ',    desc: 'Chọn loại dịch vụ và xem danh sách người giúp việc được xếp hạng phù hợp.' },
-            { step: '02', Icon: Calendar,    title: 'Đặt lịch hẹn',    desc: 'Chọn ngày giờ, địa chỉ, phương thức thanh toán và xác nhận trong vài giây.' },
-            { step: '03', Icon: CheckCircle, title: 'Nghỉ ngơi thôi!', desc: 'Người giúp việc đến đúng giờ. Đánh giá sau khi hoàn thành để giúp cộng đồng.' },
-          ].map(({ step, Icon, title, desc }) => (
-            <div key={step} className="relative bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center hover:shadow-md transition-shadow">
-              <div className="absolute top-4 right-5 text-6xl font-black text-gray-50 select-none leading-none">{step}</div>
-              <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
-                <Icon className="w-8 h-8 text-white" />
+        <div className="relative max-w-2xl mx-auto">
+          <div className="absolute left-8 top-4 bottom-4 w-0.5 bg-gradient-to-b from-orange-300 via-orange-200 to-orange-100 hidden sm:block" />
+          <div className="space-y-4">
+            {[
+              { step: '01', Icon: Search,      title: 'Chọn dịch vụ',           desc: 'Khách hàng chọn loại dịch vụ phù hợp nhu cầu: dọn dẹp nhà cửa, giặt ủi, vệ sinh sâu, vệ sinh điều hòa...' },
+              { step: '02', Icon: Calendar,    title: 'Đặt lịch',                desc: 'Chọn ngày, giờ, số giờ làm việc và địa chỉ thực hiện. Hệ thống hiển thị giá ước tính ngay lập tức.' },
+              { step: '03', Icon: Zap,         title: 'Chờ xác nhận',            desc: 'Hệ thống tự động tìm và điều phối người giúp việc phù hợp. Khách hàng nhận thông báo khi có người nhận đơn.' },
+              { step: '04', Icon: MapPin,      title: 'Đón người giúp việc',     desc: 'Người giúp việc đến đúng giờ, check-in xác nhận bắt đầu làm việc. Khách hàng theo dõi trạng thái đơn theo thời gian thực.' },
+              { step: '05', Icon: Heart,       title: 'Nghỉ ngơi thảnh thơi ☕', desc: 'Ngôi nhà sạch sẽ, gọn gàng — khách hàng tận hưởng không gian sống thoải mái mà không tốn sức.' },
+            ].map(({ step, Icon, title, desc }) => (
+              <div key={step} className="relative flex gap-4 sm:gap-5 items-start">
+                <div className="relative z-10 w-16 h-16 flex-shrink-0 bg-orange-500 rounded-2xl flex items-center justify-center shadow-md">
+                  <Icon className="w-7 h-7 text-white" />
+                  <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-white border-2 border-orange-400 rounded-full flex items-center justify-center text-[9px] font-black text-orange-500 leading-none">{step}</span>
+                </div>
+                <div className="flex-1 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                  <h3 className="font-bold text-gray-900 mb-1">{title}</h3>
+                  <p className="text-gray-500 text-sm leading-relaxed">{desc}</p>
+                </div>
               </div>
-              <h3 className="font-bold text-gray-900 mb-2 text-lg">{title}</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">{desc}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
