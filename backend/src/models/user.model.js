@@ -70,9 +70,9 @@ const UserModel = {
       );
       const userId = userResult.insertId;
 
-      // Tạo bản ghi trong bảng customers
+      // Tạo bản ghi trong bảng customers — requires_deposit=1 vì đây là tài khoản mới
       await connection.query(
-        'INSERT INTO customers (user_id, address, district, city) VALUES (?, ?, ?, ?)',
+        'INSERT INTO customers (user_id, address, district, city, requires_deposit) VALUES (?, ?, ?, ?, 1)',
         [userId, address, district, city]
       );
 

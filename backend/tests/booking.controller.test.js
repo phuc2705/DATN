@@ -3,13 +3,32 @@
 
 jest.mock('../src/models/booking.model');
 jest.mock('../src/models/user.model');
-jest.mock('../src/config/database', () => ({ pool: { query: jest.fn() } }));
-jest.mock('../src/utils/pricing');
+jest.mock('../src/config/database', () => ({
+  pool: {
+    query: jest.fn(),
+    getConnection: jest.fn(),
+  },
+}));
+jest.mock('../src/utils/pricing', () => ({
+  calculateBookingPrice: jest.fn(),
+  // getEffectiveRate: dùng custom_price nếu có, ngược lại dùng baseRate
+  getEffectiveRate: jest.fn((baseRate, customPrice) => customPrice || baseRate),
+}));
+// customerTrust không mock bởi test cũ → trả về requiresOnlinePayment=true cho khách mới → chặn 403
+jest.mock('../src/utils/customerTrust', () => ({
+  getCustomerTrustInfo: jest.fn().mockResolvedValue({
+    requiresOnlinePayment: false,
+    isNewCustomer: false,
+    completionRatePercent: 100,
+    totalBookings: 5,
+  }),
+}));
 
 const BookingModel = require('../src/models/booking.model');
 const UserModel = require('../src/models/user.model');
 const { pool } = require('../src/config/database');
-const { calculateBookingPrice } = require('../src/utils/pricing');
+const { calculateBookingPrice, getEffectiveRate } = require('../src/utils/pricing');
+const { getCustomerTrustInfo } = require('../src/utils/customerTrust');
 const BookingController = require('../src/controllers/booking.controller');
 
 // ─── Helper tạo mock req/res ──────────────────────────────────────────────────
@@ -25,6 +44,19 @@ const mockNext = jest.fn();
 beforeEach(() => {
   // resetAllMocks xóa cả queue mockResolvedValueOnce, tránh rò rỉ mock giữa các test
   jest.resetAllMocks();
+  // Sau resetAllMocks phải thiết lập lại customerTrust (mặc định: không yêu cầu online payment)
+  getCustomerTrustInfo.mockResolvedValue({
+    requiresOnlinePayment: false,
+    isNewCustomer: false,
+    completionRatePercent: 100,
+    totalBookings: 5,
+  });
+  // checkCustomerConflict mặc định không có xung đột
+  BookingModel.checkCustomerConflict.mockResolvedValue(false);
+  // checkHelperConflict mặc định không có xung đột
+  BookingModel.checkHelperConflict.mockResolvedValue(false);
+  // getEffectiveRate bị reset bởi resetAllMocks → phải restore lại
+  getEffectiveRate.mockImplementation((baseRate, customPrice) => customPrice || baseRate);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -32,7 +64,7 @@ describe('BookingController.createBooking', () => {
   const baseReq = {
     user: { user_id: 1, user_type: 'customer' },
     body: {
-      helperId: 2, serviceId: 3, bookingDate: '2026-05-01',
+      helperId: 2, serviceId: 3, bookingDate: '2027-06-01',
       startTime: '08:00', endTime: '12:00',
       address: '123 ABC', paymentMethod: 'cash',
     },
@@ -58,9 +90,10 @@ describe('BookingController.createBooking', () => {
   test('Giá được tính tại Backend — không dùng giá từ request', async () => {
     UserModel.getCustomerProfile.mockResolvedValue({ customer_id: 10, preferred_payment: 'cash' });
     pool.query
-      .mockResolvedValueOnce([[{ service_id: 3, base_price: '50000' }]])                           // service query
-      .mockResolvedValueOnce([[{ helper_id: 2, is_verified: true, is_available: true }]]);          // helper query
-    BookingModel.checkHelperConflict.mockResolvedValue(false);
+      .mockResolvedValueOnce([[{ service_id: 3, base_price: '50000' }]])                                              // service query
+      .mockResolvedValueOnce([[{ cnt: 1 }]])                                                                          // prevCheck: customer đã từng làm với helper này
+      .mockResolvedValueOnce([[{ helper_id: 2, is_verified: true, is_available: true, custom_price: null }]])         // helper query
+      .mockResolvedValueOnce([[{ cnt: 5 }]]);                                                                         // available helpers count
     calculateBookingPrice.mockReturnValue({ hours: 4, basePrice: 200000, discountAmount: 0, totalPrice: 200000 });
     BookingModel.create.mockResolvedValue(1);
 
@@ -127,9 +160,10 @@ describe('BookingController.createBooking', () => {
   test('Trả về 400 khi mã khuyến mãi không hợp lệ', async () => {
     UserModel.getCustomerProfile.mockResolvedValue({ customer_id: 10, preferred_payment: 'cash' });
     pool.query
-      .mockResolvedValueOnce([[{ effective_rate: '50000', is_verified: true, is_available: true }]]) // helper query
-      .mockResolvedValueOnce([[]])                            // promo query → không tìm thấy
-    BookingModel.checkHelperConflict.mockResolvedValue(false);
+      .mockResolvedValueOnce([[{ service_id: 3, base_price: '50000' }]])                                            // service query
+      .mockResolvedValueOnce([[{ cnt: 1 }]])                                                                        // prevCheck
+      .mockResolvedValueOnce([[{ helper_id: 2, is_verified: true, is_available: true, custom_price: null }]])       // helper query
+      .mockResolvedValueOnce([[]])                                                                                   // promo query → không tìm thấy
 
     const res = mockRes();
     await BookingController.createBooking(
@@ -166,11 +200,13 @@ describe('BookingController.createBooking', () => {
                     max_discount: 50000, min_order_value: 0 };
     UserModel.getCustomerProfile.mockResolvedValue({ customer_id: 10, preferred_payment: 'cash' });
     pool.query
-      .mockResolvedValueOnce([[{ service_id: 3, base_price: '50000' }]])                    // service query
-      .mockResolvedValueOnce([[{ helper_id: 2, is_verified: true, is_available: true }]])   // helper query
-      .mockResolvedValueOnce([[promo]])                                                       // promo query
-      .mockResolvedValueOnce([[{ cnt: 0 }]]);                                                // usage query
-    BookingModel.checkHelperConflict.mockResolvedValue(false);
+      .mockResolvedValueOnce([[{ service_id: 3, base_price: '50000' }]])                                          // service query
+      .mockResolvedValueOnce([[{ cnt: 1 }]])                                                                      // prevCheck
+      .mockResolvedValueOnce([[{ helper_id: 2, is_verified: true, is_available: true, custom_price: null }]])     // helper query
+      .mockResolvedValueOnce([[promo]])                                                                           // promo query
+      .mockResolvedValueOnce([[{ cnt: 0 }]])                                                                     // usage query
+      .mockResolvedValueOnce([[{ cnt: 5 }]])                                                                     // available helpers count
+      .mockResolvedValue([[]]);                                                                                   // customer email lookup + background queries
     calculateBookingPrice.mockReturnValue({ hours: 4, basePrice: 200000, discountAmount: 40000, totalPrice: 160000 });
     BookingModel.create.mockResolvedValue(5);
 
@@ -274,11 +310,11 @@ describe('BookingController.checkIn (confirmed → in_progress)', () => {
     pool.query.mockResolvedValue([[{ helper_id: 7 }]]);
     BookingModel.updateStatus.mockResolvedValue();
 
-    const req = { params: { bookingId: '2' }, user: { user_id: 6 } };
+    const req = { params: { bookingId: '2' }, user: { user_id: 6 }, body: {} };
     const res = mockRes();
     await BookingController.checkIn(req, res, mockNext);
 
-    expect(BookingModel.updateStatus).toHaveBeenCalledWith('2', 'in_progress', 6, 'Helper đã check-in');
+    expect(BookingModel.updateStatus).toHaveBeenCalledWith('2', 'in_progress', 6, 'Helper đã check-in', null);
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
@@ -312,11 +348,11 @@ describe('BookingController.checkOut (in_progress → completed)', () => {
     pool.query.mockResolvedValue([[{ helper_id: 7 }]]);
     BookingModel.updateStatus.mockResolvedValue();
 
-    const req = { params: { bookingId: '3' }, user: { user_id: 6 } };
+    const req = { params: { bookingId: '3' }, user: { user_id: 6 }, body: {} };
     const res = mockRes();
     await BookingController.checkOut(req, res, mockNext);
 
-    expect(BookingModel.updateStatus).toHaveBeenCalledWith('3', 'completed', 6, expect.any(String));
+    expect(BookingModel.updateStatus).toHaveBeenCalledWith('3', 'completed', 6, expect.any(String), null);
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
@@ -356,40 +392,57 @@ describe('BookingController.checkOut (in_progress → completed)', () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe('BookingController.cancelBooking', () => {
+  // cancelBooking dùng pool.getConnection() + conn.query() trực tiếp (không qua BookingModel.updateStatus)
+  const mockCancelConn = () => {
+    const conn = {
+      beginTransaction: jest.fn().mockResolvedValue(),
+      query: jest.fn()
+        .mockResolvedValueOnce([{}])                        // UPDATE bookings SET status = 'cancelled'
+        .mockResolvedValueOnce([{}])                        // INSERT booking_logs
+        .mockResolvedValueOnce([[{ payment_status: 'unpaid', deposit_amount: null }]])  // SELECT payment
+        .mockResolvedValue([{}]),                           // các query phụ (hoàn tiền v.v.)
+      commit: jest.fn().mockResolvedValue(),
+      rollback: jest.fn().mockResolvedValue(),
+      release: jest.fn(),
+    };
+    pool.getConnection.mockResolvedValue(conn);
+    return conn;
+  };
+
   test('Customer hủy đơn của chính mình thành công', async () => {
     BookingModel.findById.mockResolvedValue({ booking_id: 4, customer_id: 10, status: 'pending' });
     UserModel.getCustomerProfile.mockResolvedValue({ customer_id: 10 });
-    BookingModel.updateStatus.mockResolvedValue();
+    mockCancelConn();
 
     const req = { params: { bookingId: '4' }, user: { user_id: 1, user_type: 'customer' }, body: {} };
     const res = mockRes();
     await BookingController.cancelBooking(req, res, mockNext);
 
-    expect(BookingModel.updateStatus).toHaveBeenCalledWith('4', 'cancelled', 1, expect.any(String));
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
   test('Hủy booking với lý do tùy chỉnh', async () => {
     BookingModel.findById.mockResolvedValue({ booking_id: 4, customer_id: 10, status: 'pending' });
     UserModel.getCustomerProfile.mockResolvedValue({ customer_id: 10 });
-    BookingModel.updateStatus.mockResolvedValue();
+    const conn = mockCancelConn();
 
     const req = { params: { bookingId: '4' }, user: { user_id: 1, user_type: 'customer' }, body: { reason: 'Bận đột xuất' } };
     const res = mockRes();
     await BookingController.cancelBooking(req, res, mockNext);
 
-    expect(BookingModel.updateStatus).toHaveBeenCalledWith('4', 'cancelled', 1, 'Bận đột xuất');
+    // Kiểm tra lý do hủy được ghi vào booking_logs (query thứ 2, param thứ 4)
+    const logParams = conn.query.mock.calls[1][1];
+    expect(logParams[3]).toBe('Bận đột xuất');
   });
 
   test('Admin hủy bất kỳ booking nào không cần check ownership', async () => {
     BookingModel.findById.mockResolvedValue({ booking_id: 5, customer_id: 99, status: 'confirmed' });
-    BookingModel.updateStatus.mockResolvedValue();
+    mockCancelConn();
 
     const req = { params: { bookingId: '5' }, user: { user_id: 1, user_type: 'admin' }, body: {} };
     const res = mockRes();
     await BookingController.cancelBooking(req, res, mockNext);
 
-    expect(BookingModel.updateStatus).toHaveBeenCalledWith('5', 'cancelled', 1, expect.any(String));
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
@@ -482,6 +535,8 @@ describe('BookingController.getMyBookingsAsHelper', () => {
 describe('BookingController.getBookingDetail', () => {
   test('Trả về chi tiết booking khi tìm thấy', async () => {
     BookingModel.findById.mockResolvedValue({ booking_id: 1, status: 'confirmed', logs: [] });
+    // Controller query review count để kiểm tra đã review chưa
+    pool.query.mockResolvedValueOnce([[{ cnt: 0 }]]);
 
     const req = { params: { bookingId: '1' }, user: { user_id: 1, user_type: 'customer' } };
     const res = mockRes();

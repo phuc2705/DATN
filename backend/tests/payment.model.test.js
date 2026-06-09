@@ -70,10 +70,10 @@ describe('PaymentModel.confirmPayment', () => {
 
     await PaymentModel.confirmPayment(11, 1);
 
-    // Query thứ 5 (index 4) là INSERT wallet_transactions — kiểm tra type = debit
+    // Query thứ 5 (index 4) là INSERT wallet_transactions — kiểm tra type = debit trong SQL
     const walletTxCall = mockConn.query.mock.calls[4];
     expect(walletTxCall[0]).toContain('wallet_transactions');
-    expect(walletTxCall[1]).toContain('debit');
+    expect(walletTxCall[0]).toContain('debit');
   });
 
   test('Thanh toán online (vnpay): tạo wallet_transactions loại credit', async () => {
@@ -91,8 +91,8 @@ describe('PaymentModel.confirmPayment', () => {
 
     const walletTxCall = mockConn.query.mock.calls[4];
     expect(walletTxCall[0]).toContain('wallet_transactions');
-    expect(walletTxCall[1]).toContain('credit');
-    // helper_earning = 200000 - 40000 = 160000
+    expect(walletTxCall[0]).toContain('credit');
+    // helper_earning = 200000 - 40000 = 160000, có trong params
     expect(walletTxCall[1]).toContain(160000);
   });
 

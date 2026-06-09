@@ -232,7 +232,27 @@ const AuthController = {
       if (activatedUser?.user_type === 'helper') {
         sendHelperPendingEmail(email, activatedUser.full_name).catch(() => {});
       } else if (activatedUser?.user_type === 'customer') {
-        sendCustomerWelcomeEmail(email, activatedUser.full_name).catch(() => {});
+        // Tạo voucher chào mừng 20% riêng cho khách hàng mới
+        let welcomePromoCode = null;
+        try {
+          const suffix = Math.random().toString(36).slice(2, 6).toUpperCase();
+          welcomePromoCode = `WELCOME${activatedUser.user_id}${suffix}`;
+          const startDate = new Date().toISOString().slice(0, 10);
+          const endDate   = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+          await pool.query(
+            `INSERT INTO promotions (code, title, description, discount_type, discount_value,
+               min_order_value, max_uses, max_uses_per_user, start_date, end_date, created_by)
+             VALUES (?, ?, ?, 'percentage', 20, 0, 1, 1, ?, ?, 1)`,
+            [
+              welcomePromoCode,
+              'Ưu đãi chào mừng 20%',
+              `Voucher chào mừng dành riêng cho ${activatedUser.full_name}`,
+              startDate,
+              endDate,
+            ]
+          );
+        } catch { welcomePromoCode = null; }
+        sendCustomerWelcomeEmail(email, activatedUser.full_name, welcomePromoCode).catch(() => {});
       }
 
       // Kiểm tra loại tài khoản để trả về thông báo phù hợp

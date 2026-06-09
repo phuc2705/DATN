@@ -126,10 +126,12 @@ describe('PaymentController.getMyPayments', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 describe('PaymentController.getHelperEarnings', () => {
   test('Trả về thu nhập helper', async () => {
-    pool.query.mockResolvedValueOnce([[{ helper_id: 3 }]]);
+    pool.query
+      .mockResolvedValueOnce([[{ helper_id: 3, rating_average: 4.5, total_bookings: 10 }]])
+      .mockResolvedValueOnce([[{ balance: 50000 }]]); // wallet balance query
     PaymentModel.findByHelper.mockResolvedValue([
-      { amount: '300000' },
-      { amount: '200000' },
+      { amount: '300000', commission_rate: 0.20, platform_fee_amount: 60000, helper_earning: 240000, payment_method: 'cash', payment_status: 'paid', paid_at: null, booking_date: null, service_name: null, customer_name: null },
+      { amount: '200000', commission_rate: 0.20, platform_fee_amount: 40000, helper_earning: 160000, payment_method: 'vnpay', payment_status: 'paid', paid_at: null, booking_date: null, service_name: null, customer_name: null },
     ]);
 
     const req = { user: { user_id: 5 } };
@@ -137,8 +139,11 @@ describe('PaymentController.getHelperEarnings', () => {
     await PaymentController.getHelperEarnings(req, res, mockNext);
 
     expect(res.status).toHaveBeenCalledWith(200);
+    // helperEarning: 240000 + 160000 = 400000, nằm trong data.summary.totalEarnings
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ totalEarned: 500000 }),
+      data: expect.objectContaining({
+        summary: expect.objectContaining({ totalEarnings: 400000 }),
+      }),
     }));
   });
 

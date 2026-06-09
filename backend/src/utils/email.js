@@ -255,13 +255,29 @@ const sendOtpEmail = async (toEmail, otpCode, fullName, purpose = 'register') =>
 // ─── TÀI KHOẢN ──────────────────────────────────────────────────────────────
 
 // Khách hàng: chào mừng sau khi xác minh OTP thành công
-const sendCustomerWelcomeEmail = async (toEmail, fullName) => {
+const sendCustomerWelcomeEmail = async (toEmail, fullName, promoCode = null) => {
+  const voucherBlock = promoCode ? `
+    <!-- Voucher chào mừng -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;border:2px dashed #ea580c;border-radius:12px;overflow:hidden;">
+      <tr style="background:linear-gradient(135deg,#fff7ed 0%,#ffedd5 100%);">
+        <td style="padding:20px 24px;text-align:center;">
+          <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#c2410c;letter-spacing:1px;text-transform:uppercase;">🎁 Quà tặng chào mừng dành riêng cho bạn</p>
+          <p style="margin:0 0 12px;font-size:28px;font-weight:900;color:#ea580c;letter-spacing:2px;">${promoCode}</p>
+          <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#92400e;">Giảm 20% giá trị đơn hàng đầu tiên</p>
+          <p style="margin:0;font-size:12px;color:#b45309;">Nhập mã này khi đặt lịch · Chỉ dùng được 1 lần · Có hiệu lực 1 năm</p>
+        </td>
+      </tr>
+    </table>
+  ` : '';
+
   const html = layout(`
     ${hero('star', 'Chào mừng đến với CleanConnect!', 'Tài khoản của bạn đã được kích hoạt thành công')}
     ${greeting(fullName)}
     <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
       Chúng tôi rất vui khi có bạn trong cộng đồng CleanConnect. Tài khoản của bạn đã sẵn sàng — bạn có thể bắt đầu đặt lịch dịch vụ ngay bây giờ.
     </p>
+
+    ${voucherBlock}
 
     <!-- Tính năng nổi bật -->
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;">

@@ -8,6 +8,14 @@ const { sendSuccess, sendError } = require('../utils/response');
 const { pushNotification, mailIfOffline } = require('../utils/notify');
 const { sendPaymentReceivedEmail } = require('../utils/email');
 
+// VNPay yêu cầu IPv4 — chuẩn hóa IPv6-mapped hoặc loopback về 127.0.0.1
+const normalizeIp = (ip) => {
+  if (!ip) return '127.0.0.1';
+  if (ip === '::1') return '127.0.0.1';
+  if (ip.startsWith('::ffff:')) return ip.slice(7);
+  return ip;
+};
+
 const sendPaymentNotification = (bookingId) => {
   pool.query(
     `SELECT h.user_id AS helper_user_id, u.email AS helper_email, u.full_name AS helper_name,
@@ -88,7 +96,7 @@ const PaymentController = {
       if (!payment) return sendError(res, 'Không tìm thấy thông tin thanh toán.', 404);
       if (payment.payment_status === 'paid') return sendError(res, 'Đơn hàng đã được thanh toán.', 409);
 
-      const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || '127.0.0.1';
+      const ip = normalizeIp(req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress);
       const paymentUrl = createVNPayUrl(
         bookingId,
         parseFloat(payment.amount),
@@ -109,7 +117,15 @@ const PaymentController = {
       const query = req.query;
       const isValid = verifyVNPayReturn(query);
 
+      console.log('[VNPay Return]', {
+        responseCode: query.vnp_ResponseCode,
+        txnRef: query.vnp_TxnRef,
+        amount: query.vnp_Amount,
+        isValid,
+      });
+
       if (!isValid) {
+        console.log('[VNPay Return] Chữ ký không hợp lệ — hash mismatch');
         return res.redirect(`${process.env.CLIENT_URL}/payment/result?status=failed&reason=invalid_signature`);
       }
 
@@ -125,6 +141,14 @@ const PaymentController = {
           // Thanh toán cọc 70%
           if (payment && payment.payment_status === 'unpaid') {
             await PaymentModel.confirmDeposit(bookingId, query.vnp_TransactionNo || null);
+            // Sau khi khách hàng mới đặt cọc thành công → bỏ cờ requires_deposit để các lần sau không cần cọc
+            await pool.query(
+              `UPDATE customers c
+               JOIN bookings b ON b.customer_id = c.customer_id
+               SET c.requires_deposit = 0
+               WHERE b.booking_id = ?`,
+              [bookingId]
+            );
             // Thông báo cho helper biết đơn đã có cọc (nếu helper đã nhận)
             if (payment.helper_name) sendPaymentNotification(bookingId);
           }
@@ -180,7 +204,7 @@ const PaymentController = {
       }
 
       const depositAmount = Math.round(parseFloat(booking.total_price) * DEPOSIT_RATE);
-      const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || '127.0.0.1';
+      const ip = normalizeIp(req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress);
       const paymentUrl = createVNPayDepositUrl(
         bookingId,
         depositAmount,
@@ -216,7 +240,7 @@ const PaymentController = {
       }
 
       const remainingAmount = parseFloat(booking.total_price) - Number(payment.deposit_amount || 0);
-      const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || '127.0.0.1';
+      const ip = normalizeIp(req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress);
       const paymentUrl = createVNPayUrl(
         bookingId,
         remainingAmount,

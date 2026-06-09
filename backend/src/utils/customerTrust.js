@@ -10,11 +10,14 @@ const DEPOSIT_RATE = 0.70; // 70%
 async function getCustomerTrustInfo(customerId) {
   const [[stats]] = await pool.query(
     `SELECT
-       COUNT(*) AS total_bookings,
-       SUM(CASE WHEN status = 'completed'  THEN 1 ELSE 0 END) AS completed_bookings,
-       SUM(CASE WHEN status = 'cancelled'  THEN 1 ELSE 0 END) AS cancelled_bookings
-     FROM bookings
-     WHERE customer_id = ?`,
+       c.requires_deposit,
+       COUNT(b.booking_id) AS total_bookings,
+       SUM(CASE WHEN b.status = 'completed'  THEN 1 ELSE 0 END) AS completed_bookings,
+       SUM(CASE WHEN b.status = 'cancelled'  THEN 1 ELSE 0 END) AS cancelled_bookings
+     FROM customers c
+     LEFT JOIN bookings b ON c.customer_id = b.customer_id
+     WHERE c.customer_id = ?
+     GROUP BY c.customer_id`,
     [customerId]
   );
 
@@ -26,9 +29,9 @@ async function getCustomerTrustInfo(customerId) {
   const completionRate        = total > 0 ? completed / total : 0;
   const completionRatePercent = Math.round(completionRate * 100);
 
-  const isNewCustomer         = total === 0;
+  // Chỉ khách hàng mới đăng ký (requires_deposit=1) mới cần đặt cọc — khách hàng cũ được miễn
+  const isNewCustomer         = Number(stats.requires_deposit) === 1;
   const isTrusted             = !isNewCustomer && completionRate >= TRUST_THRESHOLD;
-  // Chỉ khách hàng mới (chưa từng đặt lịch) mới bắt buộc đặt cọc 70% qua VNPay
   const requiresOnlinePayment = isNewCustomer;
 
   return {

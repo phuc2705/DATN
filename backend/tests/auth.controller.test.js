@@ -88,6 +88,10 @@ describe('AuthController.registerHelper', () => {
   test('Đăng ký helper thành công: gửi OTP và trả về 200', async () => {
     UserModel.findByEmailAny.mockResolvedValue(null);
     bcrypt.hash.mockResolvedValue('hashed_pass');
+    UserModel.deleteInactiveByPhone.mockResolvedValue();
+    // pool.query dùng để kiểm tra CCCD trùng — trả về mảng rỗng (không trùng)
+    const { pool } = require('../src/config/database');
+    pool.query.mockResolvedValue([[]]);
     UserModel.createHelper.mockResolvedValue();
     OtpModel.create.mockResolvedValue();
 

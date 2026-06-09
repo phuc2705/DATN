@@ -78,14 +78,15 @@ describe('BookingModel.create', () => {
     expect(paymentCall[1]).toContain(200000); // totalPrice
   });
 
-  test('Có promoId → thực hiện thêm 2 query cập nhật khuyến mãi', async () => {
+  test('Có promoId → thực hiện thêm 1 query ghi nhận sử dụng khuyến mãi', async () => {
     mockConn.query
       .mockResolvedValue([{ insertId: 12 }]);
 
     await BookingModel.create({ ...baseInput, promoId: 5 });
 
-    // bookings + payments + booking_logs + update promotions + insert promotion_usage = 5 queries
-    expect(mockConn.query).toHaveBeenCalledTimes(5);
+    // bookings + payments + booking_logs + insert promotion_usage = 4 queries
+    // (used_count tăng tự động qua trigger trg_increment_promo_usage)
+    expect(mockConn.query).toHaveBeenCalledTimes(4);
   });
 
   test('Rollback và ném lỗi khi INSERT thất bại', async () => {
@@ -135,7 +136,6 @@ describe('BookingModel.updateStatus', () => {
       .mockResolvedValueOnce([[{ status: 'in_progress' }]])
       .mockResolvedValueOnce([{}])  // UPDATE bookings
       .mockResolvedValueOnce([{}])  // INSERT booking_logs
-      .mockResolvedValueOnce([{}])  // UPDATE helpers total_bookings
       .mockResolvedValueOnce([{}]); // UPDATE customers loyalty_points
 
     await BookingModel.updateStatus(1, 'completed', 10);
@@ -144,16 +144,18 @@ describe('BookingModel.updateStatus', () => {
     expect(updateCall[0]).toContain('checkout_at');
   });
 
-  test('completed → tăng total_bookings của helper', async () => {
+  test('completed → total_bookings của helper tăng qua trigger (không có query trực tiếp)', async () => {
     mockConn.query
       .mockResolvedValueOnce([[{ status: 'in_progress' }]])
       .mockResolvedValue([{}]);
 
     await BookingModel.updateStatus(1, 'completed', 10);
 
-    const helperUpdate = mockConn.query.mock.calls[3];
-    expect(helperUpdate[0]).toContain('total_bookings');
-    expect(helperUpdate[0]).toContain('total_bookings + 1');
+    // Chỉ có 4 queries: SELECT, UPDATE bookings, INSERT booking_logs, UPDATE loyalty_points
+    // total_bookings được tăng bởi DB trigger trg_completed_booking, không có query riêng
+    expect(mockConn.query).toHaveBeenCalledTimes(4);
+    const allSql = mockConn.query.mock.calls.map(c => c[0]).join(' ');
+    expect(allSql).not.toContain('total_bookings + 1');
   });
 
   test('completed → tăng loyalty_points của customer', async () => {
@@ -163,7 +165,8 @@ describe('BookingModel.updateStatus', () => {
 
     await BookingModel.updateStatus(1, 'completed', 10);
 
-    const customerUpdate = mockConn.query.mock.calls[4];
+    // calls[3] là query thứ 4: UPDATE customers loyalty_points
+    const customerUpdate = mockConn.query.mock.calls[3];
     expect(customerUpdate[0]).toContain('loyalty_points');
     expect(customerUpdate[0]).toContain('loyalty_points + 10');
   });

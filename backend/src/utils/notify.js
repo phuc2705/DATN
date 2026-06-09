@@ -11,9 +11,9 @@ const pushNotification = async ({ userId, title, body, type, refId = null }) => 
   }
 };
 
-// Chỉ gửi email khi user đang offline — nếu đang online thì web notification đã đủ
+// Gửi email khi user offline; trong môi trường dev luôn gửi để tiện kiểm thử
 const mailIfOffline = (userId, emailFn) => {
-  if (!isUserOnline(userId)) {
+  if (process.env.NODE_ENV !== 'production' || !isUserOnline(userId)) {
     emailFn().catch(() => {});
   }
 };
