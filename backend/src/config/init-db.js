@@ -251,10 +251,24 @@ async function runMigrations(connection) {
     await connection.query('ALTER TABLE bookings ADD COLUMN checkout_lng DECIMAL(11,8) NULL');
   } catch (err) { /* ignore — cột đã tồn tại */ }
 
-  // Thêm trạng thái refund_pending cho payment (khi tự động hủy và cần hoàn tiền)
+  // Thêm trạng thái deposit_paid và refund_pending cho payment
   try {
-    await connection.query(`ALTER TABLE payments MODIFY COLUMN payment_status ENUM('unpaid','paid','refunded','refund_pending') DEFAULT 'unpaid'`);
+    await connection.query(`ALTER TABLE payments MODIFY COLUMN payment_status ENUM('unpaid','deposit_paid','paid','refunded','refund_pending') DEFAULT 'unpaid'`);
   } catch (err) { /* ignore */ }
+
+  // Các cột hỗ trợ luồng đặt cọc 70% / thanh toán 30% còn lại
+  try {
+    await connection.query('ALTER TABLE payments ADD COLUMN deposit_amount DECIMAL(10,2) NULL AFTER helper_earning');
+  } catch (err) { /* ignore — cột đã tồn tại */ }
+  try {
+    await connection.query('ALTER TABLE payments ADD COLUMN deposit_transaction_id VARCHAR(100) NULL AFTER deposit_amount');
+  } catch (err) { /* ignore — cột đã tồn tại */ }
+  try {
+    await connection.query('ALTER TABLE payments ADD COLUMN deposit_paid_at TIMESTAMP NULL AFTER deposit_transaction_id');
+  } catch (err) { /* ignore — cột đã tồn tại */ }
+  try {
+    await connection.query('ALTER TABLE payments ADD COLUMN remaining_payment_method VARCHAR(20) NULL AFTER deposit_paid_at');
+  } catch (err) { /* ignore — cột đã tồn tại */ }
 
   // Thêm cột timeout_notified để tránh gửi thông báo phase-2 nhiều lần
   try {

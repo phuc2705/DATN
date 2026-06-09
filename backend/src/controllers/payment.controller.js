@@ -176,6 +176,7 @@ const PaymentController = {
       const redirectUrl = `${process.env.CLIENT_URL}/payment/vnpay-return?status=${status}&bookingId=${bookingId || ''}`;
       return res.redirect(redirectUrl);
     } catch (error) {
+      console.error('[VNPay Return] Lỗi xử lý:', error.message);
       const redirectUrl = `${process.env.CLIENT_URL}/payment/vnpay-return?status=failed`;
       return res.redirect(redirectUrl);
     }
