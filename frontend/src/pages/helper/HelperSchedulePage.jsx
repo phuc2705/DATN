@@ -71,6 +71,19 @@ function getVNNow() {
   return new Date(Date.now() + 7 * 60 * 60 * 1000);
 }
 
+// Ca đã hết hạn: ngày trước hôm nay, hoặc hôm nay nhưng giờ kết thúc đã qua
+function isShiftExpired(shiftDate, endTime, todayISO) {
+  if (!shiftDate) return false;
+  if (shiftDate < todayISO) return true;
+  if (shiftDate === todayISO) {
+    const vn = getVNNow();
+    const nowMins = vn.getUTCHours() * 60 + vn.getUTCMinutes();
+    const [h, m] = String(endTime).split(':').map(Number);
+    return (h * 60 + m) <= nowMins;
+  }
+  return false;
+}
+
 /* ─── Modal chi tiết booking ─────────────────────────────────────── */
 function BookingModal({ booking, onClose }) {
   const navigate = useNavigate();
@@ -237,20 +250,29 @@ function BookingBlock({ booking, onClick }) {
 }
 
 /* ─── Block ca đăng ký trong ô ngày ─────────────────────────────── */
-function ShiftBlock({ shift, onCancel }) {
+function ShiftBlock({ shift, onCancel, expired }) {
   return (
-    <div className="w-full border border-green-300 bg-green-50 rounded-lg px-2 py-1.5 mb-1 flex items-center justify-between gap-1 group">
+    <div className={`w-full border rounded-lg px-2 py-1.5 mb-1 flex items-center justify-between gap-1 group ${
+      expired ? 'border-gray-300 bg-gray-100' : 'border-green-300 bg-green-50'
+    }`}>
       <div className="min-w-0">
-        <p className="text-[11px] font-semibold text-green-800 leading-tight">Ca đăng ký</p>
-        <p className="text-[10px] text-green-600 mt-0.5">{String(shift.startTime).slice(0, 5)}–{String(shift.endTime).slice(0, 5)}</p>
+        <div className="flex items-center gap-1">
+          <p className={`text-[11px] font-semibold leading-tight ${expired ? 'text-gray-400' : 'text-green-800'}`}>Ca đăng ký</p>
+          {expired && <span className="text-[9px] font-semibold text-gray-400 bg-gray-200 px-1 rounded">hết hạn</span>}
+        </div>
+        <p className={`text-[10px] mt-0.5 ${expired ? 'text-gray-400' : 'text-green-600'}`}>
+          {String(shift.startTime).slice(0, 5)}–{String(shift.endTime).slice(0, 5)}
+        </p>
       </div>
-      <button
-        onClick={() => onCancel(shift)}
-        className="w-5 h-5 rounded-full hover:bg-green-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
-        title="Hủy ca"
-      >
-        <X className="w-3 h-3 text-green-700" />
-      </button>
+      {!expired && onCancel && (
+        <button
+          onClick={() => onCancel(shift)}
+          className="w-5 h-5 rounded-full hover:bg-green-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+          title="Hủy ca"
+        >
+          <X className="w-3 h-3 text-green-700" />
+        </button>
+      )}
     </div>
   );
 }
@@ -309,10 +331,13 @@ function WeekGrid({ days, bookingsByDate, shiftsByDate, today, onClickBooking, o
             : isPast ? 'bg-gray-50 border border-gray-100 opacity-60'
             : 'bg-white border border-gray-100'
           }`}>
-            {/* Ca đăng ký (xanh lá) */}
-            {shfs.map((s) => (
-              <ShiftBlock key={s.id} shift={s} onCancel={isPast ? undefined : onCancelShift} />
-            ))}
+            {/* Ca đăng ký (xanh lá / xám nếu hết hạn) */}
+            {shfs.map((s) => {
+              const expired = isShiftExpired(key, s.endTime, today);
+              return (
+                <ShiftBlock key={s.id} shift={s} expired={expired} onCancel={expired ? undefined : onCancelShift} />
+              );
+            })}
             {/* Đơn hàng */}
             {bks.map((b) => (
               <BookingBlock key={b.bookingId} booking={b} onClick={onClickBooking} />
@@ -367,25 +392,37 @@ function WeekList({ days, bookingsByDate, shiftsByDate, today, onClickBooking, o
 
             <div className="p-3 space-y-2">
               {/* Ca đăng ký */}
-              {shfs.map((s) => (
-                <div key={s.id} className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-3 py-2.5">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
-                    <div>
-                      <p className="text-sm font-semibold text-green-800">Ca đăng ký</p>
-                      <p className="text-xs text-green-600">{String(s.startTime).slice(0, 5)} – {String(s.endTime).slice(0, 5)}</p>
+              {shfs.map((s) => {
+                const expired = isShiftExpired(key, s.endTime, today);
+                return (
+                  <div key={s.id} className={`flex items-center justify-between border rounded-xl px-3 py-2.5 ${
+                    expired ? 'bg-gray-50 border-gray-200' : 'bg-green-50 border-green-200'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className={`w-4 h-4 shrink-0 ${expired ? 'text-gray-300' : 'text-green-500'}`} />
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <p className={`text-sm font-semibold ${expired ? 'text-gray-400' : 'text-green-800'}`}>Ca đăng ký</p>
+                          {expired && (
+                            <span className="text-[10px] font-semibold text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded-full">hết hạn</span>
+                          )}
+                        </div>
+                        <p className={`text-xs ${expired ? 'text-gray-400' : 'text-green-600'}`}>
+                          {String(s.startTime).slice(0, 5)} – {String(s.endTime).slice(0, 5)}
+                        </p>
+                      </div>
                     </div>
+                    {!expired && !isPast && (
+                      <button
+                        onClick={() => onCancelShift(s)}
+                        className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 border border-red-200 hover:border-red-400 px-2 py-1 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-3 h-3" /> Hủy
+                      </button>
+                    )}
                   </div>
-                  {!isPast && (
-                    <button
-                      onClick={() => onCancelShift(s)}
-                      className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 border border-red-200 hover:border-red-400 px-2 py-1 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-3 h-3" /> Hủy
-                    </button>
-                  )}
-                </div>
-              ))}
+                );
+              })}
 
               {/* Đơn hàng */}
               {bks.map((b) => {
@@ -464,22 +501,31 @@ function ShiftsPanel({ shifts, loading, onCancel, onRegister }) {
             // shiftDate từ API là string 'YYYY-MM-DD' (đã fix bằng DATE_FORMAT ở backend)
             const dateStr = String(s.shiftDate || '').slice(0, 10);
             const dateObj = dateStr ? new Date(dateStr + 'T00:00:00') : null;
+            const todayStr = new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
+            const expired = isShiftExpired(dateStr, s.endTime, todayStr);
             return (
-              <div key={s.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group">
-                <div className="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+              <div key={s.id} className={`flex items-center gap-3 px-4 py-3 transition-colors group ${expired ? 'bg-gray-50' : 'hover:bg-gray-50'}`}>
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${expired ? 'bg-gray-100' : 'bg-green-50'}`}>
+                  <CheckCircle className={`w-4 h-4 ${expired ? 'text-gray-300' : 'text-green-500'}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800">{dateObj ? fmtFull(dateObj) : dateStr}</p>
-                  <p className="text-xs text-green-600 font-semibold">{String(s.startTime).slice(0, 5)} – {String(s.endTime).slice(0, 5)}</p>
+                  <p className={`text-sm font-medium ${expired ? 'text-gray-400' : 'text-gray-800'}`}>{dateObj ? fmtFull(dateObj) : dateStr}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <p className={`text-xs font-semibold ${expired ? 'text-gray-400' : 'text-green-600'}`}>
+                      {String(s.startTime).slice(0, 5)} – {String(s.endTime).slice(0, 5)}
+                    </p>
+                    {expired && <span className="text-[10px] font-semibold text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded-full">hết hạn</span>}
+                  </div>
                 </div>
-                <button
-                  onClick={() => onCancel(s)}
-                  className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center transition-all"
-                  title="Hủy ca"
-                >
-                  <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                </button>
+                {!expired && (
+                  <button
+                    onClick={() => onCancel(s)}
+                    className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center transition-all"
+                    title="Hủy ca"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                  </button>
+                )}
               </div>
             );
           })
