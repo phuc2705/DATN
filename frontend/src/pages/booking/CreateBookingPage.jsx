@@ -599,33 +599,33 @@ export default function CreateBookingPage() {
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {previousHelpers.map(h => {
-                  const isSelected = selectedHelperId === h.helper_id;
+                  const isSelected = selectedHelperId === h.helperId;
                   return (
                     <button
-                      key={h.helper_id}
+                      key={h.helperId}
                       type="button"
-                      onClick={() => setSelectedHelperId(isSelected ? null : h.helper_id)}
+                      onClick={() => setSelectedHelperId(isSelected ? null : h.helperId)}
                       className={`flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all
                         ${isSelected
                           ? 'border-orange-500 bg-orange-50'
                           : 'border-gray-200 bg-white hover:border-orange-300'}`}
                     >
                       <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0 overflow-hidden">
-                        {h.avatar_url
-                          ? <img src={h.avatar_url} alt={h.full_name} className="w-full h-full object-cover" />
-                          : <span className="text-orange-500 font-bold text-sm">{h.full_name?.[0]}</span>}
+                        {h.avatarUrl
+                          ? <img src={h.avatarUrl} alt={h.fullName} className="w-full h-full object-cover" />
+                          : <span className="text-orange-500 font-bold text-sm">{h.fullName?.[0]}</span>}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className={`text-sm font-semibold truncate ${isSelected ? 'text-orange-700' : 'text-[#222222]'}`}>
-                          {h.full_name}
+                          {h.fullName}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="flex items-center gap-0.5 text-xs text-amber-500">
                             <Star className="w-3 h-3 fill-amber-400" />
-                            {Number(h.rating_average || 0).toFixed(1)}
+                            {Number(h.ratingAverage || 0).toFixed(1)}
                           </span>
-                          <span className={`text-xs font-medium ${h.is_available ? 'text-green-600' : 'text-gray-400'}`}>
-                            {h.is_available ? '● Đang rảnh' : '○ Đang bận'}
+                          <span className={`text-xs font-medium ${h.isAvailable ? 'text-green-600' : 'text-gray-400'}`}>
+                            {h.isAvailable ? '● Đang rảnh' : '○ Đang bận'}
                           </span>
                         </div>
                       </div>
@@ -644,7 +644,7 @@ export default function CreateBookingPage() {
         <div className="mb-4 flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
           <UserCheck className="w-5 h-5 text-blue-500 shrink-0" />
           <p className="text-sm text-blue-800 flex-1">
-            Bạn đang đặt với <strong>{previousHelpers.find(h => h.helper_id === selectedHelperId)?.full_name || 'helper đã chọn'}</strong>. Đơn sẽ giao thẳng cho họ, không qua bảng việc làm.
+            Bạn đang đặt với <strong>{previousHelpers.find(h => h.helperId === selectedHelperId)?.fullName || 'helper đã chọn'}</strong>. Đơn sẽ giao thẳng cho họ, không qua bảng việc làm.
           </p>
           <button type="button" onClick={() => setSelectedHelperId(null)}
             className="text-blue-400 hover:text-blue-600 shrink-0">
