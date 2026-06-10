@@ -706,12 +706,13 @@ const sendJobAcceptedEmail = async (toEmail, customerName, booking, helperName) 
 // Nhắc lịch (dùng cho cả customer và helper)
 const sendReminderEmail = async (toEmail, recipientName, booking, otherPartyName, role) => {
   const isHelper = role === 'helper';
+  const dateStr = new Date(booking.bookingDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
   const html = layout(`
-    ${hero('clock', 'Nhắc lịch sắp tới', `${booking.serviceName} lúc ${booking.startTime} ngày ${booking.bookingDate}`, '#2563eb')}
+    ${hero('clock', 'Nhắc nhở: Ca làm việc sắp bắt đầu', `Còn khoảng 30 phút nữa – ${booking.serviceName} lúc ${booking.startTime} ngày ${dateStr}`, '#2563eb')}
     ${greeting(recipientName)}
     <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
-      Đây là thông báo nhắc nhở về lịch <strong>${booking.serviceName}</strong> sắp diễn ra của bạn.
-      ${statusBadge('Sắp diễn ra', '#2563eb')}
+      Bạn có ca làm việc đã đăng ký lúc <strong>${booking.startTime}</strong> ngày <strong>${dateStr}</strong>.
+      ${statusBadge('Sắp bắt đầu', '#2563eb')}
     </p>
     ${bookingTable(booking)}
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
@@ -719,15 +720,15 @@ const sendReminderEmail = async (toEmail, recipientName, booking, otherPartyName
         <td style="background:#eff6ff;border-left:4px solid #2563eb;border-radius:0 8px 8px 0;padding:14px 18px;">
           <p style="margin:0;font-size:13px;color:#1e40af;line-height:1.6;">
             ${isHelper
-              ? `Hãy đến đúng giờ và nhớ check-in khi tới nơi. Khách hàng của bạn là <strong>${otherPartyName}</strong>.`
-              : `Người giúp việc <strong>${otherPartyName}</strong> sẽ đến theo đúng lịch hẹn. Vui lòng chuẩn bị sẵn sàng.`}
+              ? `Vui lòng chuẩn bị vào ca làm. Hãy đến đúng giờ và nhớ check-in khi tới nơi. Khách hàng của bạn là <strong>${otherPartyName}</strong>.`
+              : `Vui lòng chuẩn bị sẵn sàng đón người giúp việc <strong>${otherPartyName}</strong>. Họ sẽ đến theo đúng lịch hẹn.`}
           </p>
         </td>
       </tr>
     </table>
     ${closing()}
   `, '#2563eb');
-  await sendMail(toEmail, `[CleanConnect] Nhắc lịch – ${booking.serviceName} lúc ${booking.startTime} ngày ${booking.bookingDate}`, html).catch(() => {});
+  await sendMail(toEmail, `[CleanConnect] Nhắc nhở: Ca làm việc lúc ${booking.startTime} ngày ${dateStr} sắp bắt đầu`, html).catch(() => {});
 };
 
 // Helper: xác nhận đã nhận thanh toán

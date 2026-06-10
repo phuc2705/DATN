@@ -1,11 +1,12 @@
-// Job nhắc nhở lịch: chạy mỗi 30 phút, gửi thông báo cho booking sắp đến trong 24h
+// Job nhắc nhở lịch: chạy mỗi 5 phút, gửi thông báo trước 30 phút khi ca bắt đầu
 const { pool } = require('../config/database');
 const { pushNotification, mailIfOffline } = require('../utils/notify');
 const { sendReminderEmail } = require('../utils/email');
 
 async function sendBookingReminders() {
   try {
-    // Lấy các booking đã confirmed, sắp diễn ra trong 1–24h tới, chưa gửi reminder
+    // Lấy các booking confirmed sắp bắt đầu trong 25–35 phút tới, chưa gửi reminder
+    // Dùng cửa sổ 10 phút để đảm bảo không bỏ sót dù job chạy mỗi 5 phút
     const [bookings] = await pool.query(
       `SELECT b.booking_id, b.booking_date, b.start_time, b.end_time, b.address,
               s.service_name,
@@ -19,8 +20,8 @@ async function sendBookingReminders() {
        JOIN users uh ON h.user_id = uh.user_id
        WHERE b.status = 'confirmed'
          AND b.reminder_sent = 0
-         AND TIMESTAMP(b.booking_date, b.start_time) > NOW() + INTERVAL 1 HOUR
-         AND TIMESTAMP(b.booking_date, b.start_time) <= NOW() + INTERVAL 24 HOUR`
+         AND TIMESTAMP(b.booking_date, b.start_time) > NOW() + INTERVAL 25 MINUTE
+         AND TIMESTAMP(b.booking_date, b.start_time) <= NOW() + INTERVAL 35 MINUTE`
     );
 
     for (const b of bookings) {
@@ -34,37 +35,35 @@ async function sendBookingReminders() {
         endTime: String(b.end_time).slice(0, 5), address: b.address,
       };
 
+      // Thông báo cho khách hàng
       await pushNotification({
         userId: b.customer_user_id,
-        title: 'Nhắc nhở: Lịch sắp tới của bạn',
-        body: `${b.service_name} lúc ${timeStr} ngày ${dateStr}. Người giúp việc: ${b.helper_name}.`,
+        title: 'Nhắc nhở: Ca làm việc sắp bắt đầu',
+        body: `Bạn có ca làm việc đã đăng ký lúc ${timeStr} ngày ${dateStr}. Người giúp việc: ${b.helper_name}. Vui lòng chuẩn bị sẵn sàng.`,
         type: 'system',
         refId: b.booking_id,
       });
       if (b.customer_email) {
-        mailIfOffline(b.customer_user_id, () => sendReminderEmail(
-          b.customer_email, b.customer_name, bookingInfo, b.helper_name, 'customer'
-        ));
+        await sendReminderEmail(b.customer_email, b.customer_name, bookingInfo, b.helper_name, 'customer');
       }
 
+      // Thông báo cho người giúp việc
       await pushNotification({
         userId: b.helper_user_id,
-        title: 'Nhắc nhở: Lịch làm việc sắp tới',
-        body: `Bạn có lịch ${b.service_name} lúc ${timeStr} ngày ${dateStr} với khách ${b.customer_name}.`,
+        title: 'Nhắc nhở: Ca làm việc sắp bắt đầu',
+        body: `Bạn có ca làm việc đã đăng ký lúc ${timeStr} ngày ${dateStr} với khách ${b.customer_name}. Vui lòng chuẩn bị vào ca làm.`,
         type: 'system',
         refId: b.booking_id,
       });
       if (b.helper_email) {
-        mailIfOffline(b.helper_user_id, () => sendReminderEmail(
-          b.helper_email, b.helper_name, bookingInfo, b.customer_name, 'helper'
-        ));
+        await sendReminderEmail(b.helper_email, b.helper_name, bookingInfo, b.customer_name, 'helper');
       }
 
       await pool.query('UPDATE bookings SET reminder_sent = 1 WHERE booking_id = ?', [b.booking_id]);
     }
 
     if (bookings.length > 0) {
-      console.log(`📬 Đã gửi nhắc nhở cho ${bookings.length} booking sắp diễn ra.`);
+      console.log(`📬 Đã gửi nhắc nhở cho ${bookings.length} booking sắp bắt đầu trong 30 phút.`);
     }
   } catch (err) {
     console.error('❌ Lỗi job nhắc nhở:', err.message);

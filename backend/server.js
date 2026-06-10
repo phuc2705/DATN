@@ -11,6 +11,8 @@ const { initDatabase } = require('./src/config/init-db');
 const { errorHandler } = require('./src/middleware/errorHandler');
 const { initSocket } = require('./src/socket');
 const { startBookingTimeoutJob } = require('./src/jobs/bookingTimeout');
+const { sendBookingReminders } = require('./src/jobs/reminderJob');
+const { autoAssignExpiredBookings } = require('./src/jobs/autoAssignJob');
 
 // Import các router
 const authRoutes = require('./src/routes/auth.routes');
@@ -163,6 +165,10 @@ const startServer = async () => {
         console.log(`🌐 Production URL: ${process.env.CLIENT_URL || `http://localhost:${PORT}`}`);
       }
       startBookingTimeoutJob();
+      sendBookingReminders();
+      setInterval(sendBookingReminders, 5 * 60 * 1000);      // nhắc nhở trước 30 phút
+      autoAssignExpiredBookings();
+      setInterval(autoAssignExpiredBookings, 5 * 60 * 1000); // tự gán helper sau 30 phút chờ
     });
 
     // Migrations chạy nền — không block server startup
