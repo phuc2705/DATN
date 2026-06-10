@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getAllServicesApi } from '../../api/service.api';
-import { createBookingApi, validatePromoCodeApi, pricePreviewApi, checkAvailabilityApi, getCustomerTrustInfoApi } from '../../api/booking.api';
+import { createBookingApi, validatePromoCodeApi, pricePreviewApi, checkAvailabilityApi, getCustomerTrustInfoApi, getPreviousHelpersApi } from '../../api/booking.api';
 import { createVNPayUrlApi, createVNPayDepositUrlApi } from '../../api/payment.api';
 import { formatPrice } from '../../utils/format';
 import toast from 'react-hot-toast';
@@ -10,7 +10,7 @@ import {
   CreditCard, Banknote, ChevronRight, Info, Loader2, Check, Tag, X, AlertTriangle,
   Clock, Users, Lightbulb, ShieldCheck, ShieldAlert, LocateFixed,
   Sparkles, Shirt, ChefHat, Baby, HeartHandshake, Building2,
-  Wind, Droplets, PawPrint, Briefcase, Zap, Home,
+  Wind, Droplets, PawPrint, Briefcase, Zap, Home, Star, UserCheck,
 } from 'lucide-react';
 import TimePicker24h from '../../components/common/TimePicker24h';
 
@@ -113,6 +113,9 @@ export default function CreateBookingPage() {
   const paramEndTime    = searchParams.get('endTime')     || '';
   const paramHelperId   = searchParams.get('helperId')    ? parseInt(searchParams.get('helperId')) : null;
 
+  const [selectedHelperId, setSelectedHelperId] = useState(paramHelperId);
+  const [previousHelpers, setPreviousHelpers]   = useState([]);
+
   // Nếu đủ params từ service page → bỏ qua step 1
   const fromServicePage = !!(paramServiceId && paramDate && paramStartTime && paramEndTime);
   // Có serviceId nhưng chưa có giờ → ẩn service picker, chỉ chọn giờ
@@ -152,6 +155,12 @@ export default function CreateBookingPage() {
       .then(({ data }) => setServices(data.data || []))
       .catch(() => {})
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    getPreviousHelpersApi()
+      .then(({ data }) => setPreviousHelpers(data.data || []))
+      .catch(() => {});
   }, []);
 
   // Hiển thị lỗi giờ quá khứ ngay real-time khi user nhập
@@ -345,7 +354,7 @@ export default function CreateBookingPage() {
         note:        form.note || undefined,
         paymentMethod,
         promoCode: promoApplied ? promoCode.trim() : undefined,
-        ...(paramHelperId ? { helperId: paramHelperId } : {}),
+        ...(selectedHelperId ? { helperId: selectedHelperId } : {}),
         ...(formCoords ? { lat: formCoords.lat, lng: formCoords.lng } : {}),
       });
 
@@ -581,16 +590,66 @@ export default function CreateBookingPage() {
               )}
             </div>
           </SectionCard>
+
+          {/* Đặt lại với helper quen — chỉ hiện nếu có lịch sử */}
+          {previousHelpers.length > 0 && (
+            <SectionCard title="Đặt lại với người giúp việc quen" icon={UserCheck}>
+              <p className="text-xs text-[#6a6a6a] mb-3">
+                Chọn một trong những người đã từng làm việc với bạn — đơn sẽ được giao thẳng cho họ.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {previousHelpers.map(h => {
+                  const isSelected = selectedHelperId === h.helper_id;
+                  return (
+                    <button
+                      key={h.helper_id}
+                      type="button"
+                      onClick={() => setSelectedHelperId(isSelected ? null : h.helper_id)}
+                      className={`flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all
+                        ${isSelected
+                          ? 'border-orange-500 bg-orange-50'
+                          : 'border-gray-200 bg-white hover:border-orange-300'}`}
+                    >
+                      <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0 overflow-hidden">
+                        {h.avatar_url
+                          ? <img src={h.avatar_url} alt={h.full_name} className="w-full h-full object-cover" />
+                          : <span className="text-orange-500 font-bold text-sm">{h.full_name?.[0]}</span>}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-semibold truncate ${isSelected ? 'text-orange-700' : 'text-[#222222]'}`}>
+                          {h.full_name}
+                        </p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="flex items-center gap-0.5 text-xs text-amber-500">
+                            <Star className="w-3 h-3 fill-amber-400" />
+                            {Number(h.rating_average || 0).toFixed(1)}
+                          </span>
+                          <span className={`text-xs font-medium ${h.is_available ? 'text-green-600' : 'text-gray-400'}`}>
+                            {h.is_available ? '● Đang rảnh' : '○ Đang bận'}
+                          </span>
+                        </div>
+                      </div>
+                      {isSelected && <CheckCircle2 className="w-5 h-5 text-orange-500 shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </SectionCard>
+          )}
         </div>
       )}
 
       {/* ─── STEP 2: 2-column layout ──────────────────────────────────── */}
-      {step === 2 && paramHelperId && (
+      {step === 2 && selectedHelperId && (
         <div className="mb-4 flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
-          <span className="text-blue-500 text-lg">👤</span>
-          <p className="text-sm text-blue-800">
-            Bạn đang đặt lịch với <strong>người giúp việc quen đã chọn</strong>. Đơn sẽ được giao thẳng cho họ mà không qua bảng việc làm chung.
+          <UserCheck className="w-5 h-5 text-blue-500 shrink-0" />
+          <p className="text-sm text-blue-800 flex-1">
+            Bạn đang đặt với <strong>{previousHelpers.find(h => h.helper_id === selectedHelperId)?.full_name || 'helper đã chọn'}</strong>. Đơn sẽ giao thẳng cho họ, không qua bảng việc làm.
           </p>
+          <button type="button" onClick={() => setSelectedHelperId(null)}
+            className="text-blue-400 hover:text-blue-600 shrink-0">
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
