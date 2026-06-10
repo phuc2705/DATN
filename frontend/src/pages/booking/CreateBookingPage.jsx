@@ -111,6 +111,7 @@ export default function CreateBookingPage() {
   const paramDate       = searchParams.get('date')        || '';
   const paramStartTime  = searchParams.get('startTime')   || '';
   const paramEndTime    = searchParams.get('endTime')     || '';
+  const paramHelperId   = searchParams.get('helperId')    ? parseInt(searchParams.get('helperId')) : null;
 
   // Nếu đủ params từ service page → bỏ qua step 1
   const fromServicePage = !!(paramServiceId && paramDate && paramStartTime && paramEndTime);
@@ -344,6 +345,7 @@ export default function CreateBookingPage() {
         note:        form.note || undefined,
         paymentMethod,
         promoCode: promoApplied ? promoCode.trim() : undefined,
+        ...(paramHelperId ? { helperId: paramHelperId } : {}),
         ...(formCoords ? { lat: formCoords.lat, lng: formCoords.lng } : {}),
       });
 
@@ -583,6 +585,15 @@ export default function CreateBookingPage() {
       )}
 
       {/* ─── STEP 2: 2-column layout ──────────────────────────────────── */}
+      {step === 2 && paramHelperId && (
+        <div className="mb-4 flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
+          <span className="text-blue-500 text-lg">👤</span>
+          <p className="text-sm text-blue-800">
+            Bạn đang đặt lịch với <strong>người giúp việc quen đã chọn</strong>. Đơn sẽ được giao thẳng cho họ mà không qua bảng việc làm chung.
+          </p>
+        </div>
+      )}
+
       {step === 2 && (
         <div className="animate-[fadeIn_0.2s_ease] lg:grid lg:grid-cols-[1fr_380px] lg:gap-8 lg:items-start">
 
