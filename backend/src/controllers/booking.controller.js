@@ -772,7 +772,10 @@ const BookingController = {
       // Gán helper và chuyển sang confirmed (FOR UPDATE tránh race condition)
       await BookingModel.assignHelperAndConfirm(parseInt(bookingId), helper_id, user_id);
 
-      const helperDisplayName = booking.helper_name || 'Người giúp việc';
+      // Lấy tên helper từ bảng users (booking.helper_name null vì fetch trước khi assign)
+      const [helperUserRows] = await pool.query('SELECT full_name FROM users WHERE user_id = ?', [user_id]);
+      const helperDisplayName = helperUserRows[0]?.full_name || 'Người giúp việc';
+
       const acceptTime = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Ho_Chi_Minh' });
       pushNotification({
         userId: booking.customer_user_id,
@@ -783,16 +786,17 @@ const BookingController = {
       });
       emitToUser(booking.customer_user_id, 'booking:update', { bookingId: parseInt(bookingId), status: 'confirmed' });
 
+      // Luôn gửi email xác nhận nhận đơn (không phụ thuộc online/offline)
       if (booking.customer_email) {
-        mailIfOffline(booking.customer_user_id, () => sendJobAcceptedEmail(
+        sendJobAcceptedEmail(
           booking.customer_email, booking.customer_name,
           {
             bookingId, serviceName: booking.service_name, bookingDate: booking.booking_date,
             startTime: booking.start_time, endTime: booking.end_time,
             address: booking.address, totalPrice: booking.total_price,
           },
-          booking.helper_name || 'Người giúp việc'
-        ));
+          helperDisplayName
+        ).catch(() => {});
       }
 
       return sendSuccess(res, null, 'Nhận việc thành công!');

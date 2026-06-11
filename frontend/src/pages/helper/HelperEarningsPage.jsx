@@ -38,7 +38,7 @@ function EarningsBar({ payments }) {
   payments.forEach((p) => {
     if (!p.paidAt) return;
     const key = new Date(p.paidAt).toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' });
-    byMonth[key] = (byMonth[key] || 0) + (p.helperEarning || p.amount || 0);
+    byMonth[key] = (byMonth[key] || 0) + (p.helperEarning ?? p.amount ?? 0);
   });
 
   const entries = Object.entries(byMonth).slice(-6); // 6 tháng gần nhất
@@ -368,10 +368,10 @@ export default function HelperEarningsPage() {
 
                   <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-4">
                     <p className="font-bold text-[#ff385c] text-sm">
-                      +{formatPrice(p.helperEarning || p.amount)}
+                      +{formatPrice(p.helperEarning ?? p.amount)}
                     </p>
-                    <span className="text-[10px] bg-green-50 text-green-600 border border-green-100 px-2 py-0.5 rounded-full font-medium">
-                      Đã nhận
+                    <span className={`text-[10px] border px-2 py-0.5 rounded-full font-medium ${p.paymentMethod === 'cash' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-green-50 text-green-600 border-green-100'}`}>
+                      {p.paymentMethod === 'cash' ? 'Thu tiền mặt' : 'Đã nhận'}
                     </span>
                   </div>
                 </div>
