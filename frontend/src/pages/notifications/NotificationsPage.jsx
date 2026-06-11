@@ -106,16 +106,20 @@ function NotificationItem({ n, onMarkRead, isUnread }) {
   const cfg  = TYPE_CONFIG[n.type] || TYPE_CONFIG.default;
   const Icon = cfg.Icon;
 
+  const BOOKING_TYPES = ['booking_confirmed', 'booking_cancelled', 'checkin', 'checkout', 'new_job', 'booking_created'];
   const handleClick = () => {
     if (isUnread && n.notification_id) onMarkRead(n.notification_id);
-    if (cfg.linkTo) navigate(cfg.linkTo);
+    if (cfg.linkTo) { navigate(cfg.linkTo); return; }
+    if (n.ref_id && BOOKING_TYPES.includes(n.type)) {
+      navigate(`/bookings/${n.ref_id}`);
+    }
   };
 
   return (
     <div
       onClick={handleClick}
       className={`flex items-start gap-4 p-4 rounded-2xl border transition-all group ${
-        isUnread || cfg.linkTo
+        isUnread || cfg.linkTo || (n.ref_id && ['booking_confirmed','booking_cancelled','checkin','checkout','new_job','booking_created'].includes(n.type))
           ? 'cursor-pointer'
           : ''
       } ${

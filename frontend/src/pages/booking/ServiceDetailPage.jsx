@@ -288,26 +288,40 @@ function RatingBreakdownBars({ breakdown, total }) {
 }
 
 // ── Sub-component: ReviewCard ────────────────────────────────────────────────
+const AVATAR_GRADIENTS = [
+  'from-orange-400 to-orange-600', 'from-blue-400 to-blue-600',
+  'from-green-400 to-green-600',   'from-purple-400 to-purple-600',
+  'from-pink-400 to-pink-600',     'from-yellow-400 to-yellow-600',
+];
 function ReviewCard({ review }) {
   const [expanded, setExpanded] = useState(false);
-  const isLong = review.text.length > 160;
-  const displayText = isLong && !expanded ? review.text.slice(0, 160) + '…' : review.text;
+  const text = review.comment || review.text || '';
+  const isLong = text.length > 160;
+  const displayText = isLong && !expanded ? text.slice(0, 160) + '…' : text;
+  const name = review.customerName || review.name || 'Khách hàng';
+  const avatarInitial = name.charAt(name.lastIndexOf(' ') + 1).toUpperCase() || name[0]?.toUpperCase() || 'K';
+  const gradientIdx = (review.reviewId || review.id || 0) % AVATAR_GRADIENTS.length;
+  const dateStr = review.createdAt ? new Date(review.createdAt).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' }) : (review.date || '');
 
   return (
     <div className="py-5 border-b border-gray-100 last:border-0">
       {/* Author row */}
       <div className="flex items-center gap-3 mb-3">
-        <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${review.avatarBg} flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}>
-          {review.avatar}
-        </div>
+        {review.customerAvatar || review.avatar ? (
+          <img src={review.customerAvatar || review.avatar} alt={name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+        ) : (
+          <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${AVATAR_GRADIENTS[gradientIdx]} flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}>
+            {avatarInitial}
+          </div>
+        )}
         <div className="min-w-0">
-          <p className="font-semibold text-gray-900 text-sm">{review.name}</p>
+          <p className="font-semibold text-gray-900 text-sm">{name}</p>
           <div className="flex items-center gap-2 mt-0.5">
             <StarRating rating={review.rating} size="sm" />
-            <span className="text-xs text-gray-400">{review.date}</span>
+            <span className="text-xs text-gray-400">{dateStr}</span>
           </div>
         </div>
-        {review.helperName && (
+        {(review.helperName) && (
           <span className="ml-auto text-xs text-gray-400 flex-shrink-0 hidden sm:block">
             Phục vụ bởi {review.helperName}
           </span>
@@ -622,7 +636,7 @@ export default function ServiceDetailPage() {
 
     getServiceReviewsApi(serviceId)
       .then(({ data }) => {
-        setReviews(data.data?.reviews || []);
+        setReviews(Array.isArray(data.data) ? data.data : []);
       })
       .catch(() => {
         setReviews([]);

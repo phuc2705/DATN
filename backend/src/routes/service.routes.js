@@ -9,14 +9,17 @@ const validate = require('../middleware/validate');
 // GET /api/services - Lấy tất cả dịch vụ (public)
 router.get('/', ServiceController.getAllServices);
 
+// GET /api/services/helpers/:helperId/schedule - Lịch làm việc helper (đặt TRƯỚC /:serviceId để tránh bị bắt nhầm)
+router.get('/helpers/:helperId/schedule', ServiceController.getHelperSchedule);
+
 // GET /api/services/:serviceId - Lấy chi tiết 1 dịch vụ (public)
 router.get('/:serviceId', ServiceController.getServiceById);
 
 // GET /api/services/:serviceId/helpers?city=HCM - Tìm helper theo dịch vụ
 router.get('/:serviceId/helpers', ServiceController.searchHelpers);
 
-// GET /api/services/helpers/:helperId/schedule - Lịch làm việc helper
-router.get('/helpers/:helperId/schedule', ServiceController.getHelperSchedule);
+// GET /api/services/:serviceId/reviews - Đánh giá của dịch vụ (public)
+router.get('/:serviceId/reviews', ServiceController.getServiceReviews);
 
 // POST /api/services - Admin tạo dịch vụ mới
 router.post('/', authenticate, authorize('admin'), [

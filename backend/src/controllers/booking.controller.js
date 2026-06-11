@@ -772,10 +772,12 @@ const BookingController = {
       // Gán helper và chuyển sang confirmed (FOR UPDATE tránh race condition)
       await BookingModel.assignHelperAndConfirm(parseInt(bookingId), helper_id, user_id);
 
+      const helperDisplayName = booking.helper_name || 'Người giúp việc';
+      const acceptTime = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Ho_Chi_Minh' });
       pushNotification({
         userId: booking.customer_user_id,
-        title: `Đơn ${bookingId} đã được nhận`,
-        body: `Người giúp việc đã nhận đơn của bạn vào ngày ${booking.booking_date}`,
+        title: `${helperDisplayName} đã nhận đơn hàng #${bookingId}`,
+        body: `Lúc ${acceptTime} — Vui lòng xem lại đơn đặt lịch của bạn.`,
         type: 'booking_confirmed',
         refId: parseInt(bookingId),
       });

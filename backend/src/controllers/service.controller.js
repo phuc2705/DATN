@@ -1,5 +1,6 @@
 // Controller quản lý dịch vụ và tìm kiếm người giúp việc
 const ServiceModel = require('../models/service.model');
+const { pool } = require('../config/database');
 const { sendSuccess, sendError } = require('../utils/response');
 
 const ServiceController = {
@@ -73,6 +74,31 @@ const ServiceController = {
       const { serviceName, description, basePrice, iconUrl, slug } = req.body;
       const serviceId = await ServiceModel.create({ serviceName, description, basePrice, iconUrl, slug });
       return sendSuccess(res, { serviceId }, 'Tạo dịch vụ thành công!', 201);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Lấy đánh giá của dịch vụ (lọc theo service_id qua bảng bookings)
+  getServiceReviews: async (req, res, next) => {
+    try {
+      const { serviceId } = req.params;
+      const [rows] = await pool.query(
+        `SELECT r.review_id, r.rating, r.comment, r.created_at,
+                uc.full_name AS customer_name, uc.avatar_url AS customer_avatar,
+                uh.full_name AS helper_name, uh.avatar_url AS helper_avatar
+         FROM reviews r
+         JOIN bookings b ON r.booking_id = b.booking_id
+         JOIN customers c ON r.customer_id = c.customer_id
+         JOIN users uc ON c.user_id = uc.user_id
+         JOIN helpers h ON r.helper_id = h.helper_id
+         JOIN users uh ON h.user_id = uh.user_id
+         WHERE b.service_id = ? AND r.is_visible = 1
+         ORDER BY r.created_at DESC
+         LIMIT 50`,
+        [serviceId]
+      );
+      return sendSuccess(res, rows);
     } catch (error) {
       next(error);
     }
