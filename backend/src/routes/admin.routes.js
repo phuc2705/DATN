@@ -27,9 +27,6 @@ router.delete('/users/:userId', AdminController.deleteUser);
 // PATCH /api/admin/helpers/:helperId/verify - Xác minh helper
 router.patch('/helpers/:helperId/verify', AdminController.verifyHelper);
 
-// GET /api/admin/helpers/:helperId - Hồ sơ chi tiết helper
-router.get('/helpers/:helperId', AdminController.getHelperDetail);
-
 // ─── Quản lý Booking ──────────────────────────────────────────────────────────
 router.get('/bookings', AdminController.listAllBookings);
 
@@ -75,7 +72,7 @@ router.patch('/bookings/:bookingId/assign', [
   body('helperId').isInt({ min: 1 }).withMessage('helperId không hợp lệ'),
 ], validate, AdminController.assignHelper);
 
-// GET /api/admin/helpers/available?bookingId=X - Helpers đang hoạt động, lọc theo vị trí 5km
+// GET /api/admin/helpers/available?bookingId=X - phải đặt TRƯỚC /:helperId để tránh bị bắt nhầm
 router.get('/helpers/available', async (req, res) => {
   const { pool } = require('../config/database');
   const { sendSuccess } = require('../utils/response');
@@ -159,6 +156,9 @@ router.get('/helpers/available', async (req, res) => {
 
   return sendSuccess(res, { nearby, farAway, bookingLat, bookingLng });
 });
+
+// GET /api/admin/helpers/:helperId - Hồ sơ chi tiết helper (đặt SAU /helpers/available)
+router.get('/helpers/:helperId', AdminController.getHelperDetail);
 
 // ─── Quản lý Payment ──────────────────────────────────────────────────────────
 // GET /api/admin/payments?status=paid&startDate=...

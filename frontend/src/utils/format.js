@@ -4,9 +4,11 @@ export const formatPrice = (amount) =>
 
 export const formatDate = (dateStr) => {
   if (!dateStr) return '—';
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  // Tách trực tiếp từ chuỗi "YYYY-MM-DD" để tránh UTC midnight bị lệch múi giờ
+  const s = String(dateStr).slice(0, 10);
+  const [year, month, day] = s.split('-');
+  if (!year || !month || !day) return '—';
+  return `${day}/${month}/${year}`;
 };
 
 export const formatDateTime = (dateStr) => {

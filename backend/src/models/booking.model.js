@@ -290,6 +290,7 @@ const BookingModel = {
       JOIN helpers h ON b.helper_id = h.helper_id
       JOIN users u ON h.user_id = u.user_id
       WHERE b.customer_id = ? AND b.status = 'completed'
+        AND u.user_type != 'admin'
       GROUP BY h.helper_id, u.full_name, u.avatar_url,
                h.rating_average, h.total_bookings, h.is_available, h.is_verified
       ORDER BY last_booking_date DESC

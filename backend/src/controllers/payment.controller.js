@@ -161,12 +161,12 @@ const PaymentController = {
             await PaymentModel.confirmRemainingPayment(bookingId, 'vnpay', null);
             sendPaymentNotification(bookingId);
           } else if (payment && payment.payment_status === 'unpaid') {
-            // Thanh toán full ngay (trusted customer dùng VNPay)
-            await PaymentModel.confirmPayment(bookingId, null);
+            // Cập nhật payment_method trước để confirmPayment đọc đúng → CREDIT ví helper
             await pool.query(
               'UPDATE payments SET payment_method = ? WHERE booking_id = ?',
               ['vnpay', bookingId]
             );
+            await PaymentModel.confirmPayment(bookingId, null);
             sendPaymentNotification(bookingId);
           }
         }

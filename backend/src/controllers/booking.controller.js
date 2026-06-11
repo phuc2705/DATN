@@ -197,8 +197,10 @@ const BookingController = {
       const [availRows] = await pool.query(
         `SELECT COUNT(DISTINCT h.helper_id) AS cnt
          FROM helpers h
+         JOIN users u ON h.user_id = u.user_id
          JOIN helper_services hs ON h.helper_id = hs.helper_id
          WHERE h.is_available = TRUE AND h.is_verified = TRUE AND hs.service_id = ?
+           AND u.user_type != 'admin'
            AND h.helper_id NOT IN (
              SELECT DISTINCT helper_id FROM bookings
              WHERE booking_date = ? AND status NOT IN ('cancelled') AND helper_id IS NOT NULL
@@ -242,14 +244,41 @@ const BookingController = {
 
       (async () => {
         try {
-          // Lấy toàn bộ helpers hợp lệ kèm tọa độ + điểm đánh giá
+          // Nếu booking yêu cầu helper cụ thể → chỉ notify đúng helper đó
+          if (helperId) {
+            const [[specificHelper]] = await pool.query(
+              `SELECT h.helper_id, u.user_id, u.email, u.full_name
+               FROM helpers h JOIN users u ON h.user_id = u.user_id
+               WHERE h.helper_id = ?`,
+              [helperId]
+            );
+            if (specificHelper) {
+              await pushNotification({
+                userId: specificHelper.user_id,
+                title: '⭐ Khách hàng yêu cầu bạn!',
+                body: `${svcName} · ${bookingDate} ${startTime}–${endTime}`,
+                type: 'booking_new',
+                refId: bookingId,
+              });
+              emitToUser(specificHelper.user_id, 'new_job', { bookingId, svcName, bookingDate, startTime, endTime });
+              if (specificHelper.email) {
+                mailIfOffline(specificHelper.user_id, () => sendNewJobEmail(specificHelper.email, specificHelper.full_name, {
+                  bookingId, serviceName: svcName, bookingDate, startTime, endTime, address,
+                }));
+              }
+            }
+            return;
+          }
+
+          // Đặt mở: lấy toàn bộ helpers hợp lệ kèm tọa độ để phân giai đoạn
           const [helperRows] = await pool.query(
             `SELECT DISTINCT h.helper_id, u.user_id, u.email, u.full_name,
                     h.rating_average, h.latitude, h.longitude
              FROM helpers h
              JOIN users u ON h.user_id = u.user_id
              JOIN helper_services hs ON h.helper_id = hs.helper_id
-             WHERE h.is_available = TRUE AND h.is_verified = TRUE AND hs.service_id = ?`,
+             WHERE h.is_available = TRUE AND h.is_verified = TRUE AND hs.service_id = ?
+               AND u.user_type != 'admin'`,
             [serviceId]
           );
 
@@ -283,10 +312,8 @@ const BookingController = {
             (dist !== null && dist <= 5 ? nearby : faraway).push({ ...h, distKm: dist });
           }
 
-          // Sắp xếp theo rating DESC (ưu tiên người có điểm cao)
           nearby.sort((a, b) => b.rating_average - a.rating_average);
 
-          // Gửi giai đoạn 1: helpers gần trước (hoặc tất cả nếu không có toạ độ)
           const phase1 = nearby.length > 0 ? nearby : helperRows;
           for (const h of phase1) {
             await pushNotification({
@@ -307,7 +334,6 @@ const BookingController = {
           // Gửi giai đoạn 2 cho helpers xa hơn sau 10 phút (nếu có)
           if (nearby.length > 0 && faraway.length > 0) {
             setTimeout(async () => {
-              // Kiểm tra xem đơn đã có người nhận chưa trước khi gửi giai đoạn 2
               const [[bk]] = await pool.query(
                 'SELECT status FROM bookings WHERE booking_id = ?', [bookingId]
               );
@@ -913,8 +939,10 @@ const checkAvailability = async (req, res, next) => {
     const [[{ cnt }]] = await pool.query(
       `SELECT COUNT(DISTINCT h.helper_id) AS cnt
        FROM helpers h
+       JOIN users u ON h.user_id = u.user_id
        JOIN helper_services hs ON h.helper_id = hs.helper_id
        WHERE h.is_available = TRUE AND h.is_verified = TRUE AND hs.service_id = ?
+         AND u.user_type != 'admin'
          AND h.helper_id NOT IN (
            SELECT DISTINCT helper_id FROM bookings
            WHERE booking_date = ? AND status NOT IN ('cancelled') AND helper_id IS NOT NULL
@@ -959,8 +987,10 @@ const checkAvailability = async (req, res, next) => {
         const [[{ cnt: slotCnt }]] = await pool.query(
           `SELECT COUNT(DISTINCT h.helper_id) AS cnt
            FROM helpers h
+           JOIN users u ON h.user_id = u.user_id
            JOIN helper_services hs ON h.helper_id = hs.helper_id
            WHERE h.is_available = TRUE AND h.is_verified = TRUE AND hs.service_id = ?
+             AND u.user_type != 'admin'
              AND h.helper_id NOT IN (
                SELECT DISTINCT helper_id FROM bookings
                WHERE booking_date = ? AND status NOT IN ('cancelled') AND helper_id IS NOT NULL
@@ -1056,8 +1086,10 @@ const getBookingSuggestions = async (req, res, next) => {
         const [[{ cnt }]] = await pool.query(
           `SELECT COUNT(DISTINCT h.helper_id) AS cnt
            FROM helpers h
+           JOIN users u ON h.user_id = u.user_id
            JOIN helper_services hs ON h.helper_id = hs.helper_id
            WHERE h.is_available = TRUE AND h.is_verified = TRUE AND hs.service_id = ?
+             AND u.user_type != 'admin'
              AND h.helper_id NOT IN (
                SELECT DISTINCT helper_id FROM bookings
                WHERE booking_date = ? AND status NOT IN ('cancelled') AND helper_id IS NOT NULL

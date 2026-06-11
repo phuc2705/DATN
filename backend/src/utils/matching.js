@@ -93,6 +93,7 @@ const findSuggestedHelpers = async ({ serviceId, bookingDate, startTime, endTime
       AND h.is_verified = TRUE
       AND h.is_available = TRUE
       AND u.is_active = TRUE
+      AND u.user_type != 'admin'
       ${conflictClause}
       ${gapClause}
   `, allParams);
