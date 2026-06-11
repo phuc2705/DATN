@@ -35,7 +35,23 @@ export function AuthProvider({ children }) {
 
     socket.on('notification', (data) => {
       const icon = NOTIF_ICONS[data.type] || '🔔';
-      toast(`${icon} ${data.title}`, { duration: 4000 });
+      const BOOKING_TYPES = ['booking_confirmed', 'booking_cancelled', 'checkin', 'checkout', 'new_job', 'booking_created'];
+      if (data.ref_id && BOOKING_TYPES.includes(data.type)) {
+        toast(
+          (t) => (
+            <span
+              style={{ cursor: 'pointer' }}
+              onClick={() => { toast.dismiss(t.id); window.location.href = `/bookings/${data.ref_id}`; }}
+            >
+              {icon} {data.title}
+              <span style={{ display: 'block', fontSize: '11px', color: '#888', marginTop: 2 }}>Nhấn để xem đơn</span>
+            </span>
+          ),
+          { duration: 6000 }
+        );
+      } else {
+        toast(`${icon} ${data.title}`, { duration: 4000 });
+      }
       setUnreadCount((c) => c + 1);
     });
 
