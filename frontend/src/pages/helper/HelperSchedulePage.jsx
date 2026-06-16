@@ -133,40 +133,68 @@ function InfoRow({ icon: Icon, label, highlight }) {
 }
 
 /* ─── Modal đăng ký ca làm (ca cố định ~4 tiếng) ────────────────── */
-function RegisterShiftModal({ onClose, onSuccess, todayISO }) {
+function RegisterShiftModal({ onClose, onSuccess, todayISO, existingShifts }) {
   const maxDate  = useMemo(() => {
     const d = new Date(); d.setDate(d.getDate() + 30); return toISODate(d);
   }, []);
 
-  const [shiftDate,     setShiftDate]     = useState(todayISO);
-  const [selectedShift, setSelectedShift] = useState(null);
-  const [submitting,    setSubmitting]    = useState(false);
+  const [shiftDate,      setShiftDate]      = useState(todayISO);
+  const [selectedIds,    setSelectedIds]    = useState(new Set());
+  const [submitting,     setSubmitting]     = useState(false);
 
-  // Tính ca nào hết hạn theo ngày và giờ VN hiện tại
+  // Ca hết hạn (ngày + giờ đã qua)
   const expiredShiftIds = useMemo(() => {
     return PREDEFINED_SHIFTS
       .filter((s) => isShiftExpired(shiftDate, s.end, todayISO))
       .map((s) => s.id);
   }, [shiftDate, todayISO]);
 
+  // Ca đã đăng ký cho ngày đang chọn
+  const registeredStartTimes = useMemo(() => {
+    return new Set(
+      (existingShifts || [])
+        .filter((s) => s.status === 'active' && String(s.shiftDate || '').slice(0, 10) === shiftDate)
+        .map((s) => String(s.startTime).slice(0, 5))
+    );
+  }, [existingShifts, shiftDate]);
+
   const handleDateChange = (e) => {
     setShiftDate(e.target.value);
-    setSelectedShift(null);
+    setSelectedIds(new Set());
+  };
+
+  const toggleShift = (shift) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(shift.id)) next.delete(shift.id);
+      else next.add(shift.id);
+      return next;
+    });
   };
 
   const handleSubmit = async () => {
-    if (!shiftDate || !selectedShift) return toast.error('Vui lòng chọn ngày và ca làm.');
+    if (!shiftDate || selectedIds.size === 0) return toast.error('Vui lòng chọn ít nhất một ca.');
+    const toRegister = PREDEFINED_SHIFTS.filter((s) => selectedIds.has(s.id));
     setSubmitting(true);
-    try {
-      await registerShiftApi({ shiftDate, startTime: selectedShift.start, endTime: selectedShift.end });
-      toast.success('Đăng ký ca làm thành công!');
-      onSuccess();
-      onClose();
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Không thể đăng ký ca.');
-    } finally {
-      setSubmitting(false);
+    let successCount = 0;
+    const errors = [];
+    for (const shift of toRegister) {
+      try {
+        await registerShiftApi({ shiftDate, startTime: shift.start, endTime: shift.end });
+        successCount++;
+      } catch (err) {
+        errors.push(`${shift.label}: ${err.response?.data?.message || 'lỗi'}`);
+      }
     }
+    setSubmitting(false);
+    if (successCount > 0) {
+      toast.success(`Đã đăng ký ${successCount} ca thành công!`);
+      onSuccess();
+    }
+    if (errors.length > 0) {
+      errors.forEach((e) => toast.error(e));
+    }
+    if (successCount > 0) onClose();
   };
 
   return (
@@ -176,7 +204,7 @@ function RegisterShiftModal({ onClose, onSuccess, todayISO }) {
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div>
             <h3 className="font-semibold text-gray-900">Đăng ký ca làm</h3>
-            <p className="text-xs text-gray-400 mt-0.5">Ưu tiên nhận đơn trong khung giờ này</p>
+            <p className="text-xs text-gray-400 mt-0.5">Chọn một hoặc nhiều ca trong ngày</p>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors">
             <X className="w-4 h-4 text-gray-500" />
@@ -197,34 +225,44 @@ function RegisterShiftModal({ onClose, onSuccess, todayISO }) {
             />
           </div>
 
-          {/* Chọn ca */}
+          {/* Chọn ca (multi-select) */}
           <div>
-            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Chọn ca</label>
+            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Chọn ca (có thể chọn nhiều)</label>
             <div className="grid grid-cols-2 gap-2">
               {PREDEFINED_SHIFTS.map((shift) => {
-                const expired  = expiredShiftIds.includes(shift.id);
-                const selected = selectedShift?.id === shift.id;
+                const expired    = expiredShiftIds.includes(shift.id);
+                const registered = registeredStartTimes.has(shift.start);
+                const selected   = selectedIds.has(shift.id);
+                const disabled   = expired || registered;
                 return (
                   <button
                     key={shift.id}
                     type="button"
-                    disabled={expired}
-                    onClick={() => !expired && setSelectedShift(shift)}
+                    disabled={disabled}
+                    onClick={() => !disabled && toggleShift(shift)}
                     className={`border rounded-xl p-3 text-left transition-all relative ${
-                      expired
-                        ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-70'
-                        : selected
-                          ? 'border-[#ff385c] bg-rose-50 ring-1 ring-[#ff385c]'
-                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                      registered
+                        ? 'border-green-300 bg-green-50 cursor-not-allowed'
+                        : expired
+                          ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
+                          : selected
+                            ? 'border-[#ff385c] bg-rose-50 ring-1 ring-[#ff385c]'
+                            : 'border-gray-200 hover:border-gray-300 bg-white'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-1">
-                      <p className={`text-sm font-semibold ${expired ? 'text-gray-400' : 'text-gray-800'}`}>{shift.label}</p>
-                      {expired && (
-                        <span className="text-[9px] font-bold text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded-full shrink-0">hết hạn</span>
+                      <p className={`text-sm font-semibold ${disabled ? 'text-gray-400' : 'text-gray-800'}`}>{shift.label}</p>
+                      {registered && (
+                        <span className="text-[9px] font-bold text-green-600 bg-green-100 px-1.5 py-0.5 rounded-full shrink-0">Đã đăng ký</span>
+                      )}
+                      {!registered && expired && (
+                        <span className="text-[9px] font-bold text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded-full shrink-0">Hết hạn</span>
+                      )}
+                      {selected && !disabled && (
+                        <CheckCircle className="w-3.5 h-3.5 text-[#ff385c] shrink-0" />
                       )}
                     </div>
-                    <p className={`text-xs mt-0.5 ${expired ? 'text-gray-400' : 'text-gray-500'}`}>{shift.time}</p>
+                    <p className={`text-xs mt-0.5 ${disabled ? 'text-gray-400' : 'text-gray-500'}`}>{shift.time}</p>
                   </button>
                 );
               })}
@@ -243,10 +281,10 @@ function RegisterShiftModal({ onClose, onSuccess, todayISO }) {
           <button onClick={onClose} className="flex-1 h-11 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors">Hủy</button>
           <button
             onClick={handleSubmit}
-            disabled={submitting || !selectedShift}
+            disabled={submitting || selectedIds.size === 0}
             className="flex-1 h-11 rounded-xl bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors"
           >
-            {submitting ? 'Đang đăng ký...' : 'Đăng ký ca'}
+            {submitting ? 'Đang đăng ký...' : selectedIds.size > 1 ? `Đăng ký ${selectedIds.size} ca` : 'Đăng ký ca'}
           </button>
         </div>
       </div>
@@ -779,6 +817,7 @@ export default function HelperSchedulePage() {
           todayISO={todayISO}
           onClose={() => setShowRegModal(false)}
           onSuccess={fetchShifts}
+          existingShifts={shifts}
         />
       )}
     </div>

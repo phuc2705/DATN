@@ -1,185 +1,270 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getAdminStatsApi, verifyHelperApi, getAdminUsersApi } from '../../api/admin.api';
+import { getAdminStatsApi, verifyHelperApi, getAdminUsersApi, getAdminWeeklyStatsApi } from '../../api/admin.api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import Avatar from '../../components/common/Avatar';
 import { formatPrice } from '../../utils/format';
 import toast from 'react-hot-toast';
-import { User, Sparkles, ClipboardList, Banknote, RefreshCw, CheckCircle, MessageSquare } from 'lucide-react';
+import { User, Sparkles, ClipboardList, Banknote, RefreshCw, CheckCircle, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const MONTH_LABEL = { '01':'T1','02':'T2','03':'T3','04':'T4','05':'T5','06':'T6','07':'T7','08':'T8','09':'T9','10':'T10','11':'T11','12':'T12' };
+const DAY_LABELS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 
-function RevenueChart({ data }) {
-  if (!data || data.length === 0) return <p className="text-gray-400 text-sm py-8 text-center">Chưa có dữ liệu doanh thu</p>;
+/* ─── Biểu đồ doanh thu theo tuần — so sánh tuần trước ──────────── */
+function WeeklyRevenueChart() {
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [weekData, setWeekData]     = useState(null);
+  const [prevData, setPrevData]     = useState(null);
+  const [loading, setLoading]       = useState(true);
 
-  const revenues = data.map((d) => Number(d.revenue));
-  const max = Math.max(...revenues, 1);
-  const CHART_H = 140; // px chiều cao vùng cột
-  const BAR_AREA_H = 100; // px chiều cao thực tế cột (phần còn lại cho badge)
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      getAdminWeeklyStatsApi(weekOffset),
+      getAdminWeeklyStatsApi(weekOffset - 1),
+    ])
+      .then(([{ data: curr }, { data: prev }]) => {
+        setWeekData(curr.data);
+        setPrevData(prev.data);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [weekOffset]);
 
-  const growthList = revenues.map((rev, i) => {
-    if (i === 0) return null;
-    const prev = revenues[i - 1];
-    if (prev === 0) return null;
-    return Math.round(((rev - prev) / prev) * 100);
-  });
+  const days     = weekData?.days || [];
+  const prevDays = prevData?.days  || Array(7).fill({ revenue: 0, bookings: 0, date: '' });
 
-  const totalRevenue = revenues.reduce((a, b) => a + b, 0);
+  const allRevs  = [...days.map((d) => d.revenue), ...prevDays.map((d) => d.revenue || 0)];
+  const max      = Math.max(...allRevs, 1);
 
-  // Tính tọa độ Y (px từ đáy) của đỉnh mỗi cột để vẽ đường xu hướng
-  const dotYs = revenues.map((rev) => Math.max((rev / max) * BAR_AREA_H, rev > 0 ? 8 : 3));
-
-  // Tạo polyline points — cần biết width mỗi cột, dùng % để tính
-  // Tỷ lệ x của tâm mỗi cột (gap=8px ≈ dùng flex, xấp xỉ equal width)
-  const n = data.length;
+  const totalRev     = days.reduce((s, d) => s + d.revenue, 0);
+  const totalBook    = days.reduce((s, d) => s + d.bookings, 0);
+  const prevTotalRev = prevDays.reduce((s, d) => s + (d.revenue || 0), 0);
+  const weekGrowth   = prevTotalRev > 0
+    ? Math.round(((totalRev - prevTotalRev) / prevTotalRev) * 100)
+    : null;
+  const todayDayIdx  = weekOffset === 0 ? (new Date().getDay() + 6) % 7 : -1;
+  const CHART_H      = 120;
 
   return (
     <div>
-      {/* Header */}
+      {/* Điều hướng tuần */}
       <div className="flex items-center justify-between mb-3">
-        <p className="text-xs text-gray-400">Tổng 6 tháng</p>
-        <p className="text-sm font-bold text-[#828fff]">{formatPrice(totalRevenue)}</p>
+        <button onClick={() => setWeekOffset((o) => o - 1)}
+          className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <div className="text-center">
+          <p className="text-xs font-semibold text-gray-700">{weekData?.label || '...'}</p>
+          <p className="text-[10px] text-[#828fff]">
+            {weekOffset === 0 ? 'Tuần này' : weekOffset === -1 ? 'Tuần trước' : `${Math.abs(weekOffset)} tuần trước`}
+          </p>
+        </div>
+        <button onClick={() => setWeekOffset((o) => Math.min(0, o + 1))} disabled={weekOffset >= 0}
+          className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+          <ChevronRight className="w-4 h-4" />
+        </button>
       </div>
 
-      {/* Biểu đồ — dùng position relative để overlay SVG đường xu hướng */}
-      <div className="relative" style={{ height: CHART_H + 32 }}>
+      {/* Tóm tắt + so sánh tuần */}
+      <div className="flex items-start gap-5 mb-3 pb-3 border-b border-gray-100">
+        <div>
+          <p className="text-[10px] text-gray-400 uppercase tracking-wide">Doanh thu tuần</p>
+          <p className="text-sm font-extrabold text-gray-900">{formatPrice(totalRev)}</p>
+          {weekGrowth !== null && (
+            <span className={`inline-flex items-center gap-0.5 text-[10px] font-bold mt-0.5 px-1.5 py-0.5 rounded ${
+              weekGrowth >= 0 ? 'text-emerald-600 bg-emerald-50' : 'text-red-500 bg-red-50'
+            }`}>
+              {weekGrowth >= 0 ? '▲' : '▼'} {Math.abs(weekGrowth)}% so với tuần trước
+            </span>
+          )}
+        </div>
+        <div>
+          <p className="text-[10px] text-gray-400 uppercase tracking-wide">Đơn</p>
+          <p className="text-sm font-extrabold text-gray-900">{totalBook}</p>
+        </div>
+        {prevTotalRev > 0 && (
+          <div className="ml-auto text-right">
+            <p className="text-[10px] text-gray-400">Tuần trước</p>
+            <p className="text-xs font-semibold text-gray-400">{formatPrice(prevTotalRev)}</p>
+          </div>
+        )}
+      </div>
 
-        {/* Đường lưới ngang (3 mức) */}
-        {[25, 50, 75].map((pct) => (
-          <div
-            key={pct}
-            className="absolute left-0 right-0 border-t border-dashed border-gray-200"
-            style={{ bottom: 28 + (pct / 100) * BAR_AREA_H }}
-          />
+      {loading ? (
+        <div className="h-40 flex items-center justify-center">
+          <div className="w-5 h-5 border-2 border-[#828fff] border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : (
+        <>
+          <div className="relative" style={{ height: CHART_H + 20 }}>
+            {[33, 66].map((pct) => (
+              <div key={pct} className="absolute left-0 right-0 border-t border-dashed border-gray-100"
+                style={{ bottom: 20 + (pct / 100) * CHART_H }} />
+            ))}
+            {/* Cột đôi: tuần trước (xám) + tuần hiện tại (tím) */}
+            <div className="absolute inset-x-0 bottom-0 flex items-end gap-1" style={{ height: CHART_H + 30 }}>
+              {days.map((day, i) => {
+                const prev     = prevDays[i] || { revenue: 0 };
+                const currPct  = Math.max((day.revenue / max) * 100, day.revenue > 0 ? 4 : 1);
+                const prevPct  = Math.max(((prev.revenue || 0) / max) * 100, (prev.revenue || 0) > 0 ? 4 : 1);
+                const isToday  = i === todayDayIdx;
+                const [, mm, dd] = (day.date || '--').split('-');
+                const dateLabel  = mm && dd ? `${parseInt(dd)}/${parseInt(mm)}` : '';
+                return (
+                  <div key={day.date || i} className="flex-1 flex flex-col items-center group relative">
+                    {/* Tooltip */}
+                    <div className="absolute z-20 bg-gray-900 text-white text-xs px-2.5 py-2 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl"
+                      style={{ bottom: 34, left: '50%', transform: 'translateX(-50%)' }}>
+                      <p className="font-bold mb-1">{DAY_LABELS[i]} {dateLabel}</p>
+                      <p className="text-[#828fff]">Tuần này: {formatPrice(day.revenue)}</p>
+                      <p className="text-gray-400">Tuần trước: {formatPrice(prev.revenue || 0)}</p>
+                    </div>
+                    {/* 2 cột cạnh nhau */}
+                    <div className="w-full flex items-end gap-0.5" style={{ height: `${CHART_H}px` }}>
+                      <div className="flex-1 rounded-t-sm bg-gray-200 transition-all duration-300"
+                        style={{ height: `${prevPct}%` }} />
+                      <div className={`flex-1 rounded-t-sm transition-all duration-300 ${
+                        isToday ? 'bg-gradient-to-t from-[#5e6ad2] to-[#828fff]'
+                          : day.revenue > 0 ? 'bg-[#828fff]/50' : 'bg-gray-100'
+                      }`} style={{ height: `${currPct}%` }} />
+                    </div>
+                    {/* Nhãn 2 dòng: tên thứ + ngày/tháng */}
+                    <div className="flex flex-col items-center mt-1 leading-none gap-0.5">
+                      <span className={`text-[10px] font-semibold ${isToday ? 'text-[#828fff]' : 'text-gray-600'}`}>
+                        {DAY_LABELS[i]}
+                      </span>
+                      <span className="text-[9px] text-gray-400">{dateLabel}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Chú thích */}
+          <div className="flex items-center gap-4 mt-2 pt-2 border-t border-gray-100">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-sm bg-[#828fff]/50" />
+              <span className="text-[10px] text-gray-400">Tuần đang xem</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-sm bg-gray-200" />
+              <span className="text-[10px] text-gray-400">Tuần trước</span>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ─── Section 2 tab thống kê (Admin): tuần / tháng ─────────────── */
+function AdminStatsSection({ monthlyRevenue }) {
+  const [tab, setTab] = useState('week');
+
+  const TABS = [
+    { key: 'week',  label: 'Theo tuần' },
+    { key: 'month', label: 'Theo tháng' },
+  ];
+
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 mb-6">
+      <div className="flex items-center gap-0 px-6 pt-5 border-b border-gray-200">
+        <h2 className="font-bold text-gray-900 mr-6 pb-4">Thống kê doanh thu</h2>
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`px-4 py-4 text-sm font-medium border-b-2 transition-colors -mb-px ${
+              tab === t.key
+                ? 'text-[#828fff] border-[#828fff]'
+                : 'text-gray-400 border-transparent hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            {t.label}
+          </button>
         ))}
+      </div>
 
-        {/* SVG đường xu hướng overlay */}
-        <svg
-          className="absolute left-0 right-0 pointer-events-none"
-          style={{ bottom: 28, height: BAR_AREA_H, width: '100%' }}
-          preserveAspectRatio="none"
-          viewBox={`0 0 ${n * 100} ${BAR_AREA_H}`}
-        >
-          {/* Vùng tô dưới đường */}
-          <defs>
-            <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#828fff" stopOpacity="0.15" />
-              <stop offset="100%" stopColor="#828fff" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <polyline
-            points={dotYs.map((y, i) => `${i * 100 + 50},${BAR_AREA_H - y}`).join(' ')}
-            fill="none"
-            stroke="#828fff"
-            strokeWidth="2.5"
-            strokeLinejoin="round"
-            strokeLinecap="round"
-            strokeDasharray="0"
-          />
-          {/* Vùng fill dưới đường */}
-          <polygon
-            points={[
-              ...dotYs.map((y, i) => `${i * 100 + 50},${BAR_AREA_H - y}`),
-              `${(n - 1) * 100 + 50},${BAR_AREA_H}`,
-              `50,${BAR_AREA_H}`,
-            ].join(' ')}
-            fill="url(#trendFill)"
-          />
-          {/* Chấm tròn tại đỉnh mỗi cột */}
-          {dotYs.map((y, i) => {
-            const growth = growthList[i];
-            const color = growth === null ? '#828fff' : growth >= 0 ? '#34d399' : '#f87171';
-            return (
-              <circle
-                key={i}
-                cx={i * 100 + 50}
-                cy={BAR_AREA_H - y}
-                r="4"
-                fill={color}
-                stroke="#ffffff"
-                strokeWidth="2"
-              />
-            );
-          })}
-        </svg>
+      <div className="p-6">
+        {tab === 'week'  && <WeeklyRevenueChart />}
+        {tab === 'month' && <MonthlyRevenueTable data={monthlyRevenue} />}
+      </div>
+    </div>
+  );
+}
 
-        {/* Các cột + nhãn */}
-        <div className="absolute inset-x-0 bottom-0 flex items-end gap-1.5" style={{ height: CHART_H + 32 }}>
+/* ─── Bảng thống kê doanh thu theo tháng — so sánh tháng trước ──── */
+function MonthlyRevenueTable({ data }) {
+  if (!data || data.length === 0) {
+    return <p className="text-gray-400 text-sm py-8 text-center">Chưa có dữ liệu</p>;
+  }
+
+  const maxRev = Math.max(...data.map((d) => Number(d.revenue)), 1);
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-gray-200">
+            <th className="text-left text-[11px] font-semibold text-gray-400 pb-3 uppercase tracking-wide">Tháng</th>
+            <th className="text-right text-[11px] font-semibold text-gray-400 pb-3 uppercase tracking-wide">Doanh thu</th>
+            <th className="text-right text-[11px] font-semibold text-gray-400 pb-3 uppercase tracking-wide">Đơn</th>
+            <th className="text-right text-[11px] font-semibold text-gray-400 pb-3 uppercase tracking-wide">vs tháng trước</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100">
           {data.map((d, i) => {
-            const rev = Number(d.revenue);
-            const pct = Math.max((rev / max) * 100, rev > 0 ? 6 : 2);
-            const [, mon] = d.month.split('-');
-            const growth = growthList[i];
+            const rev      = Number(d.revenue);
+            const prev     = i > 0 ? Number(data[i - 1].revenue) : null;
+            const growth   = prev !== null && prev > 0
+              ? Math.round(((rev - prev) / prev) * 100)
+              : null;
+            const barPct   = Math.round((rev / maxRev) * 100);
+            const [year, mon] = d.month.split('-');
             const isLatest = i === data.length - 1;
-
-            // Màu cột theo tăng/giảm
-            let barColor = 'bg-gray-100';
-            if (isLatest) barColor = 'bg-gradient-to-t from-[#5e6ad2] to-[#828fff]';
-            else if (growth === null) barColor = 'bg-gray-300';
-            else if (growth >= 0) barColor = 'bg-emerald-500/30';
-            else barColor = 'bg-red-500/30';
-
             return (
-              <div key={d.month} className="flex-1 flex flex-col items-center gap-0 group relative">
-                {/* Badge tăng giảm */}
-                <div className="h-6 flex items-center justify-center mb-0.5">
-                  {growth !== null && (
-                    <span className={`text-[9px] font-bold leading-none px-1 py-0.5 rounded ${
-                      growth >= 0
-                        ? 'text-emerald-400 bg-emerald-400/10'
-                        : 'text-red-400 bg-red-400/10'
+              <tr key={d.month} className="hover:bg-gray-50 transition-colors">
+                <td className={`py-2.5 font-semibold ${isLatest ? 'text-[#828fff]' : 'text-gray-700'}`}>
+                  {MONTH_LABEL[mon]}/{year.slice(2)}
+                </td>
+                <td className="py-2.5 text-right">
+                  <span className="font-bold text-gray-900 block">{formatPrice(rev)}</span>
+                  <div className="h-1 w-20 bg-gray-100 rounded-full overflow-hidden ml-auto mt-1">
+                    <div className="h-full bg-[#828fff]/50 rounded-full transition-all"
+                      style={{ width: `${barPct}%` }} />
+                  </div>
+                </td>
+                <td className="py-2.5 text-right text-gray-500">{d.bookings ?? '—'}</td>
+                <td className="py-2.5 text-right">
+                  {growth !== null ? (
+                    <span className={`inline-flex items-center gap-0.5 text-xs font-bold px-1.5 py-0.5 rounded ${
+                      growth >= 0 ? 'text-emerald-600 bg-emerald-50' : 'text-red-500 bg-red-50'
                     }`}>
-                      {growth >= 0 ? '▲' : '▼'}{Math.abs(growth)}%
+                      {growth >= 0 ? '▲' : '▼'} {Math.abs(growth)}%
                     </span>
+                  ) : (
+                    <span className="text-gray-300 text-xs">—</span>
                   )}
-                </div>
-
-                {/* Tooltip */}
-                <div className="absolute z-20 bg-gray-100 border border-gray-200 text-gray-900 text-xs px-2.5 py-2 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl"
-                  style={{ bottom: 36, left: '50%', transform: 'translateX(-50%)' }}>
-                  <p className="font-bold text-gray-900">{MONTH_LABEL[mon]}: {formatPrice(rev)}</p>
-                  {growth !== null && (
-                    <p className={`text-[11px] mt-0.5 ${growth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                      {growth >= 0 ? '+' : ''}{growth}% so với tháng trước
-                    </p>
-                  )}
-                </div>
-
-                {/* Cột — chiều cao tính trong BAR_AREA_H */}
-                <div
-                  className={`w-full rounded-t transition-all duration-300 group-hover:brightness-125 ${barColor}`}
-                  style={{ height: (pct / 100) * BAR_AREA_H }}
-                />
-
-                {/* Nhãn tháng */}
-                <span className={`text-[11px] font-medium mt-1 ${isLatest ? 'text-[#828fff]' : 'text-gray-400'}`}>
-                  {MONTH_LABEL[mon]}
-                </span>
-              </div>
+                </td>
+              </tr>
             );
           })}
-        </div>
-      </div>
-
-      {/* Chú thích */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 pt-3 border-t border-gray-200">
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm bg-gradient-to-t from-[#5e6ad2] to-[#828fff]" />
-          <span className="text-[11px] text-gray-400">Tháng hiện tại</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm bg-emerald-500/30" />
-          <span className="text-[11px] text-gray-400">Tăng trưởng</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm bg-red-500/30" />
-          <span className="text-[11px] text-gray-400">Sụt giảm</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <svg width="16" height="8"><polyline points="0,6 8,2 16,4" fill="none" stroke="#828fff" strokeWidth="2" strokeLinecap="round"/></svg>
-          <span className="text-[11px] text-gray-400">Xu hướng</span>
-        </div>
-      </div>
+        </tbody>
+        <tfoot>
+          <tr className="border-t-2 border-gray-200 bg-gray-50">
+            <td className="py-2.5 font-bold text-gray-700 text-xs uppercase tracking-wide">Tổng</td>
+            <td className="py-2.5 text-right font-extrabold text-gray-900">
+              {formatPrice(data.reduce((s, d) => s + Number(d.revenue), 0))}
+            </td>
+            <td className="py-2.5 text-right font-bold text-gray-700">
+              {data.reduce((s, d) => s + (Number(d.bookings) || 0), 0)}
+            </td>
+            <td />
+          </tr>
+        </tfoot>
+      </table>
     </div>
   );
 }
@@ -316,30 +401,24 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Revenue chart + Status chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white rounded-lg p-6 border border-gray-200">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="font-bold text-gray-900">Doanh thu 6 tháng gần nhất</h2>
-          </div>
-          <RevenueChart data={stats?.monthlyRevenue} />
-        </div>
+      {/* 3 tab thống kê: ngày / tuần / tháng */}
+      <AdminStatsSection monthlyRevenue={stats?.monthlyRevenue} />
 
-        <div className="bg-white rounded-lg p-6 border border-gray-200">
-          <h2 className="font-bold text-gray-900 mb-4">Trạng thái đơn hàng</h2>
-          <div className="space-y-3">
-            {statusEntries.map(({ label, color, count }) => (
-              <div key={label}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-700 font-medium">{label}</span>
-                  <span className="text-gray-500 font-bold">{count} đơn</span>
-                </div>
-                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${(count / maxStatusCount) * 100}%` }} />
-                </div>
+      {/* Trạng thái đơn hàng */}
+      <div className="bg-white rounded-lg p-6 border border-gray-200 mb-6">
+        <h2 className="font-bold text-gray-900 mb-4">Trạng thái đơn hàng</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {statusEntries.map(({ label, color, count }) => (
+            <div key={label} className="flex flex-col gap-1.5">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-700 font-medium">{label}</span>
+                <span className="text-gray-500 font-bold">{count}</span>
               </div>
-            ))}
-          </div>
+              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${(count / maxStatusCount) * 100}%` }} />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

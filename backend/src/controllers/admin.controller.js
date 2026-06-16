@@ -21,7 +21,9 @@ const AdminController = {
 
       // Thống kê theo tháng (6 tháng gần nhất)
       const [monthlyRevenue] = await pool.query(`
-        SELECT DATE_FORMAT(paid_at, '%Y-%m') AS month, COALESCE(SUM(amount), 0) AS revenue
+        SELECT DATE_FORMAT(paid_at, '%Y-%m') AS month,
+               COALESCE(SUM(amount), 0) AS revenue,
+               COUNT(*) AS bookings
         FROM payments
         WHERE payment_status = 'paid' AND paid_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
         GROUP BY month ORDER BY month ASC
@@ -101,6 +103,89 @@ const AdminController = {
         newCustomersThisMonth,
         topHelpers,
         openFeedbacksCount: Number(openFeedbacksCount),
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Thống kê doanh thu theo từng ngày (30 ngày gần nhất)
+  getDailyStats: async (req, res, next) => {
+    try {
+      const limitDays = Math.min(parseInt(req.query.days || 30), 90);
+      const [rows] = await pool.query(
+        `SELECT DATE_FORMAT(paid_at, '%Y-%m-%d') AS date,
+                COALESCE(SUM(amount), 0) AS revenue,
+                COUNT(*) AS bookings
+         FROM payments
+         WHERE payment_status = 'paid'
+           AND paid_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+         GROUP BY date
+         ORDER BY date DESC`,
+        [limitDays]
+      );
+      return sendSuccess(res, { days: rows.map(r => ({ ...r, revenue: Number(r.revenue), bookings: Number(r.bookings) })) });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Thống kê doanh thu theo từng ngày trong tuần (weekOffset=0 là tuần này)
+  getWeeklyStats: async (req, res, next) => {
+    try {
+      const weekOffset = parseInt(req.query.weekOffset || 0);
+
+      // Tính ngày đầu tuần (Thứ Hai)
+      const now = new Date();
+      const dayOfWeek = (now.getDay() + 6) % 7;
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - dayOfWeek + weekOffset * 7);
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
+
+      const pad = (n) => String(n).padStart(2, '0');
+      const toMysql = (d) =>
+        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+
+      const [dailyRows] = await pool.query(
+        `SELECT DATE_FORMAT(paid_at, '%Y-%m-%d') AS date,
+                COALESCE(SUM(amount), 0) AS revenue,
+                COUNT(*) AS bookings
+         FROM payments
+         WHERE payment_status = 'paid'
+           AND paid_at >= ? AND paid_at <= ?
+         GROUP BY date ORDER BY date ASC`,
+        [toMysql(startOfWeek), toMysql(endOfWeek)]
+      );
+
+      // Điền đủ 7 ngày T2-CN, ngày không có data thì revenue=0
+      const days = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(startOfWeek);
+        d.setDate(startOfWeek.getDate() + i);
+        const dateStr = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        const found = dailyRows.find((r) => String(r.date).substring(0, 10) === dateStr);
+        days.push({
+          date: dateStr,
+          revenue: found ? Number(found.revenue) : 0,
+          bookings: found ? Number(found.bookings) : 0,
+        });
+      }
+
+      const fmtDisplay = (dateStr) => {
+        const [, m, d] = dateStr.split('-');
+        return `${parseInt(d)}/${parseInt(m)}`;
+      };
+
+      return sendSuccess(res, {
+        days,
+        weekOffset,
+        startDate: days[0].date,
+        endDate: days[6].date,
+        label: `${fmtDisplay(days[0].date)} - ${fmtDisplay(days[6].date)}/${days[6].date.substring(0, 4)}`,
       });
     } catch (error) {
       next(error);

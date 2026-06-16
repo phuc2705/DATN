@@ -9,6 +9,12 @@ const validate = require('../middleware/validate');
 // Tất cả admin routes yêu cầu đăng nhập + quyền admin
 router.use(authenticate, authorize('admin'));
 
+// GET /api/admin/stats/daily?days=30 - Doanh thu từng ngày
+router.get('/stats/daily', AdminController.getDailyStats);
+
+// GET /api/admin/stats/weekly?weekOffset=0 - Doanh thu theo ngày trong tuần
+router.get('/stats/weekly', AdminController.getWeeklyStats);
+
 // GET /api/admin/stats - Tổng quan dashboard
 router.get('/stats', AdminController.getDashboardStats);
 

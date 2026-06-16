@@ -1,6 +1,10 @@
 import api from './axios';
 
 export const getAdminStatsApi = () => api.get('/api/admin/stats');
+export const getAdminDailyStatsApi = (days = 30) =>
+  api.get('/api/admin/stats/daily', { params: { days } });
+export const getAdminWeeklyStatsApi = (weekOffset = 0) =>
+  api.get('/api/admin/stats/weekly', { params: { weekOffset } });
 export const getAdminUsersApi = (params) => api.get('/api/admin/users', { params });
 export const toggleUserStatusApi = (userId, isActive) =>
   api.patch(`/api/admin/users/${userId}/status`, { isActive });
