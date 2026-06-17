@@ -229,7 +229,35 @@ const AdminController = {
       const [[user]] = await pool.query('SELECT user_type FROM users WHERE user_id = ?', [userId]);
       if (!user) return sendError(res, 'Không tìm thấy tài khoản.', 404);
       if (user.user_type === 'admin') return sendError(res, 'Không thể xóa tài khoản admin.', 403);
-      await pool.query('DELETE FROM users WHERE user_id = ?', [userId]);
+
+      // Ẩn danh hóa thay vì xóa cứng — giữ nguyên user_id để lịch sử đặt lịch, đánh giá, thanh toán không bị mất
+      await pool.query(
+        `UPDATE users SET
+           full_name    = CONCAT('Tài khoản đã xóa #', user_id),
+           email        = CONCAT('deleted_', user_id, '@removed.local'),
+           phone        = NULL,
+           password_hash = '',
+           avatar_url   = NULL,
+           is_active    = 0
+         WHERE user_id = ?`,
+        [userId]
+      );
+
+      // Xóa thông tin nhạy cảm của helper (CCCD, ảnh KYC)
+      if (user.user_type === 'helper') {
+        await pool.query(
+          `UPDATE helpers SET
+             id_card_number   = CONCAT('DELETED_', helper_id),
+             id_card_front_url = NULL,
+             id_card_back_url  = NULL,
+             bio              = NULL,
+             is_available     = 0,
+             is_verified      = 0
+           WHERE user_id = ?`,
+          [userId]
+        );
+      }
+
       return sendSuccess(res, null, 'Đã xóa tài khoản.');
     } catch (error) {
       next(error);

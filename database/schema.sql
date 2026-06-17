@@ -160,13 +160,13 @@ CREATE TABLE bookings (
 CREATE TABLE booking_logs (
     log_id       INT AUTO_INCREMENT PRIMARY KEY,
     booking_id   INT NOT NULL,
-    changed_by   INT NOT NULL,                          -- user_id của người thực hiện thay đổi
+    changed_by   INT NULL,                               -- user_id của người thực hiện thay đổi (NULL nếu user bị xóa)
     old_status   ENUM('pending','confirmed','in_progress','completed','cancelled') NULL,
     new_status   ENUM('pending','confirmed','in_progress','completed','cancelled') NOT NULL,
     note         VARCHAR(255) NULL,
     created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (booking_id) REFERENCES bookings(booking_id) ON DELETE CASCADE,
-    FOREIGN KEY (changed_by) REFERENCES users(user_id),
+    CONSTRAINT fk_booking_logs_changed_by FOREIGN KEY (changed_by) REFERENCES users(user_id) ON DELETE SET NULL,
     INDEX idx_booking_log (booking_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -230,9 +230,9 @@ CREATE TABLE promotions (
     is_active       BOOLEAN DEFAULT TRUE,
     start_date      DATE NOT NULL,
     end_date        DATE NOT NULL,
-    created_by      INT NOT NULL,                       -- admin tạo
+    created_by      INT NULL,                           -- admin tạo (NULL nếu admin bị xóa)
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (created_by) REFERENCES users(user_id),
+    CONSTRAINT fk_promotions_created_by FOREIGN KEY (created_by) REFERENCES users(user_id) ON DELETE SET NULL,
     INDEX idx_code (code),
     INDEX idx_active_date (is_active, start_date, end_date),
     CONSTRAINT chk_promo_value CHECK (discount_value > 0),
@@ -348,7 +348,7 @@ CREATE TABLE blog_categories (
 CREATE TABLE blog_posts (
     post_id           INT AUTO_INCREMENT PRIMARY KEY,
     category_id       INT NOT NULL,
-    author_id         INT NOT NULL,                     -- user_id của admin/editor
+    author_id         INT NULL,                          -- user_id của admin/editor (NULL nếu bị xóa)
     title             VARCHAR(200) NOT NULL,
     slug              VARCHAR(220) UNIQUE NOT NULL,     -- URL thân thiện SEO
     excerpt           TEXT NULL,                        -- Tóm tắt ngắn
@@ -367,7 +367,7 @@ CREATE TABLE blog_posts (
     created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES blog_categories(category_id) ON DELETE RESTRICT,
-    FOREIGN KEY (author_id) REFERENCES users(user_id) ON DELETE RESTRICT,
+    CONSTRAINT fk_blog_posts_author_id FOREIGN KEY (author_id) REFERENCES users(user_id) ON DELETE SET NULL,
     INDEX idx_slug (slug),
     INDEX idx_status_date (status, published_at),
     INDEX idx_featured (is_featured, status),
