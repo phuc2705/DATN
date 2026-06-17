@@ -41,6 +41,7 @@ const allowedOrigins = [
 const isOriginAllowed = (origin) =>
   !origin ||
   /^http:\/\/localhost:\d+$/.test(origin) ||
+  /^http:\/\/172\.\d+\.\d+\.\d+:\d+$/.test(origin) ||
   allowedOrigins.includes(origin);
 
 // ─── Khởi tạo app + Socket.io ────────────────────────────────────────────────

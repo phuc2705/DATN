@@ -589,7 +589,8 @@ const AdminController = {
     try {
       const { helperId } = req.params;
       const [[helper]] = await pool.query(
-        `SELECT h.helper_id, h.bio, h.id_card_number, h.date_of_birth, h.gender,
+        `SELECT h.helper_id, h.bio, h.id_card_number, h.id_card_front_url, h.id_card_back_url,
+                h.date_of_birth, h.gender,
                 h.is_verified, h.is_available, h.rating_average, h.total_reviews,
                 h.hourly_rate, h.latitude, h.longitude, u.created_at AS joined_at,
                 u.user_id, u.full_name, u.email, u.phone, u.avatar_url, u.is_active,

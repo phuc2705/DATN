@@ -325,6 +325,14 @@ async function runMigrations(connection) {
     await connection.query('ALTER TABLE bookings ADD COLUMN is_helper_reviewed TINYINT NOT NULL DEFAULT 0');
   } catch (err) { /* ignore — cột đã tồn tại */ }
 
+  // Ảnh CCCD 2 mặt cho luồng KYC helper
+  try {
+    await connection.query('ALTER TABLE helpers ADD COLUMN id_card_front_url VARCHAR(500) NULL');
+  } catch (err) { /* ignore — cột đã tồn tại */ }
+  try {
+    await connection.query('ALTER TABLE helpers ADD COLUMN id_card_back_url VARCHAR(500) NULL');
+  } catch (err) { /* ignore — cột đã tồn tại */ }
+
   // Cập nhật giá dịch vụ về giá/giờ hợp lý — các dịch vụ cũ dùng đơn vị m², bộ, lần
   // đã gây ra tính tiền sai khi nhân với số giờ
   try {

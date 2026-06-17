@@ -87,7 +87,7 @@ const UserModel = {
   },
 
   // Đăng ký tài khoản Helper
-  createHelper: async ({ email, passwordHash, fullName, phone, dateOfBirth, gender, idCardNumber, address, bio, avatarUrl, pendingServiceIds }) => {
+  createHelper: async ({ email, passwordHash, fullName, phone, dateOfBirth, gender, idCardNumber, address, bio, avatarUrl, idCardFrontUrl, idCardBackUrl, pendingServiceIds }) => {
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
@@ -104,9 +104,9 @@ const UserModel = {
         : null;
 
       await connection.query(
-        `INSERT INTO helpers (user_id, date_of_birth, gender, id_card_number, address, bio, pending_service_ids)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [userId, dateOfBirth, gender, idCardNumber, address, bio || null, serviceIdsJson]
+        `INSERT INTO helpers (user_id, date_of_birth, gender, id_card_number, address, bio, pending_service_ids, id_card_front_url, id_card_back_url)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [userId, dateOfBirth, gender, idCardNumber, address, bio || null, serviceIdsJson, idCardFrontUrl || null, idCardBackUrl || null]
       );
 
       await connection.commit();

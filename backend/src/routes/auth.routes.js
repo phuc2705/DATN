@@ -50,8 +50,12 @@ const registerHelperRules = [
 // POST /api/auth/register/customer - Bước 1: gửi OTP
 router.post('/register/customer', otpLimiter, registerCustomerRules, validate, AuthController.registerCustomer);
 
-// POST /api/auth/register/helper - Bước 1: gửi OTP (upload.single xử lý multipart trước validation)
-router.post('/register/helper', otpLimiter, upload.single('avatar'), registerHelperRules, validate, AuthController.registerHelper);
+// POST /api/auth/register/helper - Bước 1: gửi OTP (upload.fields xử lý avatar + ảnh CCCD 2 mặt)
+router.post('/register/helper', otpLimiter, upload.fields([
+  { name: 'avatar',      maxCount: 1 },
+  { name: 'idCardFront', maxCount: 1 },
+  { name: 'idCardBack',  maxCount: 1 },
+]), registerHelperRules, validate, AuthController.registerHelper);
 
 // POST /api/auth/verify-otp - Bước 2: xác minh OTP và tạo tài khoản
 router.post('/verify-otp', [

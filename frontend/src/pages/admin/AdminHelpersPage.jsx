@@ -151,6 +151,36 @@ function HelperDetailModal({ helperId, onClose, onVerify, onToggle }) {
                   </div>
                 ))}
               </div>
+
+              {/* Ảnh CCCD 2 mặt — hiển thị khi có */}
+              {(detail.id_card_front_url || detail.id_card_back_url) && (
+                <div className="mt-4">
+                  <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest mb-2">Ảnh CCCD / CMND</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { label: 'Mặt trước', url: detail.id_card_front_url },
+                      { label: 'Mặt sau',   url: detail.id_card_back_url  },
+                    ].map(({ label, url }) => (
+                      <div key={label}>
+                        <p className="text-[10px] text-gray-400 mb-1">{label}</p>
+                        {url ? (
+                          <a href={url} target="_blank" rel="noopener noreferrer">
+                            <img
+                              src={url}
+                              alt={label}
+                              className="w-full h-28 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition-opacity cursor-zoom-in"
+                            />
+                          </a>
+                        ) : (
+                          <div className="w-full h-28 rounded-lg border border-dashed border-gray-200 flex items-center justify-center text-xs text-gray-400">
+                            Chưa có ảnh
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Dịch vụ cung cấp */}

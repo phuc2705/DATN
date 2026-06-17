@@ -2,11 +2,13 @@ import api from './axios';
 
 export const loginApi = (data) => api.post('/api/auth/login', data);
 export const registerCustomerApi = (data) => api.post('/api/auth/register/customer', data);
-export const registerHelperApi = ({ avatarFile, serviceIds = [], ...fields }) => {
+export const registerHelperApi = ({ avatarFile, idCardFrontFile, idCardBackFile, serviceIds = [], ...fields }) => {
   const formData = new FormData();
   Object.entries(fields).forEach(([k, v]) => v !== undefined && v !== null && formData.append(k, v));
   formData.append('serviceIds', JSON.stringify(serviceIds));
-  if (avatarFile) formData.append('avatar', avatarFile);
+  if (avatarFile)       formData.append('avatar',      avatarFile);
+  if (idCardFrontFile)  formData.append('idCardFront',  idCardFrontFile);
+  if (idCardBackFile)   formData.append('idCardBack',   idCardBackFile);
   return api.post('/api/auth/register/helper', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });

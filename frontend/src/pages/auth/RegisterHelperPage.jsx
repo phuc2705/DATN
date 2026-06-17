@@ -28,6 +28,10 @@ export default function RegisterHelperPage() {
   const [selectedServices, setSelectedServices] = useState([]);
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
+  const [idCardFrontFile, setIdCardFrontFile] = useState(null);
+  const [idCardFrontPreview, setIdCardFrontPreview] = useState(null);
+  const [idCardBackFile, setIdCardBackFile] = useState(null);
+  const [idCardBackPreview, setIdCardBackPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -35,7 +39,6 @@ export default function RegisterHelperPage() {
   const [otpStep, setOtpStep] = useState(false);
   const [otp, setOtp] = useState('');
   const [registeredEmail, setRegisteredEmail] = useState('');
-  const [savedPassword, setSavedPassword] = useState('');
   const [resending, setResending] = useState(false);
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
@@ -45,6 +48,14 @@ export default function RegisterHelperPage() {
     if (!file) return;
     setAvatarFile(file);
     setAvatarPreview(URL.createObjectURL(file));
+  };
+
+  const handleIdCardChange = (side) => (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const preview = URL.createObjectURL(file);
+    if (side === 'front') { setIdCardFrontFile(file); setIdCardFrontPreview(preview); }
+    else                   { setIdCardBackFile(file);  setIdCardBackPreview(preview); }
   };
 
   const toggleService = (id) => {
@@ -61,10 +72,9 @@ export default function RegisterHelperPage() {
     }
     setLoading(true);
     try {
-      const res = await registerHelperApi({ ...form, serviceIds: selectedServices, avatarFile });
+      const res = await registerHelperApi({ ...form, serviceIds: selectedServices, avatarFile, idCardFrontFile, idCardBackFile });
       const data = res.data.data || {};
       setRegisteredEmail(data.email || form.email);
-      setSavedPassword(form.password);
       if (data.skipOtp) {
         await login(data.email || form.email, form.password);
         navigate('/');
@@ -382,6 +392,48 @@ export default function RegisterHelperPage() {
                     placeholder="VD: 001099012345 (12 số)"
                     className="input-field"
                   />
+                </div>
+
+                {/* Ảnh CCCD 2 mặt */}
+                <div>
+                  <label className="label">
+                    Ảnh CCCD / CMND 2 mặt <span className="text-red-400">*</span>
+                  </label>
+                  <p className="text-xs text-gray-400 mb-2">Ảnh rõ nét, không bị che, đủ sáng — dùng để xác minh danh tính</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { side: 'front', label: 'Mặt trước', file: idCardFrontFile, preview: idCardFrontPreview },
+                      { side: 'back',  label: 'Mặt sau',   file: idCardBackFile,  preview: idCardBackPreview  },
+                    ].map(({ side, label, file, preview }) => (
+                      <label
+                        key={side}
+                        htmlFor={`cccd-${side}`}
+                        className="flex flex-col items-center gap-2 cursor-pointer border-2 border-dashed border-gray-300 hover:border-green-400 hover:bg-green-50 transition-colors rounded-xl p-3 text-center"
+                      >
+                        {preview ? (
+                          <img src={preview} alt={label} className="w-full h-28 object-cover rounded-lg" />
+                        ) : (
+                          <div className="w-full h-28 flex flex-col items-center justify-center gap-2 text-gray-400">
+                            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                                d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0" />
+                            </svg>
+                            <span className="text-xs font-medium">{label}</span>
+                          </div>
+                        )}
+                        <span className="text-xs text-gray-500 font-medium">
+                          {file ? file.name.slice(0, 20) + (file.name.length > 20 ? '…' : '') : `Chọn ảnh ${label.toLowerCase()}`}
+                        </span>
+                        <input
+                          id={`cccd-${side}`}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleIdCardChange(side)}
+                        />
+                      </label>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Địa chỉ */}
