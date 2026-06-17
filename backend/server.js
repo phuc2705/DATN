@@ -157,7 +157,7 @@ const startServer = async () => {
   try {
     await testConnection();
 
-    // Listen ngay để Render health check không timeout (migrations chạy nền)
+    // Listen ngay để Render health check không timeout, migrations chạy sau
     httpServer.listen(PORT, '0.0.0.0', () => {
       console.log(`\n🚀 Server: http://localhost:${PORT}`);
       console.log(`📋 Môi trường: ${process.env.NODE_ENV || 'development'}`);
@@ -165,17 +165,20 @@ const startServer = async () => {
       if (IS_PROD) {
         console.log(`🌐 Production URL: ${process.env.CLIENT_URL || `http://localhost:${PORT}`}`);
       }
-      startBookingTimeoutJob();
-      sendBookingReminders();
-      setInterval(sendBookingReminders, 5 * 60 * 1000);      // nhắc nhở đơn hàng trước 30 phút
-      sendShiftReminders();
-      setInterval(sendShiftReminders, 5 * 60 * 1000);        // nhắc nhở ca làm trước 30 phút
-      autoAssignExpiredBookings();
-      setInterval(autoAssignExpiredBookings, 5 * 60 * 1000); // tự gán helper sau 30 phút chờ
     });
 
-    // Migrations chạy nền — không block server startup
-    initDatabase().catch(err => console.error('❌ initDatabase error:', err.message));
+    // Migrations hoàn tất → mới khởi động các background jobs
+    initDatabase()
+      .then(() => {
+        startBookingTimeoutJob();
+        sendBookingReminders();
+        setInterval(sendBookingReminders, 5 * 60 * 1000);      // nhắc nhở đơn hàng trước 30 phút
+        sendShiftReminders();
+        setInterval(sendShiftReminders, 5 * 60 * 1000);        // nhắc nhở ca làm trước 30 phút
+        autoAssignExpiredBookings();
+        setInterval(autoAssignExpiredBookings, 5 * 60 * 1000); // tự gán helper sau 30 phút chờ
+      })
+      .catch(err => console.error('❌ initDatabase error:', err.message));
   } catch (err) {
     console.error('❌ Khởi động thất bại:', err.message);
     process.exit(1);

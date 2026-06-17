@@ -151,6 +151,15 @@ async function runMigrations(connection) {
     // ignore — cột đã tồn tại
   }
 
+  // Thêm cột shift_reminder_sent nếu chưa có
+  try {
+    await connection.query(
+      'ALTER TABLE helper_shift_registrations ADD COLUMN shift_reminder_sent TINYINT(1) NOT NULL DEFAULT 0'
+    );
+  } catch (err) {
+    // ignore — cột đã tồn tại
+  }
+
   // Tạo bảng đăng ký ca làm việc theo ngày cụ thể (helper tự đăng ký)
   try {
     await connection.query(`
