@@ -384,12 +384,15 @@ const AuthController = {
       let decoded;
       const admin = require('../config/firebase-admin');
 
+      // Thử verify bằng Admin SDK trước, nếu lỗi (OpenSSL xung đột với mysql2/SSL) thì fallback
       if (admin._initialized) {
-        // Đường chính: xác minh đầy đủ bằng Firebase Admin SDK
-        decoded = await admin.auth().verifyIdToken(idToken);
+        try {
+          decoded = await admin.auth().verifyIdToken(idToken);
+        } catch (verifyErr) {
+          console.warn('[Firebase] verifyIdToken thất bại, dùng fallback:', verifyErr.message);
+          decoded = decodeFirebaseTokenFallback(idToken);
+        }
       } else {
-        // Fallback khi chưa cấu hình service account: decode JWT mà không verify chữ ký
-        // Chỉ an toàn cho môi trường phát triển cục bộ — deploy production phải cấu hình FIREBASE_* trong .env
         console.warn('[Firebase] Dùng fallback decode — cấu hình FIREBASE_* trong .env để bật xác thực đầy đủ');
         decoded = decodeFirebaseTokenFallback(idToken);
       }

@@ -1,6 +1,9 @@
 // Entry point của Backend Server
 require('dotenv').config(); // Nạp biến môi trường từ .env trước tất cả
 
+// Khởi tạo Firebase Admin TRƯỚC mysql2/SSL để tránh xung đột OpenSSL
+require('./src/config/firebase-admin');
+
 const express = require('express');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
