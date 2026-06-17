@@ -11,7 +11,7 @@ const { initDatabase } = require('./src/config/init-db');
 const { errorHandler } = require('./src/middleware/errorHandler');
 const { initSocket } = require('./src/socket');
 const { startBookingTimeoutJob } = require('./src/jobs/bookingTimeout');
-const { sendBookingReminders } = require('./src/jobs/reminderJob');
+const { sendBookingReminders, sendShiftReminders } = require('./src/jobs/reminderJob');
 const { autoAssignExpiredBookings } = require('./src/jobs/autoAssignJob');
 
 // Import các router
@@ -167,7 +167,9 @@ const startServer = async () => {
       }
       startBookingTimeoutJob();
       sendBookingReminders();
-      setInterval(sendBookingReminders, 5 * 60 * 1000);      // nhắc nhở trước 30 phút
+      setInterval(sendBookingReminders, 5 * 60 * 1000);      // nhắc nhở đơn hàng trước 30 phút
+      sendShiftReminders();
+      setInterval(sendShiftReminders, 5 * 60 * 1000);        // nhắc nhở ca làm trước 30 phút
       autoAssignExpiredBookings();
       setInterval(autoAssignExpiredBookings, 5 * 60 * 1000); // tự gán helper sau 30 phút chờ
     });

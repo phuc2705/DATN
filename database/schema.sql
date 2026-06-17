@@ -114,8 +114,9 @@ CREATE TABLE IF NOT EXISTS helper_shift_registrations (
     shift_date  DATE NOT NULL,
     start_time  TIME NOT NULL,
     end_time    TIME NOT NULL,
-    status      ENUM('active','cancelled') NOT NULL DEFAULT 'active',
-    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status               ENUM('active','cancelled') NOT NULL DEFAULT 'active',
+    shift_reminder_sent  TINYINT(1) NOT NULL DEFAULT 0,
+    created_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY  uniq_shift (helper_id, shift_date, start_time),
     FOREIGN KEY (helper_id) REFERENCES helpers(helper_id) ON DELETE CASCADE,
     INDEX idx_helper_date (helper_id, shift_date, status)

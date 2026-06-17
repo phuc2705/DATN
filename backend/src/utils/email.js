@@ -731,6 +731,52 @@ const sendReminderEmail = async (toEmail, recipientName, booking, otherPartyName
   await sendMail(toEmail, `[CleanConnect] Nhắc nhở: Ca làm việc lúc ${booking.startTime} ngày ${dateStr} sắp bắt đầu`, html).catch(() => {});
 };
 
+// Helper: nhắc nhở ca đăng ký (shift) sắp bắt đầu — không gắn với booking cụ thể
+const sendShiftReminderEmail = async (toEmail, helperName, shift) => {
+  const dateStr  = new Date(shift.shiftDate).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+  const html = layout(`
+    ${hero('bell', 'Ca làm việc sắp bắt đầu!', `Ca ${shift.startTime} – ${shift.endTime} ngày ${dateStr}`, '#f97316')}
+    ${greeting(helperName)}
+    <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
+      Còn khoảng <strong>30 phút</strong> nữa ca làm việc của bạn sẽ bắt đầu.
+      ${statusBadge('Sắp bắt đầu', '#f97316')}
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;">
+      <tr>
+        <td style="padding:24px;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding:6px 0;font-size:13px;color:#9ca3af;font-weight:600;width:40%;">Ngày làm việc</td>
+              <td style="padding:6px 0;font-size:14px;color:#111827;font-weight:700;">${dateStr}</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 0;font-size:13px;color:#9ca3af;font-weight:600;">Giờ bắt đầu</td>
+              <td style="padding:6px 0;font-size:14px;color:#ea580c;font-weight:700;">${shift.startTime}</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 0;font-size:13px;color:#9ca3af;font-weight:600;">Giờ kết thúc</td>
+              <td style="padding:6px 0;font-size:14px;color:#111827;font-weight:700;">${shift.endTime}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
+      <tr>
+        <td style="background:#fff7ed;border-left:4px solid #f97316;border-radius:0 8px 8px 0;padding:14px 18px;">
+          <p style="margin:0;font-size:13px;color:#c2410c;line-height:1.6;">
+            Hãy chuẩn bị dụng cụ và di chuyển đúng giờ. Đừng quên <strong>check-in</strong> khi bắt đầu ca làm nhé!
+          </p>
+        </td>
+      </tr>
+    </table>
+    ${closing()}
+  `, '#f97316');
+  await sendMail(toEmail, `[CleanConnect] Ca làm việc lúc ${shift.startTime} ngày ${dateStr} sắp bắt đầu`, html).catch(() => {});
+};
+
 // Helper: xác nhận đã nhận thanh toán
 const sendPaymentReceivedEmail = async (toEmail, helperName, amount, bookingId) => {
   const amountStr = Number(amount).toLocaleString('vi-VN');
@@ -820,6 +866,7 @@ module.exports = {
   sendNewJobEmail,
   sendJobAcceptedEmail,
   sendReminderEmail,
+  sendShiftReminderEmail,
   sendPaymentReceivedEmail,
   sendFeedbackRepliedEmail,
 };

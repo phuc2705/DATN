@@ -1,7 +1,7 @@
 // Job nhắc nhở lịch: chạy mỗi 5 phút, gửi thông báo trước 30 phút khi ca bắt đầu
 const { pool } = require('../config/database');
 const { pushNotification, mailIfOffline } = require('../utils/notify');
-const { sendReminderEmail } = require('../utils/email');
+const { sendReminderEmail, sendShiftReminderEmail } = require('../utils/email');
 
 async function sendBookingReminders() {
   try {
@@ -70,4 +70,53 @@ async function sendBookingReminders() {
   }
 }
 
-module.exports = { sendBookingReminders };
+// Job nhắc nhở ca đăng ký (shift) sắp bắt đầu trong 30 phút
+async function sendShiftReminders() {
+  try {
+    const [shifts] = await pool.query(
+      `SELECT hsr.id, hsr.shift_date, hsr.start_time, hsr.end_time,
+              u.user_id, u.full_name, u.email
+       FROM helper_shift_registrations hsr
+       JOIN helpers h ON hsr.helper_id = h.helper_id
+       JOIN users   u ON h.user_id = u.user_id
+       WHERE hsr.status = 'active'
+         AND hsr.shift_reminder_sent = 0
+         AND TIMESTAMP(hsr.shift_date, hsr.start_time) > NOW() + INTERVAL 25 MINUTE
+         AND TIMESTAMP(hsr.shift_date, hsr.start_time) <= NOW() + INTERVAL 35 MINUTE`
+    );
+
+    for (const s of shifts) {
+      const startTime = String(s.start_time).slice(0, 5);
+      const endTime   = String(s.end_time).slice(0, 5);
+      const dateStr   = new Date(s.shift_date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+      await pushNotification({
+        userId: s.user_id,
+        title:  'Ca làm việc sắp bắt đầu',
+        body:   `Ca ${startTime}–${endTime} ngày ${dateStr} của bạn sẽ bắt đầu sau 30 phút. Hãy chuẩn bị!`,
+        type:   'system',
+      });
+
+      if (s.email) {
+        await sendShiftReminderEmail(s.email, s.full_name, {
+          shiftDate: s.shift_date,
+          startTime,
+          endTime,
+        });
+      }
+
+      await pool.query(
+        'UPDATE helper_shift_registrations SET shift_reminder_sent = 1 WHERE id = ?',
+        [s.id]
+      );
+    }
+
+    if (shifts.length > 0) {
+      console.log(`📬 Đã gửi nhắc nhở ca làm cho ${shifts.length} helper.`);
+    }
+  } catch (err) {
+    console.error('❌ Lỗi job nhắc nhở ca làm:', err.message);
+  }
+}
+
+module.exports = { sendBookingReminders, sendShiftReminders };
