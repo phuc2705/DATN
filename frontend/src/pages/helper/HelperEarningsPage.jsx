@@ -1,11 +1,13 @@
 import { useEffect, useState, useMemo } from 'react';
 import { getHelperEarningsApi } from '../../api/payment.api';
+import { getHelperWalletApi } from '../../api/user.api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { formatPrice, formatDate } from '../../utils/format';
 import {
   Banknote, Calendar, CheckCircle, Star,
   CreditCard, Wallet, Info, TrendingUp, PieChart, ArrowUpRight,
   ChevronDown, ChevronLeft, ChevronRight,
+  ArrowDownLeft, ArrowUpRight as ArrowUpRightIcon, Gift, RotateCcw, Plus,
 } from 'lucide-react';
 
 const DAY_LABELS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
@@ -335,6 +337,146 @@ function buildMonthOptions(payments) {
   return opts;
 }
 
+/* ─── Nhãn & icon nguồn giao dịch ───────────────────────────────── */
+const SOURCE_META = {
+  booking_payment: { label: 'Hoàn thành đơn',   Icon: CheckCircle,        color: 'text-green-600',  bg: 'bg-green-50'  },
+  withdrawal:      { label: 'Rút tiền',          Icon: ArrowUpRightIcon,   color: 'text-red-500',    bg: 'bg-red-50'    },
+  top_up:          { label: 'Nạp tiền',          Icon: Plus,               color: 'text-blue-600',   bg: 'bg-blue-50'   },
+  refund:          { label: 'Hoàn tiền',         Icon: RotateCcw,          color: 'text-orange-500', bg: 'bg-orange-50' },
+  bonus:           { label: 'Thưởng / KM',       Icon: Gift,               color: 'text-purple-600', bg: 'bg-purple-50' },
+};
+
+/* ─── Section biến động số dư ví ────────────────────────────────── */
+function WalletHistory() {
+  const [wallet,       setWallet]       = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [loading,      setLoading]      = useState(true);
+  const [filter,       setFilter]       = useState('all'); // all | credit | debit
+
+  useEffect(() => {
+    getHelperWalletApi({ limit: 100 })
+      .then(({ data: res }) => {
+        setWallet(res.data.wallet);
+        setTransactions(res.data.transactions);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (filter === 'all') return transactions;
+    return transactions.filter((t) => t.type === filter);
+  }, [transactions, filter]);
+
+  if (loading) return (
+    <div className="flex justify-center py-10"><LoadingSpinner /></div>
+  );
+
+  const FILTERS = [
+    { key: 'all',    label: 'Tất cả' },
+    { key: 'credit', label: 'Tiền vào' },
+    { key: 'debit',  label: 'Tiền ra' },
+  ];
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-5">
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center">
+            <Wallet className="w-4 h-4 text-orange-500" />
+          </div>
+          <div>
+            <h2 className="font-semibold text-gray-900 text-sm">Biến động số dư ví</h2>
+            {wallet && (
+              <p className="text-xs text-gray-400 mt-0.5">
+                Số dư hiện tại:&nbsp;
+                <span className={`font-bold ${wallet.balance < 0 ? 'text-red-500' : 'text-green-600'}`}>
+                  {wallet.balance < 0 ? '−' : ''}{formatPrice(Math.abs(wallet.balance))}
+                </span>
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Filter */}
+        <div className="flex gap-1">
+          {FILTERS.map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
+                filter === f.key
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tổng kết ví */}
+      {wallet && (
+        <div className="grid grid-cols-2 divide-x divide-gray-100 border-b border-gray-100">
+          <div className="px-6 py-3 text-center">
+            <p className="text-xs text-gray-400">Tổng tiền vào</p>
+            <p className="text-sm font-bold text-green-600">+{formatPrice(wallet.totalEarned)}</p>
+          </div>
+          <div className="px-6 py-3 text-center">
+            <p className="text-xs text-gray-400">Tổng tiền ra</p>
+            <p className="text-sm font-bold text-red-500">−{formatPrice(wallet.totalWithdrawn)}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Danh sách giao dịch */}
+      {filtered.length === 0 ? (
+        <div className="text-center py-12">
+          <Wallet className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+          <p className="text-sm text-gray-400">Chưa có biến động nào</p>
+        </div>
+      ) : (
+        <div className="divide-y divide-gray-50">
+          {filtered.map((tx, idx) => {
+            const meta    = SOURCE_META[tx.source] || { label: tx.source, Icon: Wallet, color: 'text-gray-500', bg: 'bg-gray-50' };
+            const isCredit = tx.type === 'credit';
+            return (
+              <div key={tx.transactionId ?? idx}
+                className="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${meta.bg}`}>
+                    <meta.Icon className={`w-4 h-4 ${meta.color}`} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 truncate">
+                      {meta.label}{tx.serviceName ? ` · ${tx.serviceName}` : ''}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5 truncate">
+                      {tx.description || (tx.bookingId ? `Đơn #${tx.bookingId}` : '—')}
+                      <span className="mx-1 text-gray-200">·</span>
+                      {formatDate(tx.createdAt)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-end flex-shrink-0 ml-4 gap-0.5">
+                  <p className={`text-sm font-bold ${isCredit ? 'text-green-600' : 'text-red-500'}`}>
+                    {isCredit ? '+' : '−'}{formatPrice(tx.amount)}
+                  </p>
+                  <p className="text-[10px] text-gray-400">
+                    Số dư: <span className="font-medium text-gray-600">{formatPrice(tx.balanceAfter)}</span>
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Main Page ──────────────────────────────────────────────────── */
 export default function HelperEarningsPage() {
   const [data,        setData]        = useState(null);
@@ -608,6 +750,9 @@ export default function HelperEarningsPage() {
             </div>
           )}
         </div>
+
+        {/* Biến động số dư ví */}
+        <WalletHistory />
 
         {/* Ghi chú */}
         <div className="mt-4 flex items-start gap-3 p-4 bg-blue-50 border border-blue-100 rounded-xl">

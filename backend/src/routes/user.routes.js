@@ -52,4 +52,7 @@ router.post('/helper/shifts', authorize('helper'), [
 // DELETE /api/users/helper/shifts/:shiftId - Hủy ca
 router.delete('/helper/shifts/:shiftId', authorize('helper'), UserController.cancelShift);
 
+// GET /api/users/helper/wallet - Lấy số dư + lịch sử biến động ví
+router.get('/helper/wallet', authorize('helper'), UserController.getWalletTransactions);
+
 module.exports = router;

@@ -296,6 +296,63 @@ const UserController = {
       next(error);
     }
   },
+  // Lấy lịch sử biến động số dư ví của helper
+  getWalletTransactions: async (req, res, next) => {
+    try {
+      const { user_id } = req.user;
+      const limit  = Math.min(parseInt(req.query.limit)  || 50, 200);
+      const offset = parseInt(req.query.offset) || 0;
+
+      const [[wallet]] = await pool.query(
+        'SELECT balance, total_earned, total_withdrawn FROM wallets WHERE user_id = ?',
+        [user_id]
+      );
+
+      if (!wallet) {
+        return sendSuccess(res, {
+          wallet: { balance: 0, totalEarned: 0, totalWithdrawn: 0 },
+          transactions: [],
+          total: 0,
+        });
+      }
+
+      const [[{ total }]] = await pool.query(
+        `SELECT COUNT(*) AS total
+         FROM wallet_transactions wt
+         JOIN wallets w ON wt.wallet_id = w.wallet_id
+         WHERE w.user_id = ?`,
+        [user_id]
+      );
+
+      const [transactions] = await pool.query(
+        `SELECT wt.transaction_id AS transactionId,
+                wt.type, wt.amount, wt.balance_after AS balanceAfter,
+                wt.source, wt.booking_id AS bookingId,
+                wt.description, wt.created_at AS createdAt,
+                s.service_name AS serviceName
+         FROM wallet_transactions wt
+         JOIN wallets w ON wt.wallet_id = w.wallet_id
+         LEFT JOIN bookings b  ON wt.booking_id  = b.booking_id
+         LEFT JOIN services s  ON b.service_id   = s.service_id
+         WHERE w.user_id = ?
+         ORDER BY wt.created_at DESC
+         LIMIT ? OFFSET ?`,
+        [user_id, limit, offset]
+      );
+
+      return sendSuccess(res, {
+        wallet: {
+          balance:        Number(wallet.balance),
+          totalEarned:    Number(wallet.total_earned),
+          totalWithdrawn: Number(wallet.total_withdrawn),
+        },
+        transactions,
+        total,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 
 module.exports = UserController;
