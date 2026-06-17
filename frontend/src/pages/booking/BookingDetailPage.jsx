@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { getBookingDetailApi, cancelBookingApi, getBookingSuggestionsApi } from '../../api/booking.api';
 import FeedbackModal from '../../components/common/FeedbackModal';
+import CancelBookingModal from '../../components/common/CancelBookingModal';
 import {
   confirmPaymentApi, createVNPayUrlApi, getBankTransferInfoApi,
   createVNPayDepositUrlApi, createVNPayRemainingUrlApi, confirmRemainingPaymentApi,
@@ -253,14 +254,22 @@ export default function BookingDetailPage() {
       .catch(() => setSuggestions([]));
   }, [booking]);
 
-  const handleCancel = async () => {
-    if (!confirm('Bạn có chắc muốn hủy đơn này?')) return;
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelling,      setCancelling]      = useState(false);
+
+  const handleCancel = () => setShowCancelModal(true);
+
+  const handleCancelConfirm = async (reason) => {
+    setCancelling(true);
     try {
-      await cancelBookingApi(bookingId);
+      await cancelBookingApi(bookingId, reason);
       toast.success('Đã hủy đơn.');
+      setShowCancelModal(false);
       refresh();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Không thể hủy');
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -896,6 +905,14 @@ export default function BookingDetailPage() {
           onClose={() => setShowFeedback(false)}
           userType="customer"
           bookingId={booking.bookingId}
+        />
+      )}
+
+      {showCancelModal && (
+        <CancelBookingModal
+          loading={cancelling}
+          onConfirm={handleCancelConfirm}
+          onClose={() => setShowCancelModal(false)}
         />
       )}
     </div>

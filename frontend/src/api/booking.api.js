@@ -12,7 +12,7 @@ export const getBookingDetailApi = (id) => api.get(`/api/bookings/${id}`);
 export const confirmBookingApi = (id) => api.patch(`/api/bookings/${id}/confirm`);
 export const checkInApi = (id, coords) => api.patch(`/api/bookings/${id}/checkin`, coords || {});
 export const checkOutApi = (id, coords) => api.patch(`/api/bookings/${id}/checkout`, coords || {});
-export const cancelBookingApi  = (id) => api.patch(`/api/bookings/${id}/cancel`);
+export const cancelBookingApi  = (id, reason) => api.patch(`/api/bookings/${id}/cancel`, { reason });
 export const pricePreviewApi   = (params) => api.get('/api/bookings/price-preview', { params });
 export const suggestHelpersApi    = (params) => api.get('/api/bookings/suggest-helpers', { params });
 export const getBookingSuggestionsApi   = (id)     => api.get(`/api/bookings/${id}/suggestions`);

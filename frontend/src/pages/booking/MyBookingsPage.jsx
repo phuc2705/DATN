@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMyBookingsApi, cancelBookingApi } from '../../api/booking.api';
+import CancelBookingModal from '../../components/common/CancelBookingModal';
 import { formatPrice, formatDate, BOOKING_STATUS_LABEL } from '../../utils/format';
 import toast from 'react-hot-toast';
 import {
@@ -207,15 +208,20 @@ export default function MyBookingsPage() {
   const countByStatus = (key) =>
     key === 'all' ? bookings.length : bookings.filter((b) => b.status === key).length;
 
-  const handleCancel = async (id) => {
-    if (!window.confirm('Bạn có chắc muốn hủy đơn này không?')) return;
+  const [cancelTargetId, setCancelTargetId] = useState(null);
+
+  const handleCancel = (id) => setCancelTargetId(id);
+
+  const handleCancelConfirm = async (reason) => {
+    const id = cancelTargetId;
     setCancelling(id);
     try {
-      await cancelBookingApi(id);
+      await cancelBookingApi(id, reason);
       setBookings((prev) =>
         prev.map((b) => (b.bookingId === id ? { ...b, status: 'cancelled' } : b))
       );
       toast.success('Đã hủy đơn hàng');
+      setCancelTargetId(null);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Không thể hủy đơn hàng');
     } finally {
@@ -289,6 +295,14 @@ export default function MyBookingsPage() {
             />
           ))}
         </div>
+      )}
+
+      {cancelTargetId && (
+        <CancelBookingModal
+          loading={cancelling === cancelTargetId}
+          onConfirm={handleCancelConfirm}
+          onClose={() => setCancelTargetId(null)}
+        />
       )}
     </div>
   );
