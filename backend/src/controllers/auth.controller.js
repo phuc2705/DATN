@@ -105,15 +105,9 @@ const AuthController = {
         serviceIds = Array.isArray(raw) ? raw : JSON.parse(raw || '[]');
       } catch { serviceIds = []; }
 
-      const avatarUrl = req.files?.avatar?.[0]
-        ? `/uploads/avatars/${req.files.avatar[0].filename}`
-        : '/avatars/helper-1.svg';
-      const idCardFrontUrl = req.files?.idCardFront?.[0]
-        ? `/uploads/kyc/${req.files.idCardFront[0].filename}`
-        : null;
-      const idCardBackUrl = req.files?.idCardBack?.[0]
-        ? `/uploads/kyc/${req.files.idCardBack[0].filename}`
-        : null;
+      const avatarUrl = req.files?.avatar?.[0]?.path || '/avatars/helper-1.svg';
+      const idCardFrontUrl = req.files?.idCardFront?.[0]?.path || null;
+      const idCardBackUrl  = req.files?.idCardBack?.[0]?.path  || null;
 
       const existing = await UserModel.findByEmailAny(email);
       if (existing && existing.is_active) {

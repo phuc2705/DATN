@@ -1,21 +1,16 @@
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-
-const avatarDir = path.join(__dirname, '../../public/uploads/avatars');
-const kycDir    = path.join(__dirname, '../../public/uploads/kyc');
-if (!fs.existsSync(avatarDir)) fs.mkdirSync(avatarDir, { recursive: true });
-if (!fs.existsSync(kycDir))    fs.mkdirSync(kycDir,    { recursive: true });
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('../config/cloudinary');
 
 const KYC_FIELDS = ['idCardFront', 'idCardBack'];
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, KYC_FIELDS.includes(file.fieldname) ? kycDir : avatarDir),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const prefix = KYC_FIELDS.includes(file.fieldname) ? file.fieldname : 'avatar';
-    cb(null, `${prefix}-${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`);
-  },
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: (req, file) => ({
+    folder: KYC_FIELDS.includes(file.fieldname) ? 'kyc' : 'avatars',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    public_id: `${file.fieldname}-${Date.now()}-${Math.round(Math.random() * 1e6)}`,
+  }),
 });
 
 const fileFilter = (req, file, cb) => {
