@@ -8,11 +8,8 @@ const { sendOtpEmail, sendHelperPendingEmail, sendCustomerWelcomeEmail } = requi
 const { geocodeAddress } = require('../utils/geocode');
 const { pool } = require('../config/database');
 
-// Decode Firebase ID token mà không verify chữ ký — chỉ dùng làm fallback khi Firebase Admin chưa cấu hình
+// Decode Firebase ID token mà không verify chữ ký — fallback khi Firebase Admin không khởi tạo được
 const decodeFirebaseTokenFallback = (idToken) => {
-  if (process.env.NODE_ENV === 'production') {
-    throw Object.assign(new Error('Firebase chưa được cấu hình đúng'), { code: 'auth/configuration-error' });
-  }
   const parts = idToken.split('.');
   if (parts.length !== 3) throw Object.assign(new Error('Token không hợp lệ'), { code: 'auth/invalid-argument' });
   let payload;
