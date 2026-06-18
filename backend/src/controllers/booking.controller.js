@@ -1,6 +1,7 @@
 // Controller đặt lịch - tích hợp logic tính giá tập trung và kiểm tra xung đột lịch
 const BookingModel = require('../models/booking.model');
 const UserModel = require('../models/user.model');
+const PaymentModel = require('../models/payment.model');
 const { pool } = require('../config/database');
 const { calculateBookingPrice, getEffectiveRate } = require('../utils/pricing');
 const { findSuggestedHelpers } = require('../utils/matching');
@@ -528,10 +529,19 @@ const BookingController = {
       const gps = (lat && lng) ? { lat: parseFloat(lat), lng: parseFloat(lng) } : null;
       await BookingModel.updateStatus(bookingId, 'completed', user_id, 'Helper đã check-out - hoàn thành công việc', gps);
 
+      // Tự động xác nhận thanh toán cho đơn tiền mặt → cập nhật ví helper ngay lập tức
+      const payment = await PaymentModel.findByBooking(bookingId);
+      if (payment && payment.payment_status === 'unpaid' && payment.payment_method === 'cash') {
+        await PaymentModel.confirmPayment(bookingId, null);
+      } else if (payment && payment.payment_status === 'deposit_paid') {
+        // Đơn có đặt cọc 70% online, còn lại 30% thu tiền mặt trực tiếp
+        await PaymentModel.confirmRemainingPayment(bookingId, 'cash', null);
+      }
+
       pushNotification({
         userId: booking.customer_user_id,
         title: `Đơn ${bookingId} đã hoàn thành`,
-        body: `${booking.helper_name} đã hoàn thành công việc. Vui lòng xác nhận thanh toán.`,
+        body: `${booking.helper_name} đã hoàn thành công việc.`,
         type: 'checkout',
         refId: bookingId,
       });
